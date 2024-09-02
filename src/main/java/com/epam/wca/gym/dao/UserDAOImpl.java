@@ -5,40 +5,32 @@ import com.epam.wca.gym.utils.Storage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 @Repository
-public class UserDAOImpl implements UserDAO {
-
-    private final Storage storage;
+public class UserDAOImpl extends AbstractDAO<User> implements UserDAO {
 
     @Autowired
-    public UserDAOImpl(Storage storage) {
+    @Override
+    public void setStorage(Storage storage) {
         this.storage = storage;
     }
 
     @Override
-    public void save(User user) {
-        storage.getUsers().put(user.getId(), user);
+    protected Map<Long, User> getStorageMap() {
+        return storage.getUsers();
+    }
+
+    @Override
+    protected Long getEntityId(User user) {
+        return user.getId();
     }
 
     @Override
     public void update(Long id, boolean isActive) {
-        User user = storage.getUsers().get(id);
+        User user = getStorageMap().get(id);
         if (user != null) {
             user.setActive(isActive);
         }
-    }
-
-    @Override
-    public Optional<User> findById(Long id) {
-        return Optional.ofNullable(storage.getUsers().get(id));
-    }
-
-    @Override
-    public List<User> findAll() {
-        return new ArrayList<>(storage.getUsers().values());
     }
 }

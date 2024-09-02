@@ -16,13 +16,13 @@ public class UsernameGenerator {
 
     public static String generateUsername(String firstName, String lastName, Map<Long, User> existingUsers) {
         if (firstName == null || firstName.trim().isEmpty()) {
-            log.error(FIRST_NAME_IS_NOT_PROVIDED_IMPOSSIBLE_TO_GENERATE_THE_USERNAME_LOG);
-            throw new IllegalArgumentException(FIRST_NAME_CANNOT_BE_NULL_OR_EMPTY_EXCEPTION);
+            log.error("First Name is not provided. Impossible to generate the username.");
+            throw new IllegalArgumentException("First Name cannot be null or empty.");
         }
 
         if (lastName == null || lastName.trim().isEmpty()) {
-            log.error(LAST_NAME_IS_NOT_PROVIDED_IMPOSSIBLE_TO_GENERATE_THE_USERNAME_LOG);
-            throw new IllegalArgumentException(LAST_NAME_CANNOT_BE_NULL_OR_EMPTY_EXCEPTION);
+            log.error("Last Name is not provided. Impossible to generate the username.");
+            throw new IllegalArgumentException("Last Name cannot be null or empty.");
         }
 
         String baseUsername = firstName.toLowerCase() + USERNAME_DOT_SEPARATOR + lastName.toLowerCase();

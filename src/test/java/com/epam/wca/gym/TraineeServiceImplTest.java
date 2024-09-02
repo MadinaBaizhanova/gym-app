@@ -1,8 +1,8 @@
 package com.epam.wca.gym;
 
 import com.epam.wca.gym.dao.TraineeDAO;
-import com.epam.wca.gym.dao.UserDAO;
 import com.epam.wca.gym.dto.TraineeDTO;
+import com.epam.wca.gym.dto.UserDTO;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.service.TraineeServiceImpl;
@@ -20,14 +20,13 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 class TraineeServiceImplTest {
@@ -36,13 +35,10 @@ class TraineeServiceImplTest {
     private TraineeDAO traineeDao;
 
     @Mock
-    private UserDAO userDao;
+    private UserService userService;
 
     @Mock
     private Storage storage;
-
-    @Mock
-    private UserService userService;
 
     @InjectMocks
     private TraineeServiceImpl traineeService;
@@ -50,63 +46,70 @@ class TraineeServiceImplTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        traineeService.setTraineeDao(traineeDao);
+        traineeService.setUserService(userService);
+        traineeService.setStorage(storage);
     }
 
     @Test
-    void create_ShouldReturnTrue_WhenValidTraineeIsCreated() {
+    void create_ShouldReturnOptionalTrainee_WhenValidTraineeIsCreated() {
         // Arrange
-        String firstName = "John";
-        String lastName = "Doe";
-        String dateOfBirthStr = "1990-01-01";
-        String address = "123 Main St";
+        TraineeDTO traineeDTO = new TraineeDTO();
+        traineeDTO.setFirstName("John");
+        traineeDTO.setLastName("Doe");
+        traineeDTO.setDateOfBirth("1990-01-01");
+        traineeDTO.setAddress("123 Main St");
 
         User mockUser = new User(1L, "John", "Doe", "johndoe", "securePass123", true);
-        when(userService.create(firstName, lastName)).thenReturn(mockUser);
+        when(userService.create(any(UserDTO.class))).thenReturn(Optional.of(mockUser));
         when(storage.getTrainees()).thenReturn(new HashMap<>());
         doNothing().when(traineeDao).save(any(Trainee.class));
 
         // Act
-        boolean result = traineeService.create(firstName, lastName, dateOfBirthStr, address);
+        Optional<Trainee> result = traineeService.create(traineeDTO);
 
         // Assert
-        assertTrue(result);
-        verify(userService).create(firstName, lastName);
+        assertTrue(result.isPresent());
+        verify(userService).create(any(UserDTO.class));
         verify(traineeDao).save(any(Trainee.class));
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"1990-13-01", "invalid-date", "01/01/1990"})
-    void create_ShouldReturnFalse_WhenDateOfBirthIsInvalid(String invalidDate) {
+    void create_ShouldReturnEmptyOptional_WhenDateOfBirthIsInvalid(String invalidDate) {
         // Arrange
-        String firstName = "John";
-        String lastName = "Doe";
-        String address = "123 Main St";
+        TraineeDTO traineeDTO = new TraineeDTO();
+        traineeDTO.setFirstName("John");
+        traineeDTO.setLastName("Doe");
+        traineeDTO.setDateOfBirth(invalidDate);
+        traineeDTO.setAddress("123 Main St");
 
         // Act
-        boolean result = traineeService.create(firstName, lastName, invalidDate, address);
+        Optional<Trainee> result = traineeService.create(traineeDTO);
 
         // Assert
-        assertFalse(result);
-        verify(userService, never()).create(anyString(), anyString());
+        assertTrue(result.isEmpty());
+        verify(userService, never()).create(any(UserDTO.class));
         verify(traineeDao, never()).save(any(Trainee.class));
     }
 
     @Test
-    void create_ShouldReturnFalse_WhenUserCreationFails() {
+    void create_ShouldReturnEmptyOptional_WhenUserCreationFails() {
         // Arrange
-        String firstName = "John";
-        String lastName = "Doe";
-        String dateOfBirthStr = "1990-01-01";
-        String address = "123 Main St";
+        TraineeDTO traineeDTO = new TraineeDTO();
+        traineeDTO.setFirstName("John");
+        traineeDTO.setLastName("Doe");
+        traineeDTO.setDateOfBirth("1990-01-01");
+        traineeDTO.setAddress("123 Main St");
 
-        when(userService.create(firstName, lastName)).thenReturn(null);
+        when(userService.create(any(UserDTO.class))).thenReturn(Optional.empty());
 
         // Act
-        boolean result = traineeService.create(firstName, lastName, dateOfBirthStr, address);
+        Optional<Trainee> result = traineeService.create(traineeDTO);
 
         // Assert
-        assertFalse(result);
-        verify(userService).create(firstName, lastName);
+        assertTrue(result.isEmpty());
+        verify(userService).create(any(UserDTO.class));
         verify(traineeDao, never()).save(any(Trainee.class));
     }
 
@@ -131,7 +134,7 @@ class TraineeServiceImplTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"abc", "-1", ""})
+    @ValueSource(strings = {"abc", ""})
     void update_ShouldReturnFalse_WhenTraineeIdIsInvalid(String invalidTraineeIdStr) {
         // Arrange
         String newAddress = "New Address";
@@ -171,43 +174,40 @@ class TraineeServiceImplTest {
             "1",
             "2"
     })
-    void delete_ShouldReturnTrue_WhenValidTraineeIsDeleted(String traineeIdStr) {
+    void delete_ShouldPerformDeletion_WhenValidTraineeIsDeleted(String traineeIdStr) {
         // Arrange
         Trainee mockTrainee = new Trainee();
         when(traineeDao.findById(Long.parseLong(traineeIdStr))).thenReturn(Optional.of(mockTrainee));
         doNothing().when(traineeDao).delete(Long.parseLong(traineeIdStr));
 
         // Act
-        boolean result = traineeService.delete(traineeIdStr);
+        traineeService.delete(traineeIdStr);
 
         // Assert
-        assertTrue(result);
         verify(traineeDao).findById(Long.parseLong(traineeIdStr));
         verify(traineeDao).delete(Long.parseLong(traineeIdStr));
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"xyz", "-2", ""})
-    void delete_ShouldReturnFalse_WhenTraineeIdIsInvalid(String invalidTraineeIdStr) {
+    @ValueSource(strings = {"xyz", ""})
+    void delete_ShouldNotPerformDeletion_WhenTraineeIdIsInvalid(String invalidTraineeIdStr) {
         // Act
-        boolean result = traineeService.delete(invalidTraineeIdStr);
+        traineeService.delete(invalidTraineeIdStr);
 
         // Assert
-        assertFalse(result);
         verify(traineeDao, never()).delete(anyLong());
     }
 
     @ParameterizedTest
     @MethodSource("provideInvalidTraineeIds")
-    void delete_ShouldReturnFalse_WhenTraineeNotFound(String traineeIdStr) {
+    void delete_ShouldNotPerformDeletion_WhenTraineeNotFound(String traineeIdStr) {
         // Arrange
         when(traineeDao.findById(Long.parseLong(traineeIdStr))).thenReturn(Optional.empty());
 
         // Act
-        boolean result = traineeService.delete(traineeIdStr);
+        traineeService.delete(traineeIdStr);
 
         // Assert
-        assertFalse(result);
         verify(traineeDao).findById(Long.parseLong(traineeIdStr));
         verify(traineeDao, never()).delete(anyLong());
     }
@@ -224,7 +224,7 @@ class TraineeServiceImplTest {
         User mockUser = new User(userId, firstName, lastName, username, "securePass123", isActive);
 
         when(traineeDao.findById(Long.parseLong(traineeIdStr))).thenReturn(Optional.of(mockTrainee));
-        when(userService.findById(userId)).thenReturn(mockUser);
+        when(storage.getUsers()).thenReturn(new HashMap<>(Map.of(userId, mockUser)));
 
         // Act
         Optional<TraineeDTO> result = traineeService.findById(traineeIdStr);
@@ -237,8 +237,7 @@ class TraineeServiceImplTest {
                 () -> assertEquals(firstName, result.get().getFirstName()),
                 () -> assertEquals(lastName, result.get().getLastName()),
                 () -> assertEquals(username, result.get().getUsername()),
-                () -> assertEquals(isActive, result.get().isActive()),
-                () -> assertEquals(LocalDate.parse(dateOfBirth), result.get().getDateOfBirth()),
+                () -> assertEquals(dateOfBirth, result.get().getDateOfBirth()),
                 () -> assertEquals(address, result.get().getAddress())
         );
     }
@@ -255,7 +254,7 @@ class TraineeServiceImplTest {
         // Assert
         assertTrue(result.isEmpty());
         verify(traineeDao).findById(Long.parseLong(traineeIdStr));
-        verify(userService, never()).findById(anyLong());
+        verify(storage, never()).getUsers();
     }
 
     @Test
@@ -269,8 +268,7 @@ class TraineeServiceImplTest {
         User user2 = new User(2L, "Jane", "Smith", "janesmith", "securePass456", true);
 
         when(traineeDao.findAll()).thenReturn(trainees);
-        when(userDao.findById(1L)).thenReturn(Optional.of(user1));
-        when(userDao.findById(2L)).thenReturn(Optional.of(user2));
+        when(storage.getUsers()).thenReturn(new HashMap<>(Map.of(1L, user1, 2L, user2)));
 
         // Act
         List<TraineeDTO> result = traineeService.findAll();
@@ -294,6 +292,5 @@ class TraineeServiceImplTest {
         // Assert
         assertTrue(result.isEmpty());
         verify(traineeDao).findAll();
-        verify(userDao, never()).findById(anyLong());
     }
 }

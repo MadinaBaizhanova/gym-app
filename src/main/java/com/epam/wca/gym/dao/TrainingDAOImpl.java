@@ -5,32 +5,24 @@ import com.epam.wca.gym.utils.Storage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 @Repository
-public class TrainingDAOImpl implements TrainingDAO {
-
-    private final Storage storage;
+public class TrainingDAOImpl extends AbstractDAO<Training> {
 
     @Autowired
-    public TrainingDAOImpl(Storage storage) {
+    @Override
+    public void setStorage(Storage storage) {
         this.storage = storage;
     }
 
     @Override
-    public void save(Training training) {
-        storage.getTrainings().put(training.getId(), training);
+    protected Map<Long, Training> getStorageMap() {
+        return storage.getTrainings();
     }
 
     @Override
-    public Optional<Training> findById(Long id) {
-        return Optional.ofNullable(storage.getTrainings().get(id));
-    }
-
-    @Override
-    public List<Training> findAll() {
-        return new ArrayList<>(storage.getTrainings().values());
+    protected Long getEntityId(Training training) {
+        return training.getId();
     }
 }

@@ -1,17 +1,8 @@
 package com.epam.wca.gym.service;
 
 import com.epam.wca.gym.dto.TrainerDTO;
+import com.epam.wca.gym.entity.Trainer;
 
-import java.util.List;
-import java.util.Optional;
-
-public interface TrainerService {
-
-    boolean create(String firstName, String lastName, String trainingTypeStr);
-
-    boolean update(String trainerIdStr, String newTrainingTypeStr);
-
-    Optional<TrainerDTO> findById(String trainerIdStr);
-
-    List<TrainerDTO> findAll();
+public interface TrainerService extends BaseService<Trainer, TrainerDTO> {
+    boolean update(String trainerId, String newTrainingType);
 }

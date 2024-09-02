@@ -13,7 +13,6 @@ import java.util.Map;
 @Getter
 @Component
 public class Storage {
-
     private final Map<Long, User> users = new HashMap<>();
     private final Map<Long, Trainee> trainees = new HashMap<>();
     private final Map<Long, Trainer> trainers = new HashMap<>();

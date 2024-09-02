@@ -5,28 +5,30 @@ import com.epam.wca.gym.utils.Storage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 @Repository
-public class TraineeDAOImpl implements TraineeDAO {
-
-    private final Storage storage;
+public class TraineeDAOImpl extends AbstractDAO<Trainee> implements TraineeDAO {
 
     @Autowired
-    public TraineeDAOImpl(Storage storage) {
+    @Override
+    public void setStorage(Storage storage) {
         this.storage = storage;
     }
 
     @Override
-    public void save(Trainee trainee) {
-        storage.getTrainees().put(trainee.getId(), trainee);
+    protected Map<Long, Trainee> getStorageMap() {
+        return storage.getTrainees();
+    }
+
+    @Override
+    protected Long getEntityId(Trainee trainee) {
+        return trainee.getId();
     }
 
     @Override
     public void update(Long id, String address) {
-        Trainee trainee = storage.getTrainees().get(id);
+        Trainee trainee = getStorageMap().get(id);
         if (trainee != null) {
             trainee.setAddress(address);
         }
@@ -34,16 +36,6 @@ public class TraineeDAOImpl implements TraineeDAO {
 
     @Override
     public void delete(Long id) {
-        storage.getTrainees().remove(id);
-    }
-
-    @Override
-    public Optional<Trainee> findById(Long id) {
-        return Optional.ofNullable(storage.getTrainees().get(id));
-    }
-
-    @Override
-    public List<Trainee> findAll() {
-        return new ArrayList<>(storage.getTrainees().values());
+        getStorageMap().remove(id);
     }
 }

@@ -1,10 +1,9 @@
 package com.epam.wca.gym.service;
 
+import com.epam.wca.gym.dao.BaseDAO;
 import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
-import com.epam.wca.gym.dao.TrainingDAO;
-import com.epam.wca.gym.entity.Trainee;
-import com.epam.wca.gym.entity.Trainer;
+import com.epam.wca.gym.dto.TrainingDTO;
 import com.epam.wca.gym.entity.Training;
 import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.utils.Storage;
@@ -17,21 +16,25 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
-import static com.epam.wca.gym.utils.Constants.*;
 import static com.epam.wca.gym.utils.NextIdGenerator.calculateNextId;
 
 @Slf4j
 @Service
-public class TrainingServiceImpl implements TrainingService {
-
-    private TrainingDAO trainingDao;
+public class TrainingServiceImpl extends AbstractService<Training, TrainingDTO, BaseDAO<Training>> implements TrainingService {
     private TraineeDAO traineeDao;
     private TrainerDAO trainerDao;
     private Storage storage;
+    private BaseDAO<Training> trainingDao;
 
     @Autowired
-    public void setTrainingDao(TrainingDAO trainingDao) {
+    public TrainingServiceImpl(BaseDAO<Training> trainingDao) {
+        super(trainingDao);
+    }
+
+    @Autowired
+    public void setTrainingDao(BaseDAO<Training> trainingDao) {
         this.trainingDao = trainingDao;
     }
 
@@ -52,71 +55,59 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Transactional
     @Override
-    public boolean create(String traineeIdStr,
-                          String trainerIdStr,
-                          String trainingName,
-                          String trainingTypeStr,
-                          String trainingDateStr,
-                          String trainingDurationStr) {
-
-        Long traineeId;
-        Long trainerId;
-        int trainingDuration;
-        LocalDate trainingDate;
-        TrainingType trainingType;
-
+    public Optional<Training> create(TrainingDTO dto) {
         try {
-            traineeId = Long.parseLong(traineeIdStr);
-            trainerId = Long.parseLong(trainerIdStr);
-            trainingDate = LocalDate.parse(trainingDateStr);
-            trainingDuration = Integer.parseInt(trainingDurationStr);
-            trainingType = TrainingType.valueOf(trainingTypeStr.toUpperCase());
+            Long traineeId = Long.parseLong(dto.getTraineeId());
+            Long trainerId = Long.parseLong(dto.getTrainerId());
+            int trainingDuration = Integer.parseInt(dto.getTrainingDuration());
+            LocalDate trainingDate = LocalDate.parse(dto.getTrainingDate());
+            TrainingType trainingType = TrainingType.valueOf(dto.getTrainingType().toUpperCase());
+
+            return traineeDao.findById(traineeId).flatMap(trainee ->
+                    trainerDao.findById(trainerId).map(trainer -> {
+                        Long nextTrainingId = calculateNextId(storage.getTrainings());
+                        Training training = new Training(nextTrainingId, traineeId, trainerId, dto.getTrainingName(),
+                                trainingType, trainingDate, trainingDuration);
+                        trainingDao.save(training);
+                        log.info("Training session created with ID: {}", nextTrainingId);
+                        return training;
+                    })
+            ).or(() -> {
+                log.warn("Trainee ID: {} or Trainer ID: {} not found. Training creation failed.", traineeId, trainerId);
+                return Optional.empty();
+            });
         } catch (NumberFormatException e) {
-            log.error(INVALID_NUMBER_FORMAT_FOR_TRAINEE_ID_TRAINER_ID_OR_DURATION, e.getMessage());
-            return false;
+            log.error("Invalid trainee id, trainer id, or duration: {}", e.getMessage());
+            return Optional.empty();
         } catch (DateTimeParseException e) {
-            log.error(INVALID_DATE_FORMAT_PROVIDED_FOR_TRAINING_DATE, trainingDateStr);
-            return false;
+            log.error("Invalid date provided: {}", e.getMessage());
+            return Optional.empty();
         } catch (IllegalArgumentException e) {
-            log.error(INVALID_TRAINING_TYPE_PROVIDED1, trainingTypeStr);
-            return false;
-        }
-
-        Optional<Trainee> traineeOptional = traineeDao.findById(traineeId);
-        Optional<Trainer> trainerOptional = trainerDao.findById(trainerId);
-
-        if (traineeOptional.isPresent() && trainerOptional.isPresent()) {
-            Long nextTrainingId = calculateNextId(storage.getTrainings());
-            Training training = new Training(nextTrainingId, traineeId, trainerId, trainingName, trainingType, trainingDate, trainingDuration);
-            trainingDao.save(training);
-            log.info(TRAINING_SESSION_CREATED_WITH_ID, nextTrainingId);
-            return true;
-        } else {
-            log.warn(TRAINING_CREATION_FAILED, traineeId, trainerId);
-            return false;
-        }
-    }
-
-    @Override
-    public Optional<Training> findById(String trainingIdStr) {
-        Long trainingId;
-        try {
-            trainingId = Long.parseLong(trainingIdStr);
-        } catch (NumberFormatException e) {
-            log.error(INVALID_TRAINING_ID_PROVIDED, trainingIdStr);
-            return Optional.empty();
-        }
-        Optional<Training> trainingOptional = trainingDao.findById(trainingId);
-        if (trainingOptional.isPresent()) {
-            return trainingOptional;
-        } else {
-            log.warn(TRAINING_WITH_ID_NOT_FOUND, trainingId);
+            log.error("Invalid training type provided: {}", e.getMessage());
             return Optional.empty();
         }
     }
 
     @Override
-    public List<Training> findAll() {
-        return trainingDao.findAll();
+    public Optional<TrainingDTO> findById(String trainingIdStr) {
+        return super.findById(trainingIdStr, toTrainingDTO());
+    }
+
+
+    @Override
+    public List<TrainingDTO> findAll() {
+        return super.findAll(toTrainingDTO());
+    }
+
+    private static Function<Training, TrainingDTO> toTrainingDTO() {
+        return training -> new TrainingDTO(
+                training.getId(),
+                String.valueOf(training.getTraineeId()),
+                String.valueOf(training.getTrainerId()),
+                training.getTrainingName(),
+                training.getTrainingType().toString(),
+                training.getTrainingDate().toString(),
+                String.valueOf(training.getTrainingDuration())
+        );
     }
 }

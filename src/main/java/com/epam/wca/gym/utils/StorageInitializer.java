@@ -35,12 +35,12 @@ public class StorageInitializer implements BeanPostProcessor {
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
         if (bean instanceof Storage storage) {
-            log.info(INITIALIZING_STORAGES_WITH_DATA);
+            log.info("Initializing storages with data...");
             loadData(userFile, line -> processUserLine(line, storage));
             loadData(traineeFile, line -> processTraineeLine(line, storage));
             loadData(trainerFile, line -> processTrainerLine(line, storage));
             loadData(trainingFile, line -> processTrainingLine(line, storage));
-            log.info(STORAGES_INITIALIZED_SUCCESSFULLY);
+            log.info("Storages initialized successfully.");
         }
         return bean;
     }
@@ -54,7 +54,7 @@ public class StorageInitializer implements BeanPostProcessor {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
             reader.lines().forEach(lineProcessor);
         } catch (IOException e) {
-            log.error(FAILED_TO_LOAD_DATA, file.getFilename(), e.getMessage());
+            log.error("Failed to load data from file: {}. Error: {}", file.getFilename(), e.getMessage());
         }
     }
 
@@ -102,14 +102,8 @@ public class StorageInitializer implements BeanPostProcessor {
         LocalDate trainingDate = LocalDate.parse(data[COLUMN_6]);
         int trainingDuration = Integer.parseInt(data[COLUMN_7]);
 
-        Training training = new Training(
-                trainingId,
-                traineeId,
-                trainerId,
-                trainingName,
-                trainingType,
-                trainingDate,
-                trainingDuration);
+        Training training = new Training(trainingId, traineeId, trainerId, trainingName, trainingType,
+                trainingDate, trainingDuration);
         storage.getTrainings().put(trainingId, training);
     }
 }

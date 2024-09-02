@@ -7,11 +7,15 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TrainerDTO {
-    private Long trainerId;
-    private Long userId;
+public class UserDTO {
+    private Long id;
     private String firstName;
     private String lastName;
     private String username;
-    private String trainingType;
+    private boolean isActive;
+
+    public UserDTO(String firstName, String lastName) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
 }

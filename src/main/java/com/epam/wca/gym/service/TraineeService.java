@@ -1,19 +1,10 @@
 package com.epam.wca.gym.service;
 
 import com.epam.wca.gym.dto.TraineeDTO;
+import com.epam.wca.gym.entity.Trainee;
 
-import java.util.List;
-import java.util.Optional;
+public interface TraineeService extends BaseService<Trainee, TraineeDTO> {
+    boolean update(String traineeId, String newAddress);
 
-public interface TraineeService {
-
-    boolean create(String firstName, String lastName, String dateOfBirthStr, String address);
-
-    boolean update(String traineeIdStr, String newAddress);
-
-    boolean delete(String traineeIdStr);
-
-    Optional<TraineeDTO> findById(String traineeIdStr);
-
-    List<TraineeDTO> findAll();
+    void delete(String traineeId);
 }

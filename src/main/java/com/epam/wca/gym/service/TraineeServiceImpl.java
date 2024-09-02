@@ -1,8 +1,8 @@
 package com.epam.wca.gym.service;
 
 import com.epam.wca.gym.dao.TraineeDAO;
-import com.epam.wca.gym.dao.UserDAO;
 import com.epam.wca.gym.dto.TraineeDTO;
+import com.epam.wca.gym.dto.UserDTO;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.utils.Storage;
@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,21 +21,13 @@ import static com.epam.wca.gym.utils.NextIdGenerator.calculateNextId;
 
 @Slf4j
 @Service
-public class TraineeServiceImpl implements TraineeService {
-
-    private TraineeDAO traineeDao;
-    private UserDAO userDao;
+public class TraineeServiceImpl extends AbstractService<Trainee, TraineeDTO, TraineeDAO> implements TraineeService {
     private Storage storage;
     private UserService userService;
+    private TraineeDAO traineeDao;
 
-    @Autowired
-    public void setTraineeDao(TraineeDAO traineeDao) {
-        this.traineeDao = traineeDao;
-    }
-
-    @Autowired
-    public void setUserDao(UserDAO userDao) {
-        this.userDao = userDao;
+    protected TraineeServiceImpl(TraineeDAO dao) {
+        super(dao);
     }
 
     @Autowired
@@ -49,115 +40,87 @@ public class TraineeServiceImpl implements TraineeService {
         this.userService = userService;
     }
 
+    @Autowired
+    public void setTraineeDao(TraineeDAO traineeDao) {
+        this.traineeDao = traineeDao;
+    }
+
     @Transactional
     @Override
-    public boolean create(String firstName, String lastName, String dateOfBirthStr, String address) {
-        LocalDate dateOfBirth;
+    public Optional<Trainee> create(TraineeDTO dto) {
         try {
-            dateOfBirth = LocalDate.parse(dateOfBirthStr);
+            LocalDate dateOfBirth = LocalDate.parse(dto.getDateOfBirth());
+            Optional<User> user = userService.create(new UserDTO(dto.getFirstName(), dto.getLastName()));
+
+            if (user.isEmpty()) {
+                log.error("Trainee cannot be created.");
+                return Optional.empty();
+            }
+
+            Long nextTraineeId = calculateNextId(storage.getTrainees());
+            Trainee trainee = new Trainee(nextTraineeId, user.get().getId(), dateOfBirth, dto.getAddress());
+            traineeDao.save(trainee);
+            log.info("Trainee created with ID: {}", nextTraineeId);
+            return Optional.of(trainee);
         } catch (DateTimeParseException e) {
-            log.error(INVALID_DATE_FORMAT_PROVIDED_FOR_DATE_OF_BIRTH, dateOfBirthStr);
-            return false;
+            log.error("Invalid date format provided for date of birth: {}", dto.getDateOfBirth());
+            return Optional.empty();
         }
-        User user = userService.create(firstName, lastName);
-        if (user == null) {
-            return false;
-        }
-        Long nextTraineeId = calculateNextId(storage.getTrainees());
-        Trainee trainee = new Trainee(nextTraineeId, user.getId(), dateOfBirth, address);
-        traineeDao.save(trainee);
-        log.info(TRAINEE_CREATED_WITH_ID, nextTraineeId);
-        return true;
     }
 
     @Transactional
     @Override
     public boolean update(String traineeIdStr, String newAddress) {
-        Long traineeId;
         try {
-            traineeId = Long.parseLong(traineeIdStr);
+            Long traineeId = Long.parseLong(traineeIdStr);
+            return traineeDao.findById(traineeId).map(trainee -> {
+                traineeDao.update(traineeId, newAddress);
+                log.info("Trainee with ID: {} updated with new address: {}", traineeId, newAddress);
+                return true;
+            }).orElseGet(() -> {
+                log.warn(TRAINEE_WITH_ID_NOT_FOUND, traineeId);
+                return false;
+            });
         } catch (NumberFormatException e) {
             log.error(INVALID_TRAINEE_ID_PROVIDED, traineeIdStr);
-            return false;
-        }
-        Optional<Trainee> traineeOptional = traineeDao.findById(traineeId);
-        if (traineeOptional.isPresent()) {
-            traineeDao.update(traineeId, newAddress);
-            log.info(TRAINEE_WITH_ID_UPDATED_WITH_NEW_ADDRESS, traineeId, newAddress);
-            return true;
-        } else {
-            log.warn(TRAINEE_WITH_ID_NOT_FOUND, traineeId);
             return false;
         }
     }
 
     @Transactional
     @Override
-    public boolean delete(String traineeIdStr) {
-        Long traineeId;
+    public void delete(String traineeIdStr) {
         try {
-            traineeId = Long.parseLong(traineeIdStr);
+            Long traineeId = Long.parseLong(traineeIdStr);
+            traineeDao.findById(traineeId).ifPresentOrElse(trainee -> {
+                traineeDao.delete(traineeId);
+                log.info("Trainee with ID: {} has been deleted.", traineeId);
+                userService.deactivateUser(trainee.getUserId());
+            }, () -> log.warn(TRAINEE_WITH_ID_NOT_FOUND, traineeId));
         } catch (NumberFormatException e) {
             log.error(INVALID_TRAINEE_ID_PROVIDED, traineeIdStr);
-            return false;
-        }
-        Optional<Trainee> traineeOptional = traineeDao.findById(traineeId);
-        if (traineeOptional.isPresent()) {
-            traineeDao.delete(traineeId);
-            log.info(TRAINEE_WITH_ID_HAS_BEEN_DELETED, traineeId);
-            userService.deactivateUser(traineeOptional.get().getUserId());
-            return true;
-        } else {
-            log.warn(TRAINEE_WITH_ID_NOT_FOUND, traineeId);
-            return false;
         }
     }
 
     @Override
     public Optional<TraineeDTO> findById(String traineeIdStr) {
-        Long traineeId;
-        try {
-            traineeId = Long.parseLong(traineeIdStr);
-        } catch (NumberFormatException e) {
-            log.error(INVALID_TRAINEE_ID_PROVIDED, traineeIdStr);
-            return Optional.empty();
-        }
-        Optional<Trainee> traineeOptional = traineeDao.findById(traineeId);
-        if (traineeOptional.isPresent()) {
-            Trainee trainee = traineeOptional.get();
-            User user = userService.findById(trainee.getUserId());
-            return Optional.of(convertToTraineeDTO(trainee, user));
-        } else {
-            log.warn(TRAINEE_WITH_ID_NOT_FOUND, traineeId);
-            return Optional.empty();
-        }
+        return super.findById(traineeIdStr, this::toDTO);
     }
 
     @Override
     public List<TraineeDTO> findAll() {
-        List<Trainee> trainees = traineeDao.findAll();
-        List<TraineeDTO> traineeDTOList = new ArrayList<>();
-        for (Trainee trainee : trainees) {
-            Optional<User> userOptional = userDao.findById(trainee.getUserId());
-            if (userOptional.isPresent()) {
-                User user = userOptional.get();
-                traineeDTOList.add(convertToTraineeDTO(trainee, user));
-            } else {
-                log.warn(USER_WITH_ID_NOT_FOUND_LOG, trainee.getUserId());
-            }
-        }
-        return traineeDTOList;
+        return super.findAll(this::toDTO);
     }
 
-    private TraineeDTO convertToTraineeDTO(Trainee trainee, User user) {
+    private TraineeDTO toDTO(Trainee trainee) {
+        User user = storage.getUsers().get(trainee.getUserId());
         return new TraineeDTO(
                 trainee.getId(),
                 user.getId(),
                 user.getFirstName(),
                 user.getLastName(),
                 user.getUsername(),
-                user.isActive(),
-                trainee.getDateOfBirth(),
+                trainee.getDateOfBirth().toString(),
                 trainee.getAddress()
         );
     }

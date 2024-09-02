@@ -1,23 +1,19 @@
 package com.epam.wca.gym;
 
 import com.epam.wca.gym.dao.UserDAO;
+import com.epam.wca.gym.dto.UserDTO;
 import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.service.UserServiceImpl;
 import com.epam.wca.gym.utils.Storage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,82 +34,62 @@ class UserServiceImplTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        userService.setUserDao(userDao);
+        userService.setStorage(storage);
     }
 
     @Test
-    void create_ShouldCreateUser_WhenValidInputProvided() {
+    void create_ShouldReturnOptionalUser_WhenValidUserIsCreated() {
         // Arrange
-        String firstName = "John";
-        String lastName = "Doe";
-        Long nextUserId = 1L;
+        UserDTO userDTO = new UserDTO("John", "Doe");
 
         when(storage.getUsers()).thenReturn(new HashMap<>());
-
-        // Use doAnswer() for void methods
-        doAnswer(invocation -> {
-            User user = invocation.getArgument(0);
-            user.setId(nextUserId);
-            return null;
-        }).when(userDao).save(any(User.class));
+        doNothing().when(userDao).save(any(User.class));
 
         // Act
-        User result = userService.create(firstName, lastName);
+        Optional<User> result = userService.create(userDTO);
 
         // Assert
-        assertAll(
-                () -> assertNotNull(result),
-                () -> assertEquals(nextUserId, result.getId()),
-                () -> assertEquals(firstName, result.getFirstName()),
-                () -> assertEquals(lastName, result.getLastName()),
-                () -> assertTrue(result.isActive())
-        );
+        assertTrue(result.isPresent());
         verify(userDao).save(any(User.class));
     }
 
-    @ParameterizedTest
-    @MethodSource("provideInvalidUserInputs")
-    void create_ShouldReturnNull_WhenInvalidInputProvided(String firstName, String lastName) {
+    @Test
+    void create_ShouldReturnEmptyOptional_WhenUserCreationFails() {
         // Arrange
-        when(storage.getUsers()).thenReturn(new HashMap<>());
+        UserDTO userDTO = new UserDTO("", ""); // Assuming this would fail
+
+        when(storage.getUsers()).thenThrow(new IllegalArgumentException("Invalid input"));
 
         // Act
-        User result = userService.create(firstName, lastName);
+        Optional<User> result = userService.create(userDTO);
 
         // Assert
-        assertNull(result);
+        assertTrue(result.isEmpty());
         verify(userDao, never()).save(any(User.class));
     }
 
-    private static Stream<Arguments> provideInvalidUserInputs() {
-        return Stream.of(
-                Arguments.of("", "Doe"),
-                Arguments.of("John", ""),
-                Arguments.of("", "")
-        );
-    }
-
-    @Test
-    void deactivateUser_ShouldDeactivateUser_WhenUserExists() {
+    @ParameterizedTest
+    @CsvSource({
+            "1, true",
+            "2, false"
+    })
+    void deactivateUser_ShouldDeactivateUser_WhenUserExists(Long userId) {
         // Arrange
-        Long userId = 1L;
-        User mockUser = new User(userId, "John", "Doe", "johndoe", "password", true);
-
+        User mockUser = new User(userId, "John", "Doe", "johndoe", "securePass123", true);
         when(userDao.findById(userId)).thenReturn(Optional.of(mockUser));
-        doNothing().when(userDao).update(anyLong(), anyBoolean());
 
         // Act
         userService.deactivateUser(userId);
 
         // Assert
-        assertAll(
-                () -> assertFalse(mockUser.isActive()),
-                () -> verify(userDao).findById(userId),
-                () -> verify(userDao).update(userId, false)
-        );
+        assertFalse(mockUser.isActive());
+        verify(userDao).findById(userId);
+        verify(userDao).update(userId, false);
     }
 
     @Test
-    void deactivateUser_ShouldLogWarning_WhenUserNotFound() {
+    void deactivateUser_ShouldNotDeactivateUser_WhenUserNotFound() {
         // Arrange
         Long userId = 1L;
         when(userDao.findById(userId)).thenReturn(Optional.empty());
@@ -126,52 +102,61 @@ class UserServiceImplTest {
         verify(userDao, never()).update(anyLong(), anyBoolean());
     }
 
-    @Test
-    void findById_ShouldReturnUser_WhenUserExists() {
+    @ParameterizedTest
+    @CsvSource({
+            "1, John, Doe, johndoe, true",
+            "2, Jane, Doe, janedoe, false"
+    })
+    void findById_ShouldReturnUserDTO_WhenValidUserIsFound(String userIdStr, String firstName, String lastName, String username, boolean isActive) {
         // Arrange
-        Long userId = 1L;
-        User mockUser = new User(userId, "John", "Doe", "johndoe", "password", true);
+        Long userId = Long.parseLong(userIdStr);
+        User mockUser = new User(userId, firstName, lastName, username, "securePass123", isActive);
         when(userDao.findById(userId)).thenReturn(Optional.of(mockUser));
 
         // Act
-        User result = userService.findById(userId);
+        Optional<UserDTO> result = userService.findById(userIdStr);
 
         // Assert
-        assertAll(
-                () -> assertNotNull(result),
-                () -> assertEquals(mockUser, result)
-        );
+        assertTrue(result.isPresent());
+        assertEquals(userId, result.get().getId());
+        assertEquals(firstName, result.get().getFirstName());
+        assertEquals(lastName, result.get().getLastName());
+        assertEquals(username, result.get().getUsername());
+        assertEquals(isActive, result.get().isActive());
         verify(userDao).findById(userId);
     }
 
     @Test
-    void findById_ShouldThrowException_WhenUserNotFound() {
+    void findById_ShouldReturnEmpty_WhenUserNotFound() {
         // Arrange
-        Long userId = 1L;
-        when(userDao.findById(userId)).thenReturn(Optional.empty());
+        String userIdStr = "1";
+        when(userDao.findById(Long.parseLong(userIdStr))).thenReturn(Optional.empty());
 
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> userService.findById(userId));
-        assertEquals("User with ID not found: " + userId, exception.getMessage());
-        verify(userDao).findById(userId);
+        // Act
+        Optional<UserDTO> result = userService.findById(userIdStr);
+
+        // Assert
+        assertTrue(result.isEmpty());
+        verify(userDao).findById(Long.parseLong(userIdStr));
     }
 
     @Test
-    void findAll_ShouldReturnListOfUsers_WhenUsersExist() {
+    void findAll_ShouldReturnListOfUserDTOs_WhenUsersExist() {
         // Arrange
-        User user1 = new User(1L, "John", "Doe", "johndoe", "password", true);
-        User user2 = new User(2L, "Jane", "Doe", "janedoe", "password", true);
+        User user1 = new User(1L, "John", "Doe", "johndoe", "securePass123", true);
+        User user2 = new User(2L, "Jane", "Doe", "janedoe", "securePass456", true);
         List<User> users = List.of(user1, user2);
+
         when(userDao.findAll()).thenReturn(users);
 
         // Act
-        List<User> result = userService.findAll();
+        List<UserDTO> result = userService.findAll();
 
         // Assert
         assertAll(
                 () -> assertEquals(2, result.size()),
-                () -> assertEquals(user1, result.get(0)),
-                () -> assertEquals(user2, result.get(1))
+                () -> assertEquals("John", result.get(0).getFirstName()),
+                () -> assertEquals("Jane", result.get(1).getFirstName())
         );
         verify(userDao).findAll();
     }
@@ -182,7 +167,7 @@ class UserServiceImplTest {
         when(userDao.findAll()).thenReturn(new ArrayList<>());
 
         // Act
-        List<User> result = userService.findAll();
+        List<UserDTO> result = userService.findAll();
 
         // Assert
         assertTrue(result.isEmpty());

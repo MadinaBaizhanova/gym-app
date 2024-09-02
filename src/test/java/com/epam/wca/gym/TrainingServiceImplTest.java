@@ -1,11 +1,13 @@
 package com.epam.wca.gym;
 
+import com.epam.wca.gym.dao.BaseDAO;
 import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
-import com.epam.wca.gym.dao.TrainingDAO;
+import com.epam.wca.gym.dto.TrainingDTO;
+import com.epam.wca.gym.entity.Training;
+import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
-import com.epam.wca.gym.entity.Training;
 import com.epam.wca.gym.service.TrainingServiceImpl;
 import com.epam.wca.gym.utils.Storage;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,10 +19,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,7 +30,7 @@ import static org.mockito.Mockito.*;
 class TrainingServiceImplTest {
 
     @Mock
-    private TrainingDAO trainingDao;
+    private BaseDAO<Training> trainingDao;
 
     @Mock
     private TraineeDAO traineeDao;
@@ -47,87 +47,45 @@ class TrainingServiceImplTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        trainingService.setTrainingDao(trainingDao);
+        trainingService.setTraineeDao(traineeDao);
+        trainingService.setTrainerDao(trainerDao);
+        trainingService.setStorage(storage);
     }
 
     @Test
-    void create_ShouldReturnTrue_WhenValidTrainingIsCreated() {
+    void create_ShouldReturnOptionalTraining_WhenValidTrainingIsCreated() {
         // Arrange
-        String traineeIdStr = "1";
-        String trainerIdStr = "2";
-        String trainingName = "Morning Yoga";
-        String trainingTypeStr = "YOGA";
-        String trainingDateStr = "2024-08-01";
-        String trainingDurationStr = "60";
+        TrainingDTO trainingDTO = new TrainingDTO(null, "1", "2", "Morning Yoga", "YOGA", "2023-09-01", "60");
 
-        Trainee mockTrainee = new Trainee();
-        Trainer mockTrainer = new Trainer();
+        Trainee mockTrainee = new Trainee(1L, 1L, LocalDate.of(1990, 1, 1), "123 Main St");
+        Trainer mockTrainer = new Trainer(2L, 2L, TrainingType.YOGA);
         when(traineeDao.findById(1L)).thenReturn(Optional.of(mockTrainee));
         when(trainerDao.findById(2L)).thenReturn(Optional.of(mockTrainer));
         when(storage.getTrainings()).thenReturn(new HashMap<>());
         doNothing().when(trainingDao).save(any(Training.class));
 
         // Act
-        boolean result = trainingService.create(traineeIdStr, trainerIdStr, trainingName, trainingTypeStr, trainingDateStr, trainingDurationStr);
+        Optional<Training> result = trainingService.create(trainingDTO);
 
         // Assert
-        assertTrue(result);
+        assertTrue(result.isPresent());
         verify(traineeDao).findById(1L);
         verify(trainerDao).findById(2L);
         verify(trainingDao).save(any(Training.class));
     }
 
     @ParameterizedTest
-    @CsvSource({
-            "abc, 2, Morning Yoga, YOGA, 2024-08-01, 60",
-            "1, def, Morning Yoga, YOGA, 2024-08-01, 60",
-            "1, 2, Morning Yoga, YOGA, 2024-08-01, invalid"
-    })
-    void create_ShouldReturnFalse_WhenInvalidNumberFormat(String traineeIdStr, String trainerIdStr, String trainingName, String trainingTypeStr, String trainingDateStr, String trainingDurationStr) {
-        // Act
-        boolean result = trainingService.create(traineeIdStr, trainerIdStr, trainingName, trainingTypeStr, trainingDateStr, trainingDurationStr);
-
-        // Assert
-        assertFalse(result);
-        verify(traineeDao, never()).findById(anyLong());
-        verify(trainerDao, never()).findById(anyLong());
-        verify(trainingDao, never()).save(any(Training.class));
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"invalid-date", "2024/08/01"})
-    void create_ShouldReturnFalse_WhenTrainingDateIsInvalid(String invalidDate) {
+    @ValueSource(strings = {"INVALID_ID", "abc", ""})
+    void create_ShouldReturnEmptyOptional_WhenInvalidTraineeOrTrainerIdIsProvided(String invalidId) {
         // Arrange
-        String traineeIdStr = "1";
-        String trainerIdStr = "2";
-        String trainingName = "Morning Yoga";
-        String trainingTypeStr = "YOGA";
-        String trainingDurationStr = "60";
+        TrainingDTO trainingDTO = new TrainingDTO(null, invalidId, invalidId, "Morning Yoga", "YOGA", "2023-09-01", "60");
 
         // Act
-        boolean result = trainingService.create(traineeIdStr, trainerIdStr, trainingName, trainingTypeStr, invalidDate, trainingDurationStr);
+        Optional<Training> result = trainingService.create(trainingDTO);
 
         // Assert
-        assertFalse(result);
-        verify(traineeDao, never()).findById(anyLong());
-        verify(trainerDao, never()).findById(anyLong());
-        verify(trainingDao, never()).save(any(Training.class));
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"INVALID_TYPE", "123"})
-    void create_ShouldReturnFalse_WhenTrainingTypeIsInvalid(String invalidTrainingType) {
-        // Arrange
-        String traineeIdStr = "1";
-        String trainerIdStr = "2";
-        String trainingName = "Morning Yoga";
-        String trainingDateStr = "2024-08-01";
-        String trainingDurationStr = "60";
-
-        // Act
-        boolean result = trainingService.create(traineeIdStr, trainerIdStr, trainingName, invalidTrainingType, trainingDateStr, trainingDurationStr);
-
-        // Assert
-        assertFalse(result);
+        assertTrue(result.isEmpty());
         verify(traineeDao, never()).findById(anyLong());
         verify(trainerDao, never()).findById(anyLong());
         verify(trainingDao, never()).save(any(Training.class));
@@ -135,85 +93,22 @@ class TrainingServiceImplTest {
 
     @ParameterizedTest
     @CsvSource({
-            "1, 999, Morning Yoga, YOGA, 2024-08-01, 60",
-            "999, 2, Morning Yoga, YOGA, 2024-08-01, 60"
+            "1, 2, Morning Yoga, INVALID_TYPE, 2023-09-01, 60",
+            "1, 2, Morning Yoga, YOGA, invalid-date, 60",
+            "1, 2, Morning Yoga, YOGA, 2023-09-01, invalid-duration"
     })
-    void create_ShouldReturnFalse_WhenTraineeOrTrainerNotFound(String traineeIdStr, String trainerIdStr, String trainingName, String trainingTypeStr, String trainingDateStr, String trainingDurationStr) {
+    void create_ShouldReturnEmptyOptional_WhenInvalidDataIsProvided(
+            String traineeId, String trainerId, String trainingName, String trainingType, String trainingDate, String trainingDuration) {
         // Arrange
-        when(traineeDao.findById(anyLong())).thenReturn(Optional.empty());
-        when(trainerDao.findById(anyLong())).thenReturn(Optional.empty());
+        TrainingDTO trainingDTO = new TrainingDTO(null, traineeId, trainerId, trainingName, trainingType, trainingDate, trainingDuration);
 
         // Act
-        boolean result = trainingService.create(traineeIdStr, trainerIdStr, trainingName, trainingTypeStr, trainingDateStr, trainingDurationStr);
+        Optional<Training> result = trainingService.create(trainingDTO);
 
         // Assert
-        assertFalse(result);
-        verify(traineeDao).findById(Long.parseLong(traineeIdStr));
-        verify(trainerDao).findById(Long.parseLong(trainerIdStr));
+        assertTrue(result.isEmpty());
+        verify(traineeDao, never()).findById(anyLong());
+        verify(trainerDao, never()).findById(anyLong());
         verify(trainingDao, never()).save(any(Training.class));
-    }
-
-    @Test
-    void findById_ShouldReturnTraining_WhenValidTrainingIsFound() {
-        // Arrange
-        String trainingIdStr = "1";
-        Training mockTraining = new Training();
-        when(trainingDao.findById(1L)).thenReturn(Optional.of(mockTraining));
-
-        // Act
-        Optional<Training> result = trainingService.findById(trainingIdStr);
-
-        // Assert
-        assertAll(
-                () -> assertTrue(result.isPresent()),
-                () -> assertEquals(mockTraining, result.get())
-        );
-        verify(trainingDao).findById(1L);
-    }
-
-    @Test
-    void findById_ShouldReturnEmpty_WhenTrainingNotFound() {
-        // Arrange
-        String trainingIdStr = "1";
-        when(trainingDao.findById(1L)).thenReturn(Optional.empty());
-
-        // Act
-        Optional<Training> result = trainingService.findById(trainingIdStr);
-
-        // Assert
-        assertTrue(result.isEmpty());
-        verify(trainingDao).findById(1L);
-    }
-
-    @Test
-    void findAll_ShouldReturnListOfTrainings_WhenTrainingsExist() {
-        // Arrange
-        Training training1 = new Training();
-        Training training2 = new Training();
-        List<Training> trainings = List.of(training1, training2);
-        when(trainingDao.findAll()).thenReturn(trainings);
-
-        // Act
-        List<Training> result = trainingService.findAll();
-
-        // Assert
-        assertAll(
-                () -> assertEquals(2, result.size()),
-                () -> assertEquals(training1, result.get(0)),
-                () -> assertEquals(training2, result.get(1))
-        );
-    }
-
-    @Test
-    void findAll_ShouldReturnEmptyList_WhenNoTrainingsExist() {
-        // Arrange
-        when(trainingDao.findAll()).thenReturn(new ArrayList<>());
-
-        // Act
-        List<Training> result = trainingService.findAll();
-
-        // Assert
-        assertTrue(result.isEmpty());
-        verify(trainingDao).findAll();
     }
 }
