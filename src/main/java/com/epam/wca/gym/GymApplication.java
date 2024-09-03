@@ -60,6 +60,7 @@ public class GymApplication {
 
     private static void listAllUsers(GymFacade gymFacade) {
         List<UserDTO> allUsers = gymFacade.findAllUsers();
+
         if (allUsers.isEmpty()) {
             log.warn("No users found.");
         } else {

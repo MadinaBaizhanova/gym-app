@@ -1,6 +1,7 @@
-package com.epam.wca.gym.facade;
+package com.epam.wca.gym.facade.impl;
 
 import com.epam.wca.gym.dto.TrainingDTO;
+import com.epam.wca.gym.facade.TrainingFacade;
 import com.epam.wca.gym.service.TrainingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -9,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
-public class TrainingFacadeImpl implements TrainingFacade{
+public class TrainingFacadeImpl implements TrainingFacade {
     private final TrainingService trainingService;
 
     @Autowired

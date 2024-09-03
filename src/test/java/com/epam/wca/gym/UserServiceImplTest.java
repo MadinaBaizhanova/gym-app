@@ -3,7 +3,7 @@ package com.epam.wca.gym;
 import com.epam.wca.gym.dao.UserDAO;
 import com.epam.wca.gym.dto.UserDTO;
 import com.epam.wca.gym.entity.User;
-import com.epam.wca.gym.service.UserServiceImpl;
+import com.epam.wca.gym.service.impl.UserServiceImpl;
 import com.epam.wca.gym.utils.Storage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

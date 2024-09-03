@@ -1,6 +1,10 @@
-package com.epam.wca.gym.facade;
+package com.epam.wca.gym.facade.impl;
 
 import com.epam.wca.gym.dto.UserDTO;
+import com.epam.wca.gym.facade.GymFacade;
+import com.epam.wca.gym.facade.TraineeFacade;
+import com.epam.wca.gym.facade.TrainerFacade;
+import com.epam.wca.gym.facade.TrainingFacade;
 import com.epam.wca.gym.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

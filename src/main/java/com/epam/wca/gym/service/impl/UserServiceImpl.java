@@ -1,14 +1,14 @@
-package com.epam.wca.gym.service;
+package com.epam.wca.gym.service.impl;
 
 import com.epam.wca.gym.dao.UserDAO;
 import com.epam.wca.gym.dto.UserDTO;
 import com.epam.wca.gym.entity.User;
+import com.epam.wca.gym.service.AbstractService;
+import com.epam.wca.gym.service.UserService;
 import com.epam.wca.gym.utils.Storage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,7 +20,6 @@ import static com.epam.wca.gym.utils.UsernameGenerator.generateUsername;
 
 @Slf4j
 @Service
-@Validated
 public class UserServiceImpl extends AbstractService<User, UserDTO, UserDAO> implements UserService {
     private Storage storage;
     private UserDAO userDao;
@@ -40,29 +39,36 @@ public class UserServiceImpl extends AbstractService<User, UserDTO, UserDAO> imp
         this.storage = storage;
     }
 
-    @Transactional
     @Override
     public Optional<User> create(UserDTO userDTO) {
         try {
             Long nextUserId = calculateNextId(storage.getUsers());
+
             String username = generateUsername(userDTO.getFirstName(), userDTO.getLastName(), storage.getUsers());
+
             String password = generatePassword();
+
             User user = new User(nextUserId, userDTO.getFirstName(), userDTO.getLastName(), username, password, true);
+
             userDao.save(user);
+
             log.info("User created with ID: {}", nextUserId);
+
             return Optional.of(user);
         } catch (IllegalArgumentException e) {
             log.error("User creation failed due to invalid input: {}", e.getMessage());
+
             return Optional.empty();
         }
     }
 
-    @Transactional
     @Override
     public void deactivateUser(Long userId) {
         userDao.findById(userId).ifPresentOrElse(user -> {
             user.setActive(false);
+
             userDao.update(user.getId(), user.isActive());
+
             log.info("User with ID: {} has been deactivated.", userId);
         }, () -> log.warn("User with ID: {} not found.", userId));
     }

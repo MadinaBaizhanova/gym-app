@@ -1,5 +1,7 @@
-package com.epam.wca.gym.dao;
+package com.epam.wca.gym.dao.impl;
 
+import com.epam.wca.gym.dao.AbstractDAO;
+import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.utils.Storage;

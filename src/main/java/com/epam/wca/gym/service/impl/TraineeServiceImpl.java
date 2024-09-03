@@ -1,15 +1,17 @@
-package com.epam.wca.gym.service;
+package com.epam.wca.gym.service.impl;
 
 import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dto.TraineeDTO;
 import com.epam.wca.gym.dto.UserDTO;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.User;
+import com.epam.wca.gym.service.AbstractService;
+import com.epam.wca.gym.service.TraineeService;
+import com.epam.wca.gym.service.UserService;
 import com.epam.wca.gym.utils.Storage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -45,11 +47,11 @@ public class TraineeServiceImpl extends AbstractService<Trainee, TraineeDTO, Tra
         this.traineeDao = traineeDao;
     }
 
-    @Transactional
     @Override
     public Optional<Trainee> create(TraineeDTO dto) {
         try {
             LocalDate dateOfBirth = LocalDate.parse(dto.getDateOfBirth());
+
             Optional<User> user = userService.create(new UserDTO(dto.getFirstName(), dto.getLastName()));
 
             if (user.isEmpty()) {
@@ -58,21 +60,26 @@ public class TraineeServiceImpl extends AbstractService<Trainee, TraineeDTO, Tra
             }
 
             Long nextTraineeId = calculateNextId(storage.getTrainees());
+
             Trainee trainee = new Trainee(nextTraineeId, user.get().getId(), dateOfBirth, dto.getAddress());
+
             traineeDao.save(trainee);
+
             log.info("Trainee created with ID: {}", nextTraineeId);
+
             return Optional.of(trainee);
         } catch (DateTimeParseException e) {
             log.error("Invalid date format provided for date of birth: {}", dto.getDateOfBirth());
+
             return Optional.empty();
         }
     }
 
-    @Transactional
     @Override
     public boolean update(String traineeIdStr, String newAddress) {
         try {
             Long traineeId = Long.parseLong(traineeIdStr);
+
             return traineeDao.findById(traineeId).map(trainee -> {
                 traineeDao.update(traineeId, newAddress);
                 log.info("Trainee with ID: {} updated with new address: {}", traineeId, newAddress);
@@ -83,15 +90,16 @@ public class TraineeServiceImpl extends AbstractService<Trainee, TraineeDTO, Tra
             });
         } catch (NumberFormatException e) {
             log.error(INVALID_TRAINEE_ID_PROVIDED, traineeIdStr);
+
             return false;
         }
     }
 
-    @Transactional
     @Override
     public void delete(String traineeIdStr) {
         try {
             Long traineeId = Long.parseLong(traineeIdStr);
+
             traineeDao.findById(traineeId).ifPresentOrElse(trainee -> {
                 traineeDao.delete(traineeId);
                 log.info("Trainee with ID: {} has been deleted.", traineeId);
@@ -114,6 +122,7 @@ public class TraineeServiceImpl extends AbstractService<Trainee, TraineeDTO, Tra
 
     private TraineeDTO toDTO(Trainee trainee) {
         User user = storage.getUsers().get(trainee.getUserId());
+
         return new TraineeDTO(
                 trainee.getId(),
                 user.getId(),

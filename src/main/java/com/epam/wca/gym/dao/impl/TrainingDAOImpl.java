@@ -1,5 +1,6 @@
-package com.epam.wca.gym.dao;
+package com.epam.wca.gym.dao.impl;
 
+import com.epam.wca.gym.dao.AbstractDAO;
 import com.epam.wca.gym.entity.Training;
 import com.epam.wca.gym.utils.Storage;
 import org.springframework.beans.factory.annotation.Autowired;

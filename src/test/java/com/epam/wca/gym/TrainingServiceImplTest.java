@@ -8,7 +8,7 @@ import com.epam.wca.gym.entity.Training;
 import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
-import com.epam.wca.gym.service.TrainingServiceImpl;
+import com.epam.wca.gym.service.impl.TrainingServiceImpl;
 import com.epam.wca.gym.utils.Storage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

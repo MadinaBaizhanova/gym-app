@@ -1,4 +1,4 @@
-package com.epam.wca.gym.service;
+package com.epam.wca.gym.service.impl;
 
 import com.epam.wca.gym.dao.BaseDAO;
 import com.epam.wca.gym.dao.TraineeDAO;
@@ -6,11 +6,12 @@ import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dto.TrainingDTO;
 import com.epam.wca.gym.entity.Training;
 import com.epam.wca.gym.entity.TrainingType;
+import com.epam.wca.gym.service.AbstractService;
+import com.epam.wca.gym.service.TrainingService;
 import com.epam.wca.gym.utils.Storage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -53,7 +54,6 @@ public class TrainingServiceImpl extends AbstractService<Training, TrainingDTO, 
         this.storage = storage;
     }
 
-    @Transactional
     @Override
     public Optional<Training> create(TrainingDTO dto) {
         try {
@@ -74,16 +74,20 @@ public class TrainingServiceImpl extends AbstractService<Training, TrainingDTO, 
                     })
             ).or(() -> {
                 log.warn("Trainee ID: {} or Trainer ID: {} not found. Training creation failed.", traineeId, trainerId);
+
                 return Optional.empty();
             });
         } catch (NumberFormatException e) {
             log.error("Invalid trainee id, trainer id, or duration: {}", e.getMessage());
+
             return Optional.empty();
         } catch (DateTimeParseException e) {
             log.error("Invalid date provided: {}", e.getMessage());
+
             return Optional.empty();
         } catch (IllegalArgumentException e) {
             log.error("Invalid training type provided: {}", e.getMessage());
+
             return Optional.empty();
         }
     }
@@ -92,7 +96,6 @@ public class TrainingServiceImpl extends AbstractService<Training, TrainingDTO, 
     public Optional<TrainingDTO> findById(String trainingIdStr) {
         return super.findById(trainingIdStr, toTrainingDTO());
     }
-
 
     @Override
     public List<TrainingDTO> findAll() {

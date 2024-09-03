@@ -6,7 +6,7 @@ import com.epam.wca.gym.dto.UserDTO;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.entity.User;
-import com.epam.wca.gym.service.TrainerServiceImpl;
+import com.epam.wca.gym.service.impl.TrainerServiceImpl;
 import com.epam.wca.gym.service.UserService;
 import com.epam.wca.gym.utils.Storage;
 import org.junit.jupiter.api.BeforeEach;
