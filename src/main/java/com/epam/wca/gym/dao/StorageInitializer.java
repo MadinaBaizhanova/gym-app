@@ -1,6 +1,10 @@
-package com.epam.wca.gym.utils;
+package com.epam.wca.gym.dao;
 
-import com.epam.wca.gym.entity.*;
+import com.epam.wca.gym.entity.Trainee;
+import com.epam.wca.gym.entity.Trainer;
+import com.epam.wca.gym.entity.Training;
+import com.epam.wca.gym.entity.TrainingType;
+import com.epam.wca.gym.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,11 +18,18 @@ import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.util.function.Consumer;
 
-import static com.epam.wca.gym.utils.Constants.*;
+import static com.epam.wca.gym.utils.Constants.COLUMN_1;
+import static com.epam.wca.gym.utils.Constants.COLUMN_2;
+import static com.epam.wca.gym.utils.Constants.COLUMN_3;
+import static com.epam.wca.gym.utils.Constants.COLUMN_4;
+import static com.epam.wca.gym.utils.Constants.COLUMN_5;
+import static com.epam.wca.gym.utils.Constants.COLUMN_6;
+import static com.epam.wca.gym.utils.Constants.COLUMN_7;
+import static com.epam.wca.gym.utils.Constants.LINE_SPLIT;
 
 @Slf4j
 @Component
-public class StorageInitializer implements BeanPostProcessor {
+public final class StorageInitializer implements BeanPostProcessor {
 
     @Value("${user.data.file.path}")
     private Resource userFile;

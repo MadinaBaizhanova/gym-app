@@ -6,11 +6,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TrainerFacade {
-    void createTrainer(String firstName, String lastName, String trainingTypeStr);
+    void create(String firstName, String lastName, String trainingType);
 
-    void updateTrainer(String trainerIdStr, String newTrainingTypeStr);
+    void update(String trainerId, String newTrainingType);
 
-    Optional<TrainerDTO> findTrainerById(String trainerIdStr);
+    Optional<TrainerDTO> findById(String trainerId);
 
-    List<TrainerDTO> findAllTrainers();
+    List<TrainerDTO> findAll();
 }

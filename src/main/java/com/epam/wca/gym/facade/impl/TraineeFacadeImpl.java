@@ -3,44 +3,40 @@ package com.epam.wca.gym.facade.impl;
 import com.epam.wca.gym.dto.TraineeDTO;
 import com.epam.wca.gym.facade.TraineeFacade;
 import com.epam.wca.gym.service.TraineeService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
 
 @Component
+@RequiredArgsConstructor
 public class TraineeFacadeImpl implements TraineeFacade {
     private final TraineeService traineeService;
 
-    @Autowired
-    public TraineeFacadeImpl(TraineeService traineeService) {
-        this.traineeService = traineeService;
-    }
-
     @Override
-    public void createTrainee(String firstName, String lastName, String dateOfBirth, String address) {
+    public void create(String firstName, String lastName, String dateOfBirth, String address) {
         TraineeDTO dto = toTraineeDTO(firstName, lastName, dateOfBirth, address);
         traineeService.create(dto);
     }
 
     @Override
-    public void updateTrainee(String traineeId, String newAddress) {
+    public void update(String traineeId, String newAddress) {
         traineeService.update(traineeId, newAddress);
     }
 
     @Override
-    public void deleteTrainee(String traineeId) {
+    public void delete(String traineeId) {
         traineeService.delete(traineeId);
     }
 
     @Override
-    public Optional<TraineeDTO> findTraineeById(String traineeId) {
+    public Optional<TraineeDTO> findById(String traineeId) {
         return traineeService.findById(traineeId);
     }
 
     @Override
-    public List<TraineeDTO> findAllTrainees() {
+    public List<TraineeDTO> findAll() {
         return traineeService.findAll();
     }
 

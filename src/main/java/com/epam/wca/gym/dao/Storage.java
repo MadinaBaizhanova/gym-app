@@ -1,4 +1,4 @@
-package com.epam.wca.gym.utils;
+package com.epam.wca.gym.dao;
 
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;

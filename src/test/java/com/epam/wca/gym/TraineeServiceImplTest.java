@@ -7,7 +7,7 @@ import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.service.impl.TraineeServiceImpl;
 import com.epam.wca.gym.service.UserService;
-import com.epam.wca.gym.utils.Storage;
+import com.epam.wca.gym.dao.Storage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

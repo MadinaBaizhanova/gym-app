@@ -1,6 +1,5 @@
 package com.epam.wca.gym.dao;
 
-import com.epam.wca.gym.utils.Storage;
 import lombok.Setter;
 
 import java.util.ArrayList;

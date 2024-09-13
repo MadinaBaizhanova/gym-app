@@ -8,7 +8,7 @@ import com.epam.wca.gym.entity.Training;
 import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.service.AbstractService;
 import com.epam.wca.gym.service.TrainingService;
-import com.epam.wca.gym.utils.Storage;
+import com.epam.wca.gym.dao.Storage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -65,11 +65,11 @@ public class TrainingServiceImpl extends AbstractService<Training, TrainingDTO, 
 
             return traineeDao.findById(traineeId).flatMap(trainee ->
                     trainerDao.findById(trainerId).map(trainer -> {
-                        Long nextTrainingId = calculateNextId(storage.getTrainings());
-                        Training training = new Training(nextTrainingId, traineeId, trainerId, dto.getTrainingName(),
+                        Long id = calculateNextId(storage.getTrainings());
+                        Training training = new Training(id, traineeId, trainerId, dto.getTrainingName(),
                                 trainingType, trainingDate, trainingDuration);
                         trainingDao.save(training);
-                        log.info("Training session created with ID: {}", nextTrainingId);
+                        log.info("Training session created with ID: {}", id);
                         return training;
                     })
             ).or(() -> {
@@ -93,8 +93,8 @@ public class TrainingServiceImpl extends AbstractService<Training, TrainingDTO, 
     }
 
     @Override
-    public Optional<TrainingDTO> findById(String trainingIdStr) {
-        return super.findById(trainingIdStr, toTrainingDTO());
+    public Optional<TrainingDTO> findById(String trainingId) {
+        return super.findById(trainingId, toTrainingDTO());
     }
 
     @Override

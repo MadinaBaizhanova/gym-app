@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TrainingFacade {
-    void createTraining(String traineeId, String trainerId, String trainingName, String trainingType, String trainingDate, String trainingDuration);
+    void create(String traineeId, String trainerId, String trainingName, String type, String date, String duration);
 
-    Optional<TrainingDTO> findTrainingById(String trainingId);
+    Optional<TrainingDTO> findById(String trainingId);
 
-    List<TrainingDTO> findAllTrainings();
+    List<TrainingDTO> findAll();
 }

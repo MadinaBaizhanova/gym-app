@@ -5,7 +5,7 @@ import com.epam.wca.gym.dto.UserDTO;
 import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.service.AbstractService;
 import com.epam.wca.gym.service.UserService;
-import com.epam.wca.gym.utils.Storage;
+import com.epam.wca.gym.dao.Storage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import static com.epam.wca.gym.utils.NextIdGenerator.calculateNextId;
-import static com.epam.wca.gym.utils.PasswordGenerator.*;
+import static com.epam.wca.gym.utils.PasswordGenerator.generatePassword;
 import static com.epam.wca.gym.utils.UsernameGenerator.generateUsername;
 
 @Slf4j
@@ -42,17 +42,17 @@ public class UserServiceImpl extends AbstractService<User, UserDTO, UserDAO> imp
     @Override
     public Optional<User> create(UserDTO userDTO) {
         try {
-            Long nextUserId = calculateNextId(storage.getUsers());
+            Long id = calculateNextId(storage.getUsers());
 
             String username = generateUsername(userDTO.getFirstName(), userDTO.getLastName(), storage.getUsers());
 
             String password = generatePassword();
 
-            User user = new User(nextUserId, userDTO.getFirstName(), userDTO.getLastName(), username, password, true);
+            User user = new User(id, userDTO.getFirstName(), userDTO.getLastName(), username, password, true);
 
             userDao.save(user);
 
-            log.info("User created with ID: {}", nextUserId);
+            log.info("User created with ID: {}", id);
 
             return Optional.of(user);
         } catch (IllegalArgumentException e) {

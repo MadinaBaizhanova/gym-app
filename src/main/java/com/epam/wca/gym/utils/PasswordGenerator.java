@@ -1,13 +1,15 @@
 package com.epam.wca.gym.utils;
 
-import org.springframework.stereotype.Component;
+import lombok.experimental.UtilityClass;
 
 import java.util.Random;
 
-import static com.epam.wca.gym.utils.Constants.*;
+import static com.epam.wca.gym.utils.Constants.PASSWORD_CHARACTERS;
+import static com.epam.wca.gym.utils.Constants.PASSWORD_GENERATION_START_INDEX;
+import static com.epam.wca.gym.utils.Constants.PASSWORD_LENGTH;
 
-@Component
-public class PasswordGenerator {
+@UtilityClass
+public final class PasswordGenerator {
 
     private static final Random random = new Random();
 

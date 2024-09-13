@@ -2,23 +2,27 @@ package com.epam.wca.gym.utils.cli;
 
 import com.epam.wca.gym.dto.TrainingDTO;
 import com.epam.wca.gym.facade.GymFacade;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
 
-import static com.epam.wca.gym.utils.Constants.*;
+import static com.epam.wca.gym.utils.Constants.CHOICE_1;
+import static com.epam.wca.gym.utils.Constants.CHOICE_2;
+import static com.epam.wca.gym.utils.Constants.CHOICE_3;
+import static com.epam.wca.gym.utils.Constants.CHOICE_4;
+import static com.epam.wca.gym.utils.Constants.ENTER_TRAINING_TYPE;
+import static com.epam.wca.gym.utils.Constants.ENTER_YOUR_CHOICE;
+import static com.epam.wca.gym.utils.Constants.INVALID_CHOICE_PLEASE_TRY_AGAIN;
+import static com.epam.wca.gym.utils.Constants.RETURNING_TO_MAIN_MENU;
 
 @Slf4j
+@RequiredArgsConstructor
 public final class TrainingManager {
     private final GymFacade gymFacade;
     private final Scanner scanner;
-
-    public TrainingManager(GymFacade gymFacade, Scanner scanner) {
-        this.gymFacade = gymFacade;
-        this.scanner = scanner;
-    }
 
     public void manageTrainings() {
         String choice;
@@ -52,24 +56,24 @@ public final class TrainingManager {
         String trainerId = scanner.nextLine();
         log.info("Enter Training Name: ");
         String trainingName = scanner.nextLine();
-        log.info(ENTER_TRAINING_TYPE_AVAILABLE_TYPES_FITNESS_YOGA_ZUMBA_STRETCHING_CARDIO_CROSSFIT);
+        log.info(ENTER_TRAINING_TYPE);
         String trainingType = scanner.nextLine();
         log.info("Enter Training Date (yyyy-MM-dd): ");
         String trainingDate = scanner.nextLine();
         log.info("Enter Training Duration (in minutes): ");
         String trainingDuration = scanner.nextLine();
-        gymFacade.training().createTraining(traineeId, trainerId, trainingName, trainingType, trainingDate, trainingDuration);
+        gymFacade.training().create(traineeId, trainerId, trainingName, trainingType, trainingDate, trainingDuration);
     }
 
     private void findTrainingById() {
         log.info("Enter Training ID to find: ");
         String trainingId = scanner.nextLine();
-        Optional<TrainingDTO> trainingDTO = gymFacade.training().findTrainingById(trainingId);
+        Optional<TrainingDTO> trainingDTO = gymFacade.training().findById(trainingId);
         trainingDTO.ifPresent(dto -> log.info("Training Info: {}", dto));
     }
 
     private void listAllTrainings() {
-        List<TrainingDTO> allTrainings = gymFacade.training().findAllTrainings();
+        List<TrainingDTO> allTrainings = gymFacade.training().findAll();
         log.info("\nALL TRAININGS:");
         allTrainings.forEach(training -> log.info(training.toString()));
     }

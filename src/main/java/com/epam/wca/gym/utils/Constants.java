@@ -1,11 +1,9 @@
 package com.epam.wca.gym.utils;
 
-public class Constants {
+import lombok.experimental.UtilityClass;
 
-    private Constants() {
-        throw new IllegalStateException("This is a Utility class and cannot be instantiated");
-    }
-
+@UtilityClass
+public final class Constants {
     public static final String PASSWORD_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*?";
     public static final String TRAINEE_WITH_ID_NOT_FOUND = "Trainee with ID: {} not found.";
     public static final String INVALID_TRAINEE_ID_PROVIDED = "Invalid trainee ID provided: {}";
@@ -33,5 +31,5 @@ public class Constants {
     public static final String CHOICE_5 = "5";
     public static final String CHOICE_6 = "6";
     public static final String EXITING = "Exiting...";
-    public static final String ENTER_TRAINING_TYPE_AVAILABLE_TYPES_FITNESS_YOGA_ZUMBA_STRETCHING_CARDIO_CROSSFIT = "Enter Training Type (available types: FITNESS, YOGA, ZUMBA, STRETCHING, CARDIO, CROSSFIT): ";
+    public static final String ENTER_TRAINING_TYPE = "Enter Training Type (available types: FITNESS, YOGA, ZUMBA, STRETCHING, CARDIO, CROSSFIT): ";
 }

@@ -9,7 +9,7 @@ import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.service.AbstractService;
 import com.epam.wca.gym.service.TrainerService;
 import com.epam.wca.gym.service.UserService;
-import com.epam.wca.gym.utils.Storage;
+import com.epam.wca.gym.dao.Storage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -58,13 +58,13 @@ public class TrainerServiceImpl extends AbstractService<Trainer, TrainerDTO, Tra
                 return Optional.empty();
             }
 
-            Long nextTrainerId = calculateNextId(storage.getTrainers());
+            Long id = calculateNextId(storage.getTrainers());
 
-            Trainer trainer = new Trainer(nextTrainerId, user.get().getId(), trainingType);
+            Trainer trainer = new Trainer(id, user.get().getId(), trainingType);
 
             trainerDao.save(trainer);
 
-            log.info("Trainer created with ID: {}", nextTrainerId);
+            log.info("Trainer created with ID: {}", id);
 
             return Optional.of(trainer);
         } catch (IllegalArgumentException e) {
@@ -75,35 +75,34 @@ public class TrainerServiceImpl extends AbstractService<Trainer, TrainerDTO, Tra
     }
 
     @Override
-    public boolean update(String trainerIdStr, String newTrainingTypeStr) {
+    public boolean update(String trainerId, String newTrainingType) {
         try {
-            Long trainerId = Long.parseLong(trainerIdStr);
+            Long id = Long.parseLong(trainerId);
 
-            TrainingType newTrainingType = TrainingType.valueOf(newTrainingTypeStr.toUpperCase());
+            TrainingType type = TrainingType.valueOf(newTrainingType.toUpperCase());
 
-            return trainerDao.findById(trainerId).map(trainer -> {
-                trainerDao.update(trainerId, newTrainingType);
-                log.info("Trainer with ID: {} updated with new training type: {}", trainerId, newTrainingType);
+            return trainerDao.findById(id).map(trainer -> {
+                trainerDao.update(id, type);
+                log.info("Trainer with ID: {} updated with new training type: {}", id, type);
                 return true;
             }).orElseGet(() -> {
-                log.warn("Trainer with ID: {} not found.", trainerId);
-
+                log.warn("Trainer with ID: {} not found.", id);
                 return false;
             });
         } catch (NumberFormatException e) {
-            log.error("Invalid trainer ID provided: {}", trainerIdStr);
+            log.error("Invalid trainer ID provided: {}", trainerId);
 
             return false;
         } catch (IllegalArgumentException e) {
-            log.error("Invalid training type provided: {}", newTrainingTypeStr);
+            log.error("Invalid training type provided: {}", newTrainingType);
 
             return false;
         }
     }
 
     @Override
-    public Optional<TrainerDTO> findById(String trainerIdStr) {
-        return super.findById(trainerIdStr, this::toTrainerDTO);
+    public Optional<TrainerDTO> findById(String trainerId) {
+        return super.findById(trainerId, this::toTrainerDTO);
     }
 
     @Override

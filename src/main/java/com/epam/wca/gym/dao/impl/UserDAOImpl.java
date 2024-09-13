@@ -3,7 +3,7 @@ package com.epam.wca.gym.dao.impl;
 import com.epam.wca.gym.dao.AbstractDAO;
 import com.epam.wca.gym.dao.UserDAO;
 import com.epam.wca.gym.entity.User;
-import com.epam.wca.gym.utils.Storage;
+import com.epam.wca.gym.dao.Storage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 

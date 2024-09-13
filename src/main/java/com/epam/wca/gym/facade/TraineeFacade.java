@@ -6,13 +6,13 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TraineeFacade {
-    void createTrainee(String firstName, String lastName, String dateOfBirth, String address);
+    void create(String firstName, String lastName, String dateOfBirth, String address);
 
-    void updateTrainee(String traineeId, String newAddress);
+    void update(String traineeId, String newAddress);
 
-    void deleteTrainee(String traineeId);
+    void delete(String traineeId);
 
-    Optional<TraineeDTO> findTraineeById(String traineeId);
+    Optional<TraineeDTO> findById(String traineeId);
 
-    List<TraineeDTO> findAllTrainees();
+    List<TraineeDTO> findAll();
 }

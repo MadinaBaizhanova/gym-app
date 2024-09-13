@@ -2,37 +2,39 @@ package com.epam.wca.gym.utils;
 
 import com.epam.wca.gym.entity.User;
 
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.Optional;
 
-import static com.epam.wca.gym.utils.Constants.*;
+import static com.epam.wca.gym.utils.Constants.INITIAL_SERIAL_NUMBER;
+import static com.epam.wca.gym.utils.Constants.SERIAL_NUMBER_INCREMENT;
 
 @Slf4j
-@Component
-public class UsernameGenerator {
+@UtilityClass
+public final class UsernameGenerator {
     public static String generateUsername(String firstName, String lastName, Map<Long, User> existingUsers) {
         validateName(firstName, "First Name");
         validateName(lastName, "Last Name");
 
-        String username = (firstName.trim() + "." + lastName.trim()).toLowerCase();
+        String baseUsername = firstName.toLowerCase() + "." + lastName.toLowerCase();
+        String uniqueUsername = baseUsername;
 
         Optional<Integer> serialNumber = existingUsers.values().stream()
-                .filter(user -> user.getUsername().startsWith(username))
-                .map(user -> user.getUsername().replace(username, ""))
+                .filter(user -> user.getUsername().startsWith(baseUsername))
+                .map(user -> user.getUsername().replace(baseUsername, ""))
                 .filter(serial -> !serial.isEmpty())
                 .map(Integer::parseInt)
                 .max(Integer::compareTo);
 
         if (serialNumber.isPresent()) {
-            return username + serialNumber.get() + SERIAL_NUMBER_INCREMENT;
-        } else if (existingUsers.values().stream().anyMatch(user -> user.getUsername().equals(username))) {
-            return username + INITIAL_SERIAL_NUMBER;
+            uniqueUsername = baseUsername + (serialNumber.get() + SERIAL_NUMBER_INCREMENT);
+        } else if (existingUsers.values().stream().anyMatch(user -> user.getUsername().equals(baseUsername))) {
+            uniqueUsername = baseUsername + INITIAL_SERIAL_NUMBER;
         }
 
-        return username;
+        return uniqueUsername;
     }
 
     private static void validateName(String name, String fieldName) {

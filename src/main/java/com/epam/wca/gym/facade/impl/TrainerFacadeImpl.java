@@ -3,47 +3,43 @@ package com.epam.wca.gym.facade.impl;
 import com.epam.wca.gym.dto.TrainerDTO;
 import com.epam.wca.gym.facade.TrainerFacade;
 import com.epam.wca.gym.service.TrainerService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
 
 @Component
+@RequiredArgsConstructor
 public class TrainerFacadeImpl implements TrainerFacade {
     private final TrainerService trainerService;
 
-    @Autowired
-    public TrainerFacadeImpl(TrainerService trainerService) {
-        this.trainerService = trainerService;
-    }
-
     @Override
-    public void createTrainer(String firstName, String lastName, String trainingTypeStr) {
-        TrainerDTO trainerDTO = toTrainerDTO(firstName, lastName, trainingTypeStr);
+    public void create(String firstName, String lastName, String trainingType) {
+        TrainerDTO trainerDTO = toTrainerDTO(firstName, lastName, trainingType);
         trainerService.create(trainerDTO);
     }
 
     @Override
-    public void updateTrainer(String trainerIdStr, String newTrainingTypeStr) {
-        trainerService.update(trainerIdStr, newTrainingTypeStr);
+    public void update(String trainerId, String newTrainingType) {
+        trainerService.update(trainerId, newTrainingType);
     }
 
     @Override
-    public Optional<TrainerDTO> findTrainerById(String trainerIdStr) {
-        return trainerService.findById(trainerIdStr);
+    public Optional<TrainerDTO> findById(String trainerId) {
+        return trainerService.findById(trainerId);
     }
 
     @Override
-    public List<TrainerDTO> findAllTrainers() {
+    public List<TrainerDTO> findAll() {
         return trainerService.findAll();
     }
 
-    private static TrainerDTO toTrainerDTO(String firstName, String lastName, String trainingTypeStr) {
+    private static TrainerDTO toTrainerDTO(String firstName, String lastName, String trainingType) {
         TrainerDTO trainerDTO = new TrainerDTO();
         trainerDTO.setFirstName(firstName);
         trainerDTO.setLastName(lastName);
-        trainerDTO.setTrainingType(trainingTypeStr);
+        trainerDTO.setTrainingType(trainingType);
         return trainerDTO;
     }
 }

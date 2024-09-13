@@ -6,28 +6,18 @@ import com.epam.wca.gym.facade.TraineeFacade;
 import com.epam.wca.gym.facade.TrainerFacade;
 import com.epam.wca.gym.facade.TrainingFacade;
 import com.epam.wca.gym.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class GymFacadeImpl implements GymFacade {
     private final TraineeFacade traineeFacade;
     private final TrainerFacade trainerFacade;
     private final TrainingFacade trainingFacade;
     private final UserService userService;
-
-    @Autowired
-    public GymFacadeImpl(TraineeFacade traineeFacade,
-                         TrainerFacade trainerFacade,
-                         TrainingFacade trainingFacade,
-                         UserService userService) {
-        this.traineeFacade = traineeFacade;
-        this.trainerFacade = trainerFacade;
-        this.trainingFacade = trainingFacade;
-        this.userService = userService;
-    }
 
     @Override
     public List<UserDTO> findAllUsers() {

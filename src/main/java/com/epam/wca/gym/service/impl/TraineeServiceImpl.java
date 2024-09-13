@@ -8,7 +8,7 @@ import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.service.AbstractService;
 import com.epam.wca.gym.service.TraineeService;
 import com.epam.wca.gym.service.UserService;
-import com.epam.wca.gym.utils.Storage;
+import com.epam.wca.gym.dao.Storage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,8 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 
-import static com.epam.wca.gym.utils.Constants.*;
+import static com.epam.wca.gym.utils.Constants.INVALID_TRAINEE_ID_PROVIDED;
+import static com.epam.wca.gym.utils.Constants.TRAINEE_WITH_ID_NOT_FOUND;
 import static com.epam.wca.gym.utils.NextIdGenerator.calculateNextId;
 
 @Slf4j
@@ -59,13 +60,13 @@ public class TraineeServiceImpl extends AbstractService<Trainee, TraineeDTO, Tra
                 return Optional.empty();
             }
 
-            Long nextTraineeId = calculateNextId(storage.getTrainees());
+            Long id = calculateNextId(storage.getTrainees());
 
-            Trainee trainee = new Trainee(nextTraineeId, user.get().getId(), dateOfBirth, dto.getAddress());
+            Trainee trainee = new Trainee(id, user.get().getId(), dateOfBirth, dto.getAddress());
 
             traineeDao.save(trainee);
 
-            log.info("Trainee created with ID: {}", nextTraineeId);
+            log.info("Trainee created with ID: {}", id);
 
             return Optional.of(trainee);
         } catch (DateTimeParseException e) {
@@ -76,43 +77,43 @@ public class TraineeServiceImpl extends AbstractService<Trainee, TraineeDTO, Tra
     }
 
     @Override
-    public boolean update(String traineeIdStr, String newAddress) {
+    public boolean update(String traineeId, String newAddress) {
         try {
-            Long traineeId = Long.parseLong(traineeIdStr);
+            Long id = Long.parseLong(traineeId);
 
-            return traineeDao.findById(traineeId).map(trainee -> {
-                traineeDao.update(traineeId, newAddress);
-                log.info("Trainee with ID: {} updated with new address: {}", traineeId, newAddress);
+            return traineeDao.findById(id).map(trainee -> {
+                traineeDao.update(id, newAddress);
+                log.info("Trainee with ID: {} updated with new address: {}", id, newAddress);
                 return true;
             }).orElseGet(() -> {
-                log.warn(TRAINEE_WITH_ID_NOT_FOUND, traineeId);
+                log.warn(TRAINEE_WITH_ID_NOT_FOUND, id);
                 return false;
             });
         } catch (NumberFormatException e) {
-            log.error(INVALID_TRAINEE_ID_PROVIDED, traineeIdStr);
+            log.error(INVALID_TRAINEE_ID_PROVIDED, traineeId);
 
             return false;
         }
     }
 
     @Override
-    public void delete(String traineeIdStr) {
+    public void delete(String traineeId) {
         try {
-            Long traineeId = Long.parseLong(traineeIdStr);
+            Long id= Long.parseLong(traineeId);
 
-            traineeDao.findById(traineeId).ifPresentOrElse(trainee -> {
-                traineeDao.delete(traineeId);
-                log.info("Trainee with ID: {} has been deleted.", traineeId);
+            traineeDao.findById(id).ifPresentOrElse(trainee -> {
+                traineeDao.delete(id);
+                log.info("Trainee with ID: {} has been deleted.", id);
                 userService.deactivateUser(trainee.getUserId());
-            }, () -> log.warn(TRAINEE_WITH_ID_NOT_FOUND, traineeId));
+            }, () -> log.warn(TRAINEE_WITH_ID_NOT_FOUND, id));
         } catch (NumberFormatException e) {
-            log.error(INVALID_TRAINEE_ID_PROVIDED, traineeIdStr);
+            log.error(INVALID_TRAINEE_ID_PROVIDED, traineeId);
         }
     }
 
     @Override
-    public Optional<TraineeDTO> findById(String traineeIdStr) {
-        return super.findById(traineeIdStr, this::toDTO);
+    public Optional<TraineeDTO> findById(String traineeId) {
+        return super.findById(traineeId, this::toDTO);
     }
 
     @Override

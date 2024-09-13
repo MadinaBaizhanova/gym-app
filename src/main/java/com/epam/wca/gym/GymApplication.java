@@ -14,7 +14,14 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import java.util.List;
 import java.util.Scanner;
 
-import static com.epam.wca.gym.utils.Constants.*;
+import static com.epam.wca.gym.utils.Constants.CHOICE_1;
+import static com.epam.wca.gym.utils.Constants.CHOICE_2;
+import static com.epam.wca.gym.utils.Constants.CHOICE_3;
+import static com.epam.wca.gym.utils.Constants.CHOICE_4;
+import static com.epam.wca.gym.utils.Constants.CHOICE_5;
+import static com.epam.wca.gym.utils.Constants.ENTER_YOUR_CHOICE;
+import static com.epam.wca.gym.utils.Constants.EXITING;
+import static com.epam.wca.gym.utils.Constants.INVALID_CHOICE_PLEASE_TRY_AGAIN;
 
 @Slf4j
 public class GymApplication {

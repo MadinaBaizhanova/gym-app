@@ -2,23 +2,28 @@ package com.epam.wca.gym.utils.cli;
 
 import com.epam.wca.gym.dto.TrainerDTO;
 import com.epam.wca.gym.facade.GymFacade;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
 
-import static com.epam.wca.gym.utils.Constants.*;
+import static com.epam.wca.gym.utils.Constants.CHOICE_1;
+import static com.epam.wca.gym.utils.Constants.CHOICE_2;
+import static com.epam.wca.gym.utils.Constants.CHOICE_3;
+import static com.epam.wca.gym.utils.Constants.CHOICE_4;
+import static com.epam.wca.gym.utils.Constants.CHOICE_5;
+import static com.epam.wca.gym.utils.Constants.ENTER_TRAINING_TYPE;
+import static com.epam.wca.gym.utils.Constants.ENTER_YOUR_CHOICE;
+import static com.epam.wca.gym.utils.Constants.INVALID_CHOICE_PLEASE_TRY_AGAIN;
+import static com.epam.wca.gym.utils.Constants.RETURNING_TO_MAIN_MENU;
 
 @Slf4j
+@RequiredArgsConstructor
 public final class TrainerManager {
     private final GymFacade gymFacade;
     private final Scanner scanner;
-
-    public TrainerManager(GymFacade gymFacade, Scanner scanner) {
-        this.gymFacade = gymFacade;
-        this.scanner = scanner;
-    }
 
     public void manageTrainers() {
         String choice;
@@ -52,28 +57,28 @@ public final class TrainerManager {
         String firstName = scanner.nextLine();
         log.info("Enter Last Name: ");
         String lastName = scanner.nextLine();
-        log.info(ENTER_TRAINING_TYPE_AVAILABLE_TYPES_FITNESS_YOGA_ZUMBA_STRETCHING_CARDIO_CROSSFIT);
+        log.info(ENTER_TRAINING_TYPE);
         String trainingTypeInput = scanner.nextLine();
-        gymFacade.trainer().createTrainer(firstName, lastName, trainingTypeInput);
+        gymFacade.trainer().create(firstName, lastName, trainingTypeInput);
     }
 
     private void updateTrainer() {
         log.info("Enter Trainer ID to update: ");
         String trainerIdToUpdate = scanner.nextLine();
-        log.info(ENTER_TRAINING_TYPE_AVAILABLE_TYPES_FITNESS_YOGA_ZUMBA_STRETCHING_CARDIO_CROSSFIT);
+        log.info(ENTER_TRAINING_TYPE);
         String newTrainingTypeInput = scanner.nextLine();
-        gymFacade.trainer().updateTrainer(trainerIdToUpdate, newTrainingTypeInput);
+        gymFacade.trainer().update(trainerIdToUpdate, newTrainingTypeInput);
     }
 
     private void findTrainerById() {
         log.info("Enter Trainer ID to find: ");
         String trainerIdToFind = scanner.nextLine();
-        Optional<TrainerDTO> optionalTrainerDTO = gymFacade.trainer().findTrainerById(trainerIdToFind);
+        Optional<TrainerDTO> optionalTrainerDTO = gymFacade.trainer().findById(trainerIdToFind);
         optionalTrainerDTO.ifPresent(trainerDTO -> log.info("Trainer Info: {}", trainerDTO));
     }
 
     private void listAllTrainers() {
-        List<TrainerDTO> allTrainerDTOs = gymFacade.trainer().findAllTrainers();
+        List<TrainerDTO> allTrainerDTOs = gymFacade.trainer().findAll();
         log.info("ALL TRAINERS:");
         allTrainerDTOs.forEach(trainerDTO -> log.info(trainerDTO.toString()));
     }

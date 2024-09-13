@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 @Data
 @RequiredArgsConstructor
 @AllArgsConstructor
-public class UserDTO {
+public final class UserDTO {
     private Long id;
     private final String firstName;
     private final String lastName;
