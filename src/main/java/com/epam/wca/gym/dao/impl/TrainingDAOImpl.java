@@ -1,29 +1,35 @@
 package com.epam.wca.gym.dao.impl;
 
-import com.epam.wca.gym.dao.AbstractDAO;
+import com.epam.wca.gym.dao.TrainingDAO;
 import com.epam.wca.gym.entity.Training;
-import com.epam.wca.gym.dao.Storage;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Repository;
 
-import java.util.Map;
-
 @Repository
-public class TrainingDAOImpl extends AbstractDAO<Training> {
+public class TrainingDAOImpl extends AbstractDAO<Training> implements TrainingDAO {
 
-    @Autowired
-    @Override
-    public void setStorage(Storage storage) {
-        this.storage = storage;
+    public TrainingDAOImpl(SessionFactory sessionFactory) {
+        super(sessionFactory);
     }
 
     @Override
-    protected Map<Long, Training> getStorageMap() {
-        return storage.getTrainings();
+    public void deleteByTrainee(String traineeUsername) {
+        deleteByRole("trainee.user.username", traineeUsername);
     }
 
     @Override
-    protected Long getEntityId(Training training) {
-        return training.getId();
+    public void deleteByTrainer(String trainerUsername) {
+        deleteByRole("trainer.user.username", trainerUsername);
+    }
+
+    private void deleteByRole(String roleField, String username) {
+        try (Session session = sessionFactory.openSession()) {
+            session.beginTransaction();
+            session.createMutationQuery("DELETE FROM Training t WHERE t." + roleField + " = :username")
+                    .setParameter("username", username)
+                    .executeUpdate();
+            session.getTransaction().commit();
+        }
     }
 }

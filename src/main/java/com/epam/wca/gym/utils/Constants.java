@@ -3,33 +3,19 @@ package com.epam.wca.gym.utils;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
-public final class Constants {
+public class Constants {
+    public static final String TIME_ZONED = "T00:00:00Z";
+    public static final String ENTER_YOUR_FIRST_NAME = "Enter your First Name: ";
+    public static final String ENTER_YOUR_LAST_NAME = "Enter your Last Name: ";
+    public static final String UNAUTHORIZED_ACCESS_ATTEMPT_PLEASE_LOG_IN_FIRST =
+            "Unauthorized access attempt. Please log in first.";
+    public static final String ACCESS_DENIED = "Access Denied: {}";
+    public static final String BACK_TO_MAIN_MENU = "0. Back to Main Menu";
+    public static final String TRAINEE_NOT_FOUND = "Trainee not found";
+    public static final String TRAINER_NOT_FOUND = "Trainer not found";
     public static final String PASSWORD_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*?";
-    public static final String TRAINEE_WITH_ID_NOT_FOUND = "Trainee with ID: {} not found.";
-    public static final String INVALID_TRAINEE_ID_PROVIDED = "Invalid trainee ID provided: {}";
-    public static final long ID_DEFAULT_VALUE = 0L;
-    public static final int ID_INCREMENT = 1;
-    public static final int INITIAL_SERIAL_NUMBER = 2;
-    public static final int SERIAL_NUMBER_INCREMENT = 1;
     public static final int PASSWORD_LENGTH = 10;
     public static final int PASSWORD_GENERATION_START_INDEX = 0;
-    public static final String LINE_SPLIT = ",";
-    public static final int COLUMN_1 = 0;
-    public static final int COLUMN_2 = 1;
-    public static final int COLUMN_3 = 2;
-    public static final int COLUMN_4 = 3;
-    public static final int COLUMN_5 = 4;
-    public static final int COLUMN_6 = 5;
-    public static final int COLUMN_7 = 6;
-    public static final String ENTER_YOUR_CHOICE = "Enter your choice: ";
-    public static final String INVALID_CHOICE_PLEASE_TRY_AGAIN = "Invalid choice. Please try again.";
-    public static final String RETURNING_TO_MAIN_MENU = "Returning to Main Menu...";
-    public static final String CHOICE_1 = "1";
-    public static final String CHOICE_2 = "2";
-    public static final String CHOICE_3 = "3";
-    public static final String CHOICE_4 = "4";
-    public static final String CHOICE_5 = "5";
-    public static final String CHOICE_6 = "6";
-    public static final String EXITING = "Exiting...";
-    public static final String ENTER_TRAINING_TYPE = "Enter Training Type (available types: FITNESS, YOGA, ZUMBA, STRETCHING, CARDIO, CROSSFIT): ";
+    public static final int SERIAL_NUMBER_INCREMENT = 1;
+    public static final int INITIAL_SERIAL_NUMBER = 2;
 }

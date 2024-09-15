@@ -11,4 +11,8 @@ public class MenuUtils {
             log.info(option);
         }
     }
+
+    public static void invalidChoice() {
+        log.warn("Invalid choice! Please try again.");
+    }
 }

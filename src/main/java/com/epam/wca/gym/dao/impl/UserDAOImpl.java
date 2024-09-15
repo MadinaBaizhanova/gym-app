@@ -1,38 +1,37 @@
 package com.epam.wca.gym.dao.impl;
 
-import com.epam.wca.gym.dao.AbstractDAO;
 import com.epam.wca.gym.dao.UserDAO;
 import com.epam.wca.gym.entity.User;
-import com.epam.wca.gym.dao.Storage;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Repository;
 
-import java.util.Map;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class UserDAOImpl extends AbstractDAO<User> implements UserDAO {
 
-    @Autowired
-    @Override
-    public void setStorage(Storage storage) {
-        this.storage = storage;
+    public UserDAOImpl(SessionFactory sessionFactory) {
+        super(sessionFactory);
     }
 
     @Override
-    protected Map<Long, User> getStorageMap() {
-        return storage.getUsers();
+    public Optional<User> findByUsername(String username) {
+        try (Session session = sessionFactory.openSession()) {
+            return Optional.ofNullable(
+                    session.createQuery("FROM User u WHERE LOWER(u.username) = :username", User.class)
+                            .setParameter("username", username.toLowerCase())
+                            .uniqueResult());
+        }
     }
 
     @Override
-    protected Long getEntityId(User user) {
-        return user.getId();
-    }
-
-    @Override
-    public void update(Long id, boolean isActive) {
-        User user = getStorageMap().get(id);
-        if (user != null) {
-            user.setActive(isActive);
+    public List<User> findByUsernameStartingWith(String baseUsername) {
+        try (Session session = sessionFactory.openSession()) {
+            return session.createQuery("FROM User u WHERE u.username LIKE :baseUsername", User.class)
+                    .setParameter("baseUsername", baseUsername + "%")
+                    .list();
         }
     }
 }

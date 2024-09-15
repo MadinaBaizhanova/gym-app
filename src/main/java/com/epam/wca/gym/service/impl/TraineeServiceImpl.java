@@ -1,137 +1,186 @@
 package com.epam.wca.gym.service.impl;
 
+import com.epam.wca.gym.annotation.CheckActiveTrainee;
+import com.epam.wca.gym.annotation.Secured;
+import com.epam.wca.gym.annotation.TraineeOnly;
 import com.epam.wca.gym.dao.TraineeDAO;
+import com.epam.wca.gym.dao.TrainerDAO;
+import com.epam.wca.gym.dao.UserDAO;
 import com.epam.wca.gym.dto.TraineeDTO;
+import com.epam.wca.gym.dto.TrainerDTO;
+import com.epam.wca.gym.dto.TrainingDTO;
 import com.epam.wca.gym.dto.UserDTO;
 import com.epam.wca.gym.entity.Trainee;
+import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.User;
-import com.epam.wca.gym.service.AbstractService;
+import com.epam.wca.gym.mapper.TraineeMapper;
+import com.epam.wca.gym.mapper.TrainerMapper;
+import com.epam.wca.gym.mapper.TrainingMapper;
 import com.epam.wca.gym.service.TraineeService;
 import com.epam.wca.gym.service.UserService;
-import com.epam.wca.gym.dao.Storage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static com.epam.wca.gym.utils.Constants.INVALID_TRAINEE_ID_PROVIDED;
-import static com.epam.wca.gym.utils.Constants.TRAINEE_WITH_ID_NOT_FOUND;
-import static com.epam.wca.gym.utils.NextIdGenerator.calculateNextId;
+import static com.epam.wca.gym.utils.Constants.TRAINEE_NOT_FOUND;
 
 @Slf4j
 @Service
-public class TraineeServiceImpl extends AbstractService<Trainee, TraineeDTO, TraineeDAO> implements TraineeService {
-    private Storage storage;
-    private UserService userService;
-    private TraineeDAO traineeDao;
+@RequiredArgsConstructor
+public class TraineeServiceImpl implements TraineeService {
 
-    protected TraineeServiceImpl(TraineeDAO dao) {
-        super(dao);
-    }
+    private final TraineeDAO traineeDAO;
+    private final TrainerDAO trainerDAO;
+    private final UserService userService;
+    private final UserDAO userDAO;
 
-    @Autowired
-    public void setStorage(Storage storage) {
-        this.storage = storage;
-    }
-
-    @Autowired
-    public void setUserService(UserService userService) {
-        this.userService = userService;
-    }
-
-    @Autowired
-    public void setTraineeDao(TraineeDAO traineeDao) {
-        this.traineeDao = traineeDao;
-    }
-
+    @Transactional
     @Override
     public Optional<Trainee> create(TraineeDTO dto) {
-        try {
-            LocalDate dateOfBirth = LocalDate.parse(dto.getDateOfBirth());
+        Optional<User> user = userService.create(new UserDTO(dto.firstName(), dto.lastName()));
 
-            Optional<User> user = userService.create(new UserDTO(dto.getFirstName(), dto.getLastName()));
-
-            if (user.isEmpty()) {
-                log.error("Trainee cannot be created.");
-                return Optional.empty();
-            }
-
-            Long id = calculateNextId(storage.getTrainees());
-
-            Trainee trainee = new Trainee(id, user.get().getId(), dateOfBirth, dto.getAddress());
-
-            traineeDao.save(trainee);
-
-            log.info("Trainee created with ID: {}", id);
-
-            return Optional.of(trainee);
-        } catch (DateTimeParseException e) {
-            log.error("Invalid date format provided for date of birth: {}", dto.getDateOfBirth());
-
+        if (user.isEmpty()) {
+            log.error("Trainee creation failed.");
             return Optional.empty();
         }
+
+        Trainee newTrainee = new Trainee();
+        newTrainee.setUser(user.get());
+        newTrainee.setDateOfBirth(dto.dateOfBirth());
+        newTrainee.setAddress(dto.address());
+        Trainee trainee = traineeDAO.save(newTrainee);
+        log.info("Trainee Registered Successfully!");
+
+        return Optional.of(trainee);
     }
 
+    @Secured
+    @TraineeOnly
     @Override
-    public boolean update(String traineeId, String newAddress) {
-        try {
-            Long id = Long.parseLong(traineeId);
+    public Optional<TraineeDTO> findByUsername(String traineeUsername) {
+        return traineeDAO.findByUsername(traineeUsername)
+                .map(TraineeMapper::toDTO);
+    }
 
-            return traineeDao.findById(id).map(trainee -> {
-                traineeDao.update(id, newAddress);
-                log.info("Trainee with ID: {} updated with new address: {}", id, newAddress);
-                return true;
-            }).orElseGet(() -> {
-                log.warn(TRAINEE_WITH_ID_NOT_FOUND, id);
-                return false;
-            });
-        } catch (NumberFormatException e) {
-            log.error(INVALID_TRAINEE_ID_PROVIDED, traineeId);
+    @Secured
+    @TraineeOnly
+    @Transactional
+    @Override
+    public void deleteByUsername(String traineeUsername) {
+        Trainee trainee = traineeDAO.findByUsername(traineeUsername)
+                .orElseThrow(() -> new IllegalArgumentException(TRAINEE_NOT_FOUND));
+        userDAO.delete(trainee.getUser());
+        log.info("Trainee profile deleted successfully.");
+    }
 
-            return false;
+    @Secured
+    @TraineeOnly
+    @Transactional
+    @Override
+    public void update(TraineeDTO dto) {
+        Trainee trainee = traineeDAO.findByUsername(dto.username())
+                .orElseThrow(() -> new IllegalArgumentException(TRAINEE_NOT_FOUND));
+
+        if (dto.dateOfBirth() != null) {
+            trainee.setDateOfBirth(dto.dateOfBirth());
+        }
+
+        userService.update(new UserDTO(dto.id(), dto.firstName(), dto.lastName(),
+                dto.username(), null, dto.isActive()));
+
+        trainee.setAddress((dto.address() != null && !dto.address().isBlank()) ? dto.address() : trainee.getAddress());
+
+        traineeDAO.update(trainee);
+        log.info("Trainee updated.");
+    }
+
+    @Secured
+    @TraineeOnly
+    @CheckActiveTrainee
+    @Transactional
+    @Override
+    public void addTrainer(String traineeUsername, String trainerUsername) {
+        Trainee trainee = traineeDAO.findByUsername(traineeUsername)
+                .orElseThrow(() -> new IllegalArgumentException(TRAINEE_NOT_FOUND));
+
+        Trainer trainer = trainerDAO.findByUsername(trainerUsername)
+                .orElseThrow(() -> new IllegalArgumentException("Trainer not found"));
+
+        if (Boolean.FALSE.equals(trainer.getUser().getIsActive())) {
+            log.warn("Trainer {} is deactivated and cannot be added.", trainerUsername);
+            throw new IllegalStateException("Cannot add a deactivated trainer.");
+        }
+
+        boolean alreadyAssigned = trainee.getTrainers().stream()
+                .anyMatch(existingTrainer -> existingTrainer.getUser().getUsername().equals(trainerUsername));
+
+        if (alreadyAssigned) {
+            log.warn("Trainer {} is already assigned to Trainee {}", trainerUsername, traineeUsername);
+        } else {
+            trainee.getTrainers().add(trainer);
+            traineeDAO.update(trainee);
+            log.info("Trainer {} successfully added to Trainee {}", trainerUsername, traineeUsername);
         }
     }
 
+    @Secured
+    @TraineeOnly
+    @CheckActiveTrainee
+    @Transactional
     @Override
-    public void delete(String traineeId) {
-        try {
-            Long id= Long.parseLong(traineeId);
+    public void removeTrainer(String traineeUsername, String trainerUsername) {
+        Trainee trainee = traineeDAO.findByUsername(traineeUsername)
+                .orElseThrow(() -> new IllegalArgumentException(TRAINEE_NOT_FOUND));
 
-            traineeDao.findById(id).ifPresentOrElse(trainee -> {
-                traineeDao.delete(id);
-                log.info("Trainee with ID: {} has been deleted.", id);
-                userService.deactivateUser(trainee.getUserId());
-            }, () -> log.warn(TRAINEE_WITH_ID_NOT_FOUND, id));
-        } catch (NumberFormatException e) {
-            log.error(INVALID_TRAINEE_ID_PROVIDED, traineeId);
+        Optional<Trainer> trainerToRemove = trainee.getTrainers().stream()
+                .filter(trainer -> trainer.getUser().getUsername().equals(trainerUsername))
+                .findFirst();
+
+        if (trainerToRemove.isPresent()) {
+            trainee.getTrainers().remove(trainerToRemove.get());
+            traineeDAO.update(trainee);
+            log.info("Trainer {} successfully removed from Trainee {}", trainerUsername, traineeUsername);
+        } else {
+            throw new IllegalArgumentException("Trainer not found in the trainee's list");
         }
     }
 
+    @Secured
+    @TraineeOnly
     @Override
-    public Optional<TraineeDTO> findById(String traineeId) {
-        return super.findById(traineeId, this::toDTO);
+    public List<TrainerDTO> findAvailableTrainers(String traineeUsername) {
+        return traineeDAO.findAvailableTrainers(traineeUsername)
+                .stream()
+                .map(TrainerMapper::toDTO)
+                .toList();
     }
 
+    @Secured
+    @TraineeOnly
     @Override
-    public List<TraineeDTO> findAll() {
-        return super.findAll(this::toDTO);
+    public List<TrainerDTO> findAssignedTrainers(String traineeUsername) {
+        Trainee trainee = traineeDAO.findByUsername(traineeUsername)
+                .orElseThrow(() -> new IllegalArgumentException(TRAINEE_NOT_FOUND));
+
+        return trainee.getTrainers()
+                .stream()
+                .map(TrainerMapper::toDTO)
+                .toList();
     }
 
-    private TraineeDTO toDTO(Trainee trainee) {
-        User user = storage.getUsers().get(trainee.getUserId());
-
-        return new TraineeDTO(
-                trainee.getId(),
-                user.getId(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getUsername(),
-                trainee.getDateOfBirth().toString(),
-                trainee.getAddress()
-        );
+    @Secured
+    @TraineeOnly
+    @Override
+    public List<TrainingDTO> findTrainings(String traineeUsername, String trainerName, String trainingType,
+                                           ZonedDateTime fromDate, ZonedDateTime toDate) {
+        return traineeDAO.findTrainings(traineeUsername, trainerName, trainingType, fromDate, toDate)
+                .stream()
+                .map(TrainingMapper::toDTO)
+                .toList();
     }
 }

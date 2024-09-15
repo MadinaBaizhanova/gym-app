@@ -1,16 +1,21 @@
 package com.epam.wca.gym.facade;
 
 import com.epam.wca.gym.dto.TrainerDTO;
+import com.epam.wca.gym.dto.TrainingDTO;
+import com.epam.wca.gym.entity.Trainer;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
 public interface TrainerFacade {
-    void create(String firstName, String lastName, String trainingType);
 
-    void update(String trainerId, String newTrainingType);
+    Optional<Trainer> create(TrainerDTO trainerDTO);
 
-    Optional<TrainerDTO> findById(String trainerId);
+    Optional<TrainerDTO> findByUsername(String trainerUsername);
 
-    List<TrainerDTO> findAll();
+    void update(TrainerDTO trainerDTO);
+
+    List<TrainingDTO> findTrainings(String trainerUsername, String traineeName,
+                                    ZonedDateTime fromDate, ZonedDateTime toDate);
 }

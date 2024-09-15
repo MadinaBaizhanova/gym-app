@@ -1,17 +1,56 @@
 package com.epam.wca.gym.entity;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
+import java.math.BigInteger;
+
+@Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@RequiredArgsConstructor
+@Table(name = "users")
 public class User {
-    private Long id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private BigInteger id;
+
+    @NonNull
+    @Column(name = "first_name", nullable = false)
     private String firstName;
+
+    @NonNull
+    @Column(name = "last_name", nullable = false)
     private String lastName;
+
+    @NonNull
+    @Column(name = "username", nullable = false, unique = true)
     private String username;
+
+    @NonNull
+    @Column(name = "password", nullable = false)
     private String password;
-    private boolean isActive;
+
+    @NonNull
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Trainee trainee;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Trainer trainer;
 }

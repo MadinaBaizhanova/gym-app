@@ -1,85 +1,118 @@
 package com.epam.wca.gym.utils.cli;
 
 import com.epam.wca.gym.dto.TrainerDTO;
+import com.epam.wca.gym.dto.TrainingDTO;
 import com.epam.wca.gym.facade.GymFacade;
-import lombok.RequiredArgsConstructor;
+import com.epam.wca.gym.service.SecurityService;
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
 
-import static com.epam.wca.gym.utils.Constants.CHOICE_1;
-import static com.epam.wca.gym.utils.Constants.CHOICE_2;
-import static com.epam.wca.gym.utils.Constants.CHOICE_3;
-import static com.epam.wca.gym.utils.Constants.CHOICE_4;
-import static com.epam.wca.gym.utils.Constants.CHOICE_5;
-import static com.epam.wca.gym.utils.Constants.ENTER_TRAINING_TYPE;
-import static com.epam.wca.gym.utils.Constants.ENTER_YOUR_CHOICE;
-import static com.epam.wca.gym.utils.Constants.INVALID_CHOICE_PLEASE_TRY_AGAIN;
-import static com.epam.wca.gym.utils.Constants.RETURNING_TO_MAIN_MENU;
+import static com.epam.wca.gym.utils.Constants.ACCESS_DENIED;
+import static com.epam.wca.gym.utils.Constants.BACK_TO_MAIN_MENU;
+import static com.epam.wca.gym.utils.Constants.TIME_ZONED;
 
 @Slf4j
-@RequiredArgsConstructor
-public final class TrainerManager {
-    private final GymFacade gymFacade;
-    private final Scanner scanner;
+@UtilityClass
+public class TrainerManager {
 
-    public void manageTrainers() {
-        String choice;
-        do {
-            MenuUtils.displayMenu("\nTRAINER MANAGEMENT MENU",
-                    "1. Create Trainer",
-                    "2. Update Trainer Training Type",
-                    "3. Find Trainer by ID",
-                    "4. List All Trainers",
-                    "5. Return to Main Menu",
-                    ENTER_YOUR_CHOICE);
+    public static void showTrainerManagement(Scanner scanner, GymFacade gymFacade, SecurityService securityService) {
+        if (securityService.isTrainee()) {
+            log.error("Access denied: you are not a trainer and cannot access this menu.");
+            return;
+        }
 
-            choice = scanner.nextLine();
-            handleTrainerMenuChoice(choice);
-        } while (!choice.equals(CHOICE_5));
-    }
+        boolean backToMain = false;
+        while (!backToMain) {
+            MenuUtils.displayMenu("\nTrainer Management:", "1. View my Trainer Account information",
+                    "2. Update my profile", "3. View my scheduled Trainings", BACK_TO_MAIN_MENU);
 
-    private void handleTrainerMenuChoice(String choice) {
-        switch (choice) {
-            case CHOICE_1 -> createTrainer();
-            case CHOICE_2 -> updateTrainer();
-            case CHOICE_3 -> findTrainerById();
-            case CHOICE_4 -> listAllTrainers();
-            case CHOICE_5 -> log.info(RETURNING_TO_MAIN_MENU);
-            default -> log.warn(INVALID_CHOICE_PLEASE_TRY_AGAIN);
+            try {
+                String choice = scanner.nextLine();
+
+                switch (choice) {
+                    case "1" -> viewProfile(gymFacade, securityService);
+                    case "2" -> updateProfile(scanner, gymFacade, securityService);
+                    case "3" -> viewTrainings(scanner, gymFacade, securityService);
+                    case "0" -> backToMain = true;
+                    default -> MenuUtils.invalidChoice();
+                }
+            } catch (SecurityException e) {
+                log.error(ACCESS_DENIED, e.getMessage());
+            }
         }
     }
 
-    private void createTrainer() {
-        log.info("Enter First Name: ");
+    private static void viewProfile(GymFacade gymFacade, SecurityService securityService) {
+        String username = securityService.getAuthenticatedUsername();
+        try {
+            Optional<TrainerDTO> trainer = gymFacade.trainer().findByUsername(username);
+            log.info("Trainer Profile: {}", trainer);
+        } catch (Exception e) {
+            log.error("Error finding trainer: {}", e.getMessage());
+        }
+    }
+
+    private static void updateProfile(Scanner scanner, GymFacade gymFacade, SecurityService securityService) {
+        String username = securityService.getAuthenticatedUsername();
+
+        log.info("Enter new First Name (leave blank to keep unchanged): ");
         String firstName = scanner.nextLine();
-        log.info("Enter Last Name: ");
+
+        log.info("Enter new Last Name (leave blank to keep unchanged): ");
         String lastName = scanner.nextLine();
-        log.info(ENTER_TRAINING_TYPE);
-        String trainingTypeInput = scanner.nextLine();
-        gymFacade.trainer().create(firstName, lastName, trainingTypeInput);
+
+        log.info("Enter new Training Type (leave blank to keep unchanged): ");
+        String trainingType = scanner.nextLine();
+
+        TrainerDTO updatedDTO = new TrainerDTO(null, firstName, lastName, username, trainingType, true);
+        try {
+            gymFacade.trainer().update(updatedDTO);
+        } catch (Exception e) {
+            log.error("Error updating trainer profile: {}", e.getMessage());
+        }
     }
 
-    private void updateTrainer() {
-        log.info("Enter Trainer ID to update: ");
-        String trainerIdToUpdate = scanner.nextLine();
-        log.info(ENTER_TRAINING_TYPE);
-        String newTrainingTypeInput = scanner.nextLine();
-        gymFacade.trainer().update(trainerIdToUpdate, newTrainingTypeInput);
-    }
+    private static void viewTrainings(Scanner scanner, GymFacade gymFacade, SecurityService securityService) {
+        String trainerUsername = securityService.getAuthenticatedUsername();
 
-    private void findTrainerById() {
-        log.info("Enter Trainer ID to find: ");
-        String trainerIdToFind = scanner.nextLine();
-        Optional<TrainerDTO> optionalTrainerDTO = gymFacade.trainer().findById(trainerIdToFind);
-        optionalTrainerDTO.ifPresent(trainerDTO -> log.info("Trainer Info: {}", trainerDTO));
-    }
+        log.info("Enter optional Trainee First Name or Last Name (or leave blank): ");
+        String traineeName = scanner.nextLine().trim();
 
-    private void listAllTrainers() {
-        List<TrainerDTO> allTrainerDTOs = gymFacade.trainer().findAll();
-        log.info("ALL TRAINERS:");
-        allTrainerDTOs.forEach(trainerDTO -> log.info(trainerDTO.toString()));
+        ZonedDateTime fromDate = null;
+        log.info("Enter optional 'From Date' (format: yyyy-mm-dd) or leave blank: ");
+        String from = scanner.nextLine().trim();
+        if (!from.isEmpty()) {
+            try {
+                fromDate = ZonedDateTime.parse(from + TIME_ZONED);
+            } catch (DateTimeParseException e) {
+                log.error("Invalid 'From Date' format. Please enter a valid date in yyyy-mm-dd format.");
+                return;
+            }
+        }
+
+        ZonedDateTime toDate = null;
+        log.info("Enter optional 'To Date' (format: yyyy-mm-dd) or leave blank: ");
+        String to = scanner.nextLine().trim();
+        if (!to.isEmpty()) {
+            try {
+                toDate = ZonedDateTime.parse(to + TIME_ZONED);
+            } catch (DateTimeParseException e) {
+                log.error("Invalid 'To Date' format. Please enter a valid date in yyyy-mm-dd format.");
+                return;
+            }
+        }
+
+        List<TrainingDTO> trainings = gymFacade.trainer().findTrainings(trainerUsername, traineeName, fromDate, toDate);
+        if (trainings.isEmpty()) {
+            log.info("No trainings found.");
+        } else {
+            trainings.forEach(training -> log.info(training.toString()));
+        }
     }
 }
