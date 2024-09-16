@@ -54,7 +54,7 @@ public class TrainerManager {
             Optional<TrainerDTO> trainer = gymFacade.trainer().findByUsername(username);
             log.info("Trainer Profile: {}", trainer);
         } catch (Exception e) {
-            log.error("Error finding trainer: {}", e.getMessage());
+            log.error("Error viewing profile: {}", e.getMessage());
         }
     }
 

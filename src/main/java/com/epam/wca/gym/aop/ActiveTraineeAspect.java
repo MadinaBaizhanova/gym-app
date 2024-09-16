@@ -25,20 +25,16 @@ public class ActiveTraineeAspect {
 
     @Before("@annotation(com.epam.wca.gym.annotation.CheckActiveTrainee) && args(traineeUsername,..)")
     public void checkTraineeIsActive(String traineeUsername) {
-
-        Trainee trainee = traineeDAO.findByUsername(traineeUsername)
-                .orElseThrow(() -> new IllegalArgumentException("Trainee not found."));
-
-        if (!trainee.getUser().getIsActive()) {
-            throw new IllegalStateException("Your account is deactivated. Please activate it to perform this action.");
-        }
+        validateTraineeIsActiveStatus(traineeUsername);
     }
 
     @Before("@annotation(com.epam.wca.gym.annotation.CheckActiveTrainee) && args(trainingDTO,..)")
     public void checkTraineeIsActive(TrainingDTO trainingDTO) {
-
         String traineeUsername = trainingDTO.traineeUsername();
+        validateTraineeIsActiveStatus(traineeUsername);
+    }
 
+    private void validateTraineeIsActiveStatus(String traineeUsername) {
         Trainee trainee = traineeDAO.findByUsername(traineeUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Trainee not found."));
 

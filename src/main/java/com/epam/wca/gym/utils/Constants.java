@@ -18,4 +18,5 @@ public class Constants {
     public static final int PASSWORD_GENERATION_START_INDEX = 0;
     public static final int SERIAL_NUMBER_INCREMENT = 1;
     public static final int INITIAL_SERIAL_NUMBER = 2;
+    public static final String USERNAME = "username";
 }

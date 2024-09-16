@@ -18,10 +18,14 @@ public class SecurityServiceImpl implements SecurityService {
     public void login(String username, Role role) {
         authenticatedUser.set(username);
         authenticatedRole.set(role);
+        log.info("User {} logged in as {}", username, role);
     }
 
     @Override
     public void logout() {
+        String username = authenticatedUser.get();
+        Role role = authenticatedRole.get();
+        log.info("User {} with role {} logged out", username, role);
         authenticatedUser.remove();
         authenticatedRole.remove();
     }

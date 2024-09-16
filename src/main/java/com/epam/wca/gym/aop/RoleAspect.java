@@ -1,5 +1,6 @@
 package com.epam.wca.gym.aop;
 
+import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.service.SecurityService;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.annotation.Aspect;
@@ -23,25 +24,28 @@ public class RoleAspect {
 
     @Before("@annotation(com.epam.wca.gym.annotation.TraineeOnly)")
     public void checkTraineeRole() {
-        if (!securityService.isAuthenticated()) {
-            return;
-        }
-
-        if (!securityService.isTrainee()) {
-            log.warn("Access denied: You are not a Trainee.");
-            throw new SecurityException("Access denied: Only Trainees can perform this action.");
-        }
+        checkRole(Role.TRAINEE);
     }
 
     @Before("@annotation(com.epam.wca.gym.annotation.TrainerOnly)")
     public void checkTrainerRole() {
+        checkRole(Role.TRAINER);
+    }
+
+    private void checkRole(Role role) {
         if (!securityService.isAuthenticated()) {
             return;
         }
 
-        if (!securityService.isTrainer()) {
-            log.warn("Access denied: You are not a Trainer.");
-            throw new SecurityException("Access denied: Only Trainers can perform this action.");
+        boolean hasRole = switch (role) {
+            case TRAINEE -> securityService.isTrainee();
+            case TRAINER -> securityService.isTrainer();
+            case NONE -> false;
+        };
+
+        if (!hasRole) {
+            log.warn("Access denied: You are not a {}.", role);
+            throw new SecurityException("Only " + role.name().toLowerCase() + "s can perform this action.");
         }
     }
 }

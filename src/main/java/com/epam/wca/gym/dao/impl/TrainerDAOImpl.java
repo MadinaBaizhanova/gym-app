@@ -3,6 +3,10 @@ package com.epam.wca.gym.dao.impl;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.Training;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Repository;
@@ -34,34 +38,30 @@ public class TrainerDAOImpl extends AbstractDAO<Trainer> implements TrainerDAO {
     @Override
     public List<Training> findTrainings(String trainerUsername, String traineeName,
                                         ZonedDateTime fromDate, ZonedDateTime toDate) {
-        StringBuilder query = new StringBuilder("FROM Training tr WHERE tr.trainer.user.username = :trainerUsername ");
-
-        if (traineeName != null && !traineeName.isEmpty()) {
-            query.append("AND (UPPER(tr.trainee.user.firstName) LIKE UPPER(:traineeName) " +
-                         "OR UPPER(tr.trainee.user.lastName) LIKE UPPER(:traineeName)) ");
-        }
-        if (fromDate != null) {
-            query.append("AND tr.trainingDate >= :fromDate ");
-        }
-        if (toDate != null) {
-            query.append("AND tr.trainingDate <= :toDate ");
-        }
-
         try (Session session = sessionFactory.openSession()) {
-            var hqlQuery = session.createQuery(query.toString(), Training.class)
-                    .setParameter("trainerUsername", trainerUsername);
+            CriteriaBuilder cb = session.getCriteriaBuilder();
+            CriteriaQuery<Training> cq = cb.createQuery(Training.class);
+            Root<Training> trainingRoot = cq.from(Training.class);
+
+            Predicate criteria = cb.equal(trainingRoot.get("trainer").get("user").get("username"), trainerUsername);
 
             if (traineeName != null && !traineeName.isEmpty()) {
-                hqlQuery.setParameter("traineeName", "%" + traineeName.toUpperCase() + "%");
+                String traineeNamePattern = "%" + traineeName.toUpperCase() + "%";
+                Predicate traineeNamePredicate = cb.or(
+                        cb.like(cb.upper(trainingRoot.get("trainee").get("user").get("firstName")), traineeNamePattern),
+                        cb.like(cb.upper(trainingRoot.get("trainee").get("user").get("lastName")), traineeNamePattern)
+                );
+                criteria = cb.and(criteria, traineeNamePredicate);
             }
             if (fromDate != null) {
-                hqlQuery.setParameter("fromDate", fromDate);
+                criteria = cb.and(criteria, cb.greaterThanOrEqualTo(trainingRoot.get("trainingDate"), fromDate));
             }
             if (toDate != null) {
-                hqlQuery.setParameter("toDate", toDate);
+                criteria = cb.and(criteria, cb.lessThanOrEqualTo(trainingRoot.get("trainingDate"), toDate));
             }
 
-            return hqlQuery.list();
+            cq.where(criteria);
+            return session.createQuery(cq).getResultList();
         }
     }
 }
