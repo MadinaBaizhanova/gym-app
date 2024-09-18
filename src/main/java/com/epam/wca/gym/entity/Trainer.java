@@ -10,6 +10,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 import java.math.BigInteger;
 import java.util.List;
 
+import static com.epam.wca.gym.utils.Constants.ALLOCATION_SIZE;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -29,7 +32,8 @@ import java.util.List;
 public class Trainer {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "trainer_seq")
+    @SequenceGenerator(name = "trainer_seq", sequenceName = "trainer_sequence", allocationSize = ALLOCATION_SIZE)
     private BigInteger id;
 
     @NonNull

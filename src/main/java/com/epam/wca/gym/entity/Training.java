@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import java.math.BigInteger;
 import java.time.ZonedDateTime;
 
+import static com.epam.wca.gym.utils.Constants.ALLOCATION_SIZE;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -26,7 +29,8 @@ import java.time.ZonedDateTime;
 public class Training {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "training_seq")
+    @SequenceGenerator(name = "training_seq", sequenceName = "training_sequence", allocationSize = ALLOCATION_SIZE)
     private BigInteger id;
 
     @NonNull

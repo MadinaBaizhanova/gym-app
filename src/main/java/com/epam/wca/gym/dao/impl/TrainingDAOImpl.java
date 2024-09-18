@@ -24,12 +24,9 @@ public class TrainingDAOImpl extends AbstractDAO<Training> implements TrainingDA
     }
 
     private void deleteByRole(String roleField, String username) {
-        try (Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
-            session.createMutationQuery("DELETE FROM Training t WHERE t." + roleField + " = :username")
-                    .setParameter("username", username)
-                    .executeUpdate();
-            session.getTransaction().commit();
-        }
+        Session session = sessionFactory.getCurrentSession();
+        session.createMutationQuery("DELETE FROM Training t WHERE t." + roleField + " = :username")
+                .setParameter("username", username)
+                .executeUpdate();
     }
 }

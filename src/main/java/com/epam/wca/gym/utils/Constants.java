@@ -18,4 +18,5 @@ public class Constants {
     public static final int INITIAL_SERIAL_NUMBER = 2;
     public static final String USERNAME = "username";
     public static final int TRAINING_DURATION_INITIALIZATION = 0;
+    public static final int ALLOCATION_SIZE = 1;
 }

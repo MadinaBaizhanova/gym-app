@@ -87,14 +87,9 @@ public class TraineeDAOImpl extends AbstractDAO<Trainee> implements TraineeDAO {
 
     @Override
     public void removeDeactivatedTrainer(BigInteger trainerId) {
-        try (Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
-
-            session.createNativeMutationQuery("DELETE FROM trainee_trainer WHERE trainer_id = :trainerId")
-                    .setParameter("trainerId", trainerId)
-                    .executeUpdate();
-
-            session.getTransaction().commit();
-        }
+        Session session = sessionFactory.getCurrentSession();
+        session.createNativeMutationQuery("DELETE FROM trainee_trainer WHERE trainer_id = :trainerId")
+                .setParameter("trainerId", trainerId)
+                .executeUpdate();
     }
 }

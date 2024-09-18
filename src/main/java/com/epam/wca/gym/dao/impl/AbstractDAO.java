@@ -14,30 +14,21 @@ public abstract class AbstractDAO<T> implements BaseDAO<T> {
 
     @Override
     public T save(T entity) {
-        try (Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
-            session.persist(entity);
-            session.getTransaction().commit();
-        }
+        Session session = sessionFactory.getCurrentSession();
+        session.persist(entity);
         return entity;
     }
 
     @Override
     public T update(T entity) {
-        try (Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
-            session.merge(entity);
-            session.getTransaction().commit();
-        }
+        Session session = sessionFactory.getCurrentSession();
+        session.merge(entity);
         return entity;
     }
 
     @Override
     public void delete(T entity) {
-        try (Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
-            session.remove(entity);
-            session.getTransaction().commit();
-        }
+        Session session = sessionFactory.getCurrentSession();
+        session.remove(entity);
     }
 }
