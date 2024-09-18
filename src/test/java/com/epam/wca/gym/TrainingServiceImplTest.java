@@ -3,10 +3,8 @@ package com.epam.wca.gym;
 import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainingDAO;
 import com.epam.wca.gym.dto.TrainingDTO;
-import com.epam.wca.gym.entity.Trainee;
-import com.epam.wca.gym.entity.Trainer;
-import com.epam.wca.gym.entity.Training;
-import com.epam.wca.gym.entity.User;
+import com.epam.wca.gym.entity.*;
+import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.impl.TrainingServiceImpl;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
@@ -30,9 +28,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
@@ -85,7 +81,7 @@ class TrainingServiceImplTest {
         when(validator.validate(any(TrainingDTO.class))).thenReturn(violations);
 
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> trainingService.create(trainingDTO));
+        InvalidInputException exception = assertThrows(InvalidInputException.class, () -> trainingService.create(trainingDTO));
         assertEquals("Validation failed for the provided training information.", exception.getMessage());
         verify(validator).validate(any(TrainingDTO.class));
         verify(traineeDAO, never()).findByUsername(anyString());
@@ -174,5 +170,62 @@ class TrainingServiceImplTest {
         assertFalse(result.isPresent());
         verify(traineeDAO).findByUsername("john.doe");
         verify(trainingDAO, never()).save(any(Training.class));
+    }
+
+    @Test
+    void testCreateTraining_Success() {
+        //Arrange
+        User traineeUser = new User();
+        traineeUser.setUsername("john.doe");
+
+        Trainee trainee = new Trainee();
+        trainee.setUser(traineeUser);
+
+        User trainerUser = new User();
+        trainerUser.setUsername("trainer.one");
+
+        Trainer trainer = new Trainer();
+        trainer.setUser(trainerUser);
+
+        TrainingType trainingType = new TrainingType();
+        trainingType.setTrainingTypeName("YOGA");
+        trainer.setTrainingType(trainingType);
+
+        trainee.setTrainers(Collections.singletonList(trainer));
+
+        when(validator.validate(any(TrainingDTO.class))).thenReturn(Collections.emptySet());
+        when(traineeDAO.findByUsername("john.doe")).thenReturn(Optional.of(trainee));
+
+        TransactionStatus transactionStatus = mock(TransactionStatus.class);
+        when(transactionTemplate.execute(any(TransactionCallback.class)))
+                .thenAnswer(invocation -> {
+                    TransactionCallback<Optional<Training>> callback = invocation.getArgument(0);
+                    return callback.doInTransaction(transactionStatus);
+                });
+
+        Training newTraining = new Training();
+        newTraining.setTrainingName("Morning Yoga");
+        newTraining.setTrainingType(trainingType);
+
+        when(trainingDAO.save(any(Training.class))).thenReturn(newTraining);
+
+        // Act
+        Optional<Training> result = trainingService.create(new TrainingDTO(
+                BigInteger.ONE,
+                "Morning Yoga",
+                "YOGA",
+                ZonedDateTime.now(),
+                60,
+                "john.doe",
+                "trainer.one"
+        ));
+
+        // Assert
+        assertAll(
+                () -> assertTrue(result.isPresent()),
+                () -> assertEquals("Morning Yoga", result.get().getTrainingName())
+        );
+
+        verify(trainingDAO).save(any(Training.class));
     }
 }

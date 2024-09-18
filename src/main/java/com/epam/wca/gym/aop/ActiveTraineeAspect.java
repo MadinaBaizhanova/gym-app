@@ -3,6 +3,7 @@ package com.epam.wca.gym.aop;
 import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dto.TrainingDTO;
 import com.epam.wca.gym.entity.Trainee;
+import com.epam.wca.gym.exception.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -36,7 +37,7 @@ public class ActiveTraineeAspect {
 
     private void validateTraineeIsActiveStatus(String traineeUsername) {
         Trainee trainee = traineeDAO.findByUsername(traineeUsername)
-                .orElseThrow(() -> new IllegalArgumentException("Trainee not found."));
+                .orElseThrow(() -> new EntityNotFoundException("Trainee not found with username: " + traineeUsername));
 
         if (!trainee.getUser().getIsActive()) {
             throw new IllegalStateException("Your account is deactivated. Please activate it to perform this action.");

@@ -9,6 +9,8 @@ import com.epam.wca.gym.dto.TrainingDTO;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.Training;
+import com.epam.wca.gym.exception.EntityNotFoundException;
+import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.TrainingService;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
@@ -38,13 +40,13 @@ public class TrainingServiceImpl implements TrainingService {
         Set<ConstraintViolation<TrainingDTO>> violations = validator.validate(dto);
         if (!violations.isEmpty()) {
             violations.forEach(violation -> log.error(violation.getMessage()));
-            throw new IllegalArgumentException("Validation failed for the provided training information.");
+            throw new InvalidInputException("Validation failed for the provided training information.");
         }
 
         return transactionTemplate.execute(status -> {
             try {
                 Trainee trainee = traineeDAO.findByUsername(dto.traineeUsername())
-                        .orElseThrow(() -> new IllegalArgumentException("Trainee not found"));
+                        .orElseThrow(() -> new EntityNotFoundException("Trainee not found"));
 
                 Optional<Trainer> chosenTrainer = trainee.getTrainers().stream()
                         .filter(trainer -> trainer.getUser().getUsername().equals(dto.trainerUsername()))

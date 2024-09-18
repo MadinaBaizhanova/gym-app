@@ -8,6 +8,7 @@ import com.epam.wca.gym.dao.UserDAO;
 import com.epam.wca.gym.dto.UserDTO;
 import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.entity.User;
+import com.epam.wca.gym.exception.EntityNotFoundException;
 import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.UserService;
 import com.epam.wca.gym.utils.PasswordGenerator;
@@ -146,7 +147,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void update(UserDTO dto) {
         User user = userDAO.findByUsername(dto.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         String firstName = (dto.getFirstName() != null && !dto.getFirstName().isBlank()) ?
                 dto.getFirstName() : user.getFirstName();

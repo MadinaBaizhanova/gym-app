@@ -13,9 +13,11 @@ import com.epam.wca.gym.dto.UserDTO;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.User;
+import com.epam.wca.gym.exception.EntityNotFoundException;
 import com.epam.wca.gym.mapper.TraineeMapper;
 import com.epam.wca.gym.mapper.TrainerMapper;
 import com.epam.wca.gym.mapper.TrainingMapper;
+import com.epam.wca.gym.service.SecurityService;
 import com.epam.wca.gym.service.TraineeService;
 import com.epam.wca.gym.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ public class TraineeServiceImpl implements TraineeService {
     private final TrainerDAO trainerDAO;
     private final UserService userService;
     private final UserDAO userDAO;
+    private final SecurityService securityService;
 
     @Transactional
     @Override
@@ -73,9 +76,10 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public void deleteByUsername(String traineeUsername) {
         Trainee trainee = traineeDAO.findByUsername(traineeUsername)
-                .orElseThrow(() -> new IllegalArgumentException(TRAINEE_NOT_FOUND));
+                .orElseThrow(() -> new EntityNotFoundException(TRAINEE_NOT_FOUND));
         userDAO.delete(trainee.getUser());
         log.info("Trainee profile deleted successfully.");
+        securityService.logout();
     }
 
     @Secured
@@ -84,7 +88,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public void update(TraineeDTO dto) {
         Trainee trainee = traineeDAO.findByUsername(dto.username())
-                .orElseThrow(() -> new IllegalArgumentException(TRAINEE_NOT_FOUND));
+                .orElseThrow(() -> new EntityNotFoundException(TRAINEE_NOT_FOUND));
 
         if (dto.dateOfBirth() != null) {
             trainee.setDateOfBirth(dto.dateOfBirth());
@@ -106,10 +110,10 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public void addTrainer(String traineeUsername, String trainerUsername) {
         Trainee trainee = traineeDAO.findByUsername(traineeUsername)
-                .orElseThrow(() -> new IllegalArgumentException(TRAINEE_NOT_FOUND));
+                .orElseThrow(() -> new EntityNotFoundException(TRAINEE_NOT_FOUND));
 
         Trainer trainer = trainerDAO.findByUsername(trainerUsername)
-                .orElseThrow(() -> new IllegalArgumentException("Trainer not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Trainer not found"));
 
         if (Boolean.FALSE.equals(trainer.getUser().getIsActive())) {
             log.warn("Trainer {} is deactivated and cannot be added.", trainerUsername);
@@ -135,7 +139,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public void removeTrainer(String traineeUsername, String trainerUsername) {
         Trainee trainee = traineeDAO.findByUsername(traineeUsername)
-                .orElseThrow(() -> new IllegalArgumentException(TRAINEE_NOT_FOUND));
+                .orElseThrow(() -> new EntityNotFoundException(TRAINEE_NOT_FOUND));
 
         Optional<Trainer> trainerToRemove = trainee.getTrainers().stream()
                 .filter(trainer -> trainer.getUser().getUsername().equals(trainerUsername))
@@ -146,7 +150,7 @@ public class TraineeServiceImpl implements TraineeService {
             traineeDAO.update(trainee);
             log.info("Trainer {} successfully removed from Trainee {}", trainerUsername, traineeUsername);
         } else {
-            throw new IllegalArgumentException("Trainer not found in the trainee's list");
+            throw new EntityNotFoundException("Trainer not found in the trainee's list");
         }
     }
 
@@ -165,7 +169,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public List<TrainerDTO> findAssignedTrainers(String traineeUsername) {
         Trainee trainee = traineeDAO.findByUsername(traineeUsername)
-                .orElseThrow(() -> new IllegalArgumentException(TRAINEE_NOT_FOUND));
+                .orElseThrow(() -> new EntityNotFoundException(TRAINEE_NOT_FOUND));
 
         return trainee.getTrainers()
                 .stream()

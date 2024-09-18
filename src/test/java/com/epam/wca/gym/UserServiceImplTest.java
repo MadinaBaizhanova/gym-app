@@ -9,6 +9,7 @@ import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.User;
+import com.epam.wca.gym.exception.EntityNotFoundException;
 import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.impl.UserServiceImpl;
 import com.epam.wca.gym.utils.UsernameGenerator;
@@ -223,7 +224,7 @@ class UserServiceImplTest {
         dto.setUsername("nonExistentUser");
 
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> userService.update(dto));
+        assertThrows(EntityNotFoundException.class, () -> userService.update(dto));
         verify(userDAO, never()).update(any(User.class));
     }
 
@@ -372,7 +373,6 @@ class UserServiceImplTest {
                 .thenReturn(Optional.of(user));
         when(passwordEncoder.matches(currentPassword, storedPasswordHash))
                 .thenReturn(true);
-        @SuppressWarnings("unchecked")
         ConstraintViolation<UserDTO> violation = mock(ConstraintViolation.class);
         when(violation.getMessage())
                 .thenReturn("Password must be at least 10 characters long.");

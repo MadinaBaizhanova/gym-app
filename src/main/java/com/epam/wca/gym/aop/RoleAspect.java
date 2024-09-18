@@ -33,10 +33,6 @@ public class RoleAspect {
     }
 
     private void checkRole(Role role) {
-        if (!securityService.isAuthenticated()) {
-            return;
-        }
-
         boolean hasRole = switch (role) {
             case TRAINEE -> securityService.isTrainee();
             case TRAINER -> securityService.isTrainer();

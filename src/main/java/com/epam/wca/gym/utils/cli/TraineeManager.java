@@ -18,7 +18,7 @@ import java.util.Scanner;
 import static com.epam.wca.gym.utils.Constants.ACCESS_DENIED;
 import static com.epam.wca.gym.utils.Constants.BACK_TO_MAIN_MENU;
 import static com.epam.wca.gym.utils.Constants.TIME_ZONED;
-import static com.epam.wca.gym.utils.Constants.UNAUTHORIZED_ACCESS_ATTEMPT_PLEASE_LOG_IN_FIRST;
+import static com.epam.wca.gym.utils.Constants.TRAINING_DURATION_INITIALIZATION;
 
 @Slf4j
 @UtilityClass
@@ -206,11 +206,6 @@ public class TraineeManager {
     }
 
     private static void addTraining(Scanner scanner, GymFacade gymFacade, SecurityService securityService) {
-        if (!securityService.isAuthenticated()) {
-            log.warn(UNAUTHORIZED_ACCESS_ATTEMPT_PLEASE_LOG_IN_FIRST);
-            return;
-        }
-
         String traineeUsername = securityService.getAuthenticatedUsername();
 
         log.info("Enter Trainer Username: ");
@@ -219,19 +214,26 @@ public class TraineeManager {
         log.info("Enter Training Name: ");
         String trainingName = scanner.nextLine();
 
-        ZonedDateTime trainingDate;
+        ZonedDateTime trainingDate = null;
         log.info("Enter Training Date (format: yyyy-mm-dd): ");
-        String trainingDateStr = scanner.nextLine();
-        try {
-            trainingDate = ZonedDateTime.parse(trainingDateStr + TIME_ZONED);
-        } catch (DateTimeParseException e) {
-            log.error("Invalid Training Date format. Please enter a valid date in yyyy-mm-dd format.");
-            return;
+        String date = scanner.nextLine();
+        if (!date.isEmpty()) {
+            try {
+                trainingDate = ZonedDateTime.parse(date + TIME_ZONED);
+            } catch (DateTimeParseException e) {
+                log.error("Invalid Training Date format. Please enter a valid date in yyyy-mm-dd format.");
+                return;
+            }
         }
 
+        int trainingDuration = TRAINING_DURATION_INITIALIZATION;
         log.info("Enter Training Duration (in minutes): ");
-        int trainingDuration = scanner.nextInt();
-        scanner.nextLine();
+        String duration = scanner.nextLine();
+        try {
+            trainingDuration = Integer.parseInt(duration);
+        } catch (NumberFormatException e) {
+            log.error("Invalid Training Duration. Please enter a valid numeric value.");
+        }
 
         TrainingDTO trainingDTO = new TrainingDTO(null, trainingName, null, trainingDate,
                 trainingDuration, traineeUsername, trainerUsername);

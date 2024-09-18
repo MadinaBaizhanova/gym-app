@@ -7,6 +7,7 @@ import com.epam.wca.gym.dto.UserDTO;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.entity.User;
+import com.epam.wca.gym.exception.EntityNotFoundException;
 import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.UserService;
 import com.epam.wca.gym.service.impl.TrainerServiceImpl;
@@ -217,7 +218,7 @@ class TrainerServiceImplTest {
         when(trainerDAO.findByUsername(dto.username())).thenReturn(Optional.empty());
 
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
                 trainerService.update(dto));
         assertEquals("Trainer not found", exception.getMessage());
 

@@ -8,6 +8,8 @@ import com.epam.wca.gym.dto.UserDTO;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.User;
+import com.epam.wca.gym.exception.EntityNotFoundException;
+import com.epam.wca.gym.service.SecurityService;
 import com.epam.wca.gym.service.UserService;
 import com.epam.wca.gym.service.impl.TraineeServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +52,9 @@ class TraineeServiceImplTest {
 
     @Mock
     private UserDAO userDAO;
+
+    @Mock
+    private SecurityService securityService;
 
     @InjectMocks
     private TraineeServiceImpl traineeService;
@@ -216,7 +221,7 @@ class TraineeServiceImplTest {
         when(traineeDAO.findByUsername(dto.username())).thenReturn(Optional.empty());
 
         // Act & Assert
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> traineeService.update(dto));
+        Exception exception = assertThrows(EntityNotFoundException.class, () -> traineeService.update(dto));
         assertEquals(TRAINEE_NOT_FOUND, exception.getMessage());
         verify(userService, never()).update(any(UserDTO.class));
         verify(traineeDAO, never()).update(any(Trainee.class));
@@ -240,6 +245,7 @@ class TraineeServiceImplTest {
         // Assert
         verify(userDAO).delete(user);
         verify(traineeDAO).findByUsername(username);
+        verify(securityService).logout();
     }
 
     @Test
@@ -250,7 +256,7 @@ class TraineeServiceImplTest {
         when(traineeDAO.findByUsername(username)).thenReturn(Optional.empty());
 
         // Act & Assert
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> traineeService.deleteByUsername(username));
+        Exception exception = assertThrows(EntityNotFoundException.class, () -> traineeService.deleteByUsername(username));
         assertEquals(TRAINEE_NOT_FOUND, exception.getMessage());
         verify(userDAO, never()).delete(any(User.class));
     }
@@ -399,7 +405,7 @@ class TraineeServiceImplTest {
         when(traineeDAO.findByUsername(traineeUsername)).thenReturn(Optional.of(trainee));
 
         // Act & Assert
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> traineeService.removeTrainer(traineeUsername, trainerUsername));
+        Exception exception = assertThrows(EntityNotFoundException.class, () -> traineeService.removeTrainer(traineeUsername, trainerUsername));
         assertEquals("Trainer not found in the trainee's list", exception.getMessage());
         verify(traineeDAO, never()).update(trainee);
     }

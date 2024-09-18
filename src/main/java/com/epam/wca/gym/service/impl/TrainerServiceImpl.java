@@ -10,6 +10,7 @@ import com.epam.wca.gym.dto.UserDTO;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.entity.User;
+import com.epam.wca.gym.exception.EntityNotFoundException;
 import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.mapper.TrainerMapper;
 import com.epam.wca.gym.mapper.TrainingMapper;
@@ -72,14 +73,14 @@ public class TrainerServiceImpl implements TrainerService {
     @Override
     public void update(TrainerDTO dto) {
         Trainer trainer = trainerDAO.findByUsername(dto.username())
-                .orElseThrow(() -> new IllegalArgumentException(TRAINER_NOT_FOUND));
+                .orElseThrow(() -> new EntityNotFoundException(TRAINER_NOT_FOUND));
 
         userService.update(new UserDTO(dto.id(), dto.firstName(), dto.lastName(),
                 dto.username(), null, dto.isActive()));
 
         if (dto.trainingType() != null && !dto.trainingType().isBlank()) {
             TrainingType trainingType = trainingTypeDAO.findByName(dto.trainingType().toUpperCase())
-                    .orElseThrow(() -> new IllegalArgumentException("Training Type not found"));
+                    .orElseThrow(() -> new InvalidInputException("Training Type not found"));
             trainer.setTrainingType(trainingType);
         }
 
