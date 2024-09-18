@@ -26,13 +26,16 @@ public class ActiveTraineeAspect {
 
     @Before("@annotation(com.epam.wca.gym.annotation.CheckActiveTrainee) && args(traineeUsername,..)")
     public void checkTraineeIsActive(String traineeUsername) {
+        log.info("Checking if trainee with username '{}' is active...", traineeUsername);
         validateTraineeIsActiveStatus(traineeUsername);
+        log.info("Trainee with username '{}' is active.", traineeUsername);
     }
 
     @Before("@annotation(com.epam.wca.gym.annotation.CheckActiveTrainee) && args(trainingDTO,..)")
     public void checkTraineeIsActive(TrainingDTO trainingDTO) {
-        String traineeUsername = trainingDTO.traineeUsername();
-        validateTraineeIsActiveStatus(traineeUsername);
+        log.info("Checking if trainee with username '{}' is active...", trainingDTO.traineeUsername());
+        validateTraineeIsActiveStatus(trainingDTO.traineeUsername());
+        log.info("Trainee with username '{}' is active.", trainingDTO.traineeUsername());
     }
 
     private void validateTraineeIsActiveStatus(String traineeUsername) {
@@ -40,6 +43,7 @@ public class ActiveTraineeAspect {
                 .orElseThrow(() -> new EntityNotFoundException("Trainee not found with username: " + traineeUsername));
 
         if (!trainee.getUser().getIsActive()) {
+            log.warn("Trainee with username '{}' is deactivated.", traineeUsername);
             throw new IllegalStateException("Your account is deactivated. Please activate it to perform this action.");
         }
     }
