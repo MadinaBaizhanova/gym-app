@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TraineeService extends BaseService<Trainee, TraineeDTO> {
-
     Optional<TraineeDTO> findByUsername(String traineeUsername);
 
     void update(TraineeDTO dto);

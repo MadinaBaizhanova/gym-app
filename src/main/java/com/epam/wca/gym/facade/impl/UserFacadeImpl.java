@@ -13,18 +13,18 @@ public class UserFacadeImpl implements UserFacade {
     private final UserService userService;
 
     @Override
-    public Role authenticate(String traineeUsername, String password) {
-        return userService.authenticate(traineeUsername, password);
+    public Role authenticate(String username, String password) {
+        return userService.authenticate(username, password);
     }
 
     @Override
-    public void activateUser(String traineeUsername) {
-        userService.activateUser(traineeUsername);
+    public void activateUser(String username) {
+        userService.activateUser(username);
     }
 
     @Override
-    public void deactivateUser(String traineeUsername) {
-        userService.deactivateUser(traineeUsername);
+    public void deactivateUser(String username) {
+        userService.deactivateUser(username);
     }
 
     @Override

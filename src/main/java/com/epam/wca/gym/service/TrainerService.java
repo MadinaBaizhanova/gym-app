@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TrainerService extends BaseService<Trainer, TrainerDTO> {
-
     Optional<TrainerDTO> findByUsername(String trainerUsername);
 
     void update(TrainerDTO dto);

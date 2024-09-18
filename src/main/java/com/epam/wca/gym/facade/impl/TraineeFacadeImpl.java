@@ -20,7 +20,6 @@ import java.util.Optional;
 public class TraineeFacadeImpl implements TraineeFacade {
 
     private final TraineeService traineeService;
-
     private final TrainingService trainingService;
 
     @Override
@@ -29,13 +28,13 @@ public class TraineeFacadeImpl implements TraineeFacade {
     }
 
     @Override
-    public Optional<TraineeDTO> findByUsername(String username) {
-        return traineeService.findByUsername(username);
+    public Optional<TraineeDTO> findByUsername(String traineeUsername) {
+        return traineeService.findByUsername(traineeUsername);
     }
 
     @Override
-    public void deleteByUsername(String username) {
-        traineeService.deleteByUsername(username);
+    public void deleteByUsername(String traineeUsername) {
+        traineeService.deleteByUsername(traineeUsername);
     }
 
     @Override
