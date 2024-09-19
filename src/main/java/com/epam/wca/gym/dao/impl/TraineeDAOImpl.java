@@ -8,6 +8,8 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import lombok.extern.slf4j.Slf4j;
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Repository;
@@ -19,6 +21,7 @@ import java.util.Optional;
 
 import static com.epam.wca.gym.utils.Constants.USERNAME;
 
+@Slf4j
 @Repository
 public class TraineeDAOImpl extends AbstractDAO<Trainee> implements TraineeDAO {
 
@@ -87,9 +90,14 @@ public class TraineeDAOImpl extends AbstractDAO<Trainee> implements TraineeDAO {
 
     @Override
     public void removeDeactivatedTrainer(BigInteger trainerId) {
-        Session session = sessionFactory.getCurrentSession();
-        session.createNativeMutationQuery("DELETE FROM trainee_trainer WHERE trainer_id = :trainerId")
-                .setParameter("trainerId", trainerId)
-                .executeUpdate();
+        try {
+            Session session = sessionFactory.getCurrentSession();
+            session.createNativeMutationQuery("DELETE FROM trainee_trainer WHERE trainer_id = :trainerId")
+                    .setParameter("trainerId", trainerId)
+                    .executeUpdate();
+        } catch (HibernateException exception) {
+            log.error("Error occurred while removing deactivated Trainer from Trainee(s).", exception);
+            throw exception;
+        }
     }
 }
