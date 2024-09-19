@@ -94,10 +94,10 @@ public class TraineeServiceImpl implements TraineeService {
             trainee.setDateOfBirth(dto.dateOfBirth());
         }
 
+        trainee.setAddress((dto.address() != null && !dto.address().isBlank()) ? dto.address() : trainee.getAddress());
+
         userService.update(new UserDTO(dto.id(), dto.firstName(), dto.lastName(),
                 dto.username(), null, dto.isActive()));
-
-        trainee.setAddress((dto.address() != null && !dto.address().isBlank()) ? dto.address() : trainee.getAddress());
 
         traineeDAO.update(trainee);
         log.info("Trainee updated.");

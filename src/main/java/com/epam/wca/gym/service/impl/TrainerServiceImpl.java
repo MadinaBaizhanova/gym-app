@@ -75,14 +75,14 @@ public class TrainerServiceImpl implements TrainerService {
         Trainer trainer = trainerDAO.findByUsername(dto.username())
                 .orElseThrow(() -> new EntityNotFoundException(TRAINER_NOT_FOUND));
 
-        userService.update(new UserDTO(dto.id(), dto.firstName(), dto.lastName(),
-                dto.username(), null, dto.isActive()));
-
         if (dto.trainingType() != null && !dto.trainingType().isBlank()) {
             TrainingType trainingType = trainingTypeDAO.findByName(dto.trainingType().toUpperCase())
                     .orElseThrow(() -> new InvalidInputException("Training Type not found"));
             trainer.setTrainingType(trainingType);
         }
+
+        userService.update(new UserDTO(dto.id(), dto.firstName(), dto.lastName(),
+                dto.username(), null, dto.isActive()));
 
         trainerDAO.update(trainer);
         log.info("Trainer updated.");
