@@ -1,16 +1,11 @@
 package com.epam.wca.gym.entity;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.Immutable;
 
 import java.math.BigInteger;
@@ -32,9 +27,11 @@ public class TrainingType {
     @Column(name = "training_type_name", nullable = false)
     private String trainingTypeName;
 
-    @OneToMany(mappedBy = "trainingType", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "trainingType")
+    @EqualsAndHashCode.Exclude
     private List<Trainer> trainers;
 
-    @OneToMany(mappedBy = "trainingType", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "trainingType")
+    @EqualsAndHashCode.Exclude
     private List<Training> trainings;
 }

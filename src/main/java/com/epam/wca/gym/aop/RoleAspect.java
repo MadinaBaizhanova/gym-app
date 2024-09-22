@@ -2,10 +2,10 @@ package com.epam.wca.gym.aop;
 
 import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.service.SecurityService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -13,14 +13,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 @Order(2)
+@RequiredArgsConstructor
 public class RoleAspect {
 
     private final SecurityService securityService;
-
-    @Autowired
-    public RoleAspect(SecurityService securityService) {
-        this.securityService = securityService;
-    }
 
     @Before("@annotation(com.epam.wca.gym.annotation.TraineeOnly)")
     public void checkTraineeRole() {

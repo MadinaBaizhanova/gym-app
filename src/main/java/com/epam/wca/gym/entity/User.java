@@ -14,6 +14,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 import java.math.BigInteger;
 
@@ -46,6 +47,7 @@ public class User {
 
     @NonNull
     @Column(name = "password", nullable = false)
+    @ToString.Exclude
     private String password;
 
     @NonNull

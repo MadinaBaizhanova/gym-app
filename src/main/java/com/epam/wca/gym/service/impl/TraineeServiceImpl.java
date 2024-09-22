@@ -65,8 +65,8 @@ public class TraineeServiceImpl implements TraineeService {
     @Secured
     @TraineeOnly
     @Override
-    public Optional<TraineeDTO> findByUsername(String traineeUsername) {
-        return traineeDAO.findByUsername(traineeUsername)
+    public Optional<TraineeDTO> findByUsername(String username) {
+        return traineeDAO.findByUsername(username)
                 .map(TraineeMapper::toDTO);
     }
 
@@ -74,8 +74,8 @@ public class TraineeServiceImpl implements TraineeService {
     @TraineeOnly
     @Transactional
     @Override
-    public void deleteByUsername(String traineeUsername) {
-        Trainee trainee = traineeDAO.findByUsername(traineeUsername)
+    public void deleteByUsername(String username) {
+        Trainee trainee = traineeDAO.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException(TRAINEE_NOT_FOUND));
         userDAO.delete(trainee.getUser());
         log.info("Trainee profile deleted successfully.");
@@ -157,8 +157,8 @@ public class TraineeServiceImpl implements TraineeService {
     @Secured
     @TraineeOnly
     @Override
-    public List<TrainerDTO> findAvailableTrainers(String traineeUsername) {
-        return traineeDAO.findAvailableTrainers(traineeUsername)
+    public List<TrainerDTO> findAvailableTrainers(String username) {
+        return traineeDAO.findAvailableTrainers(username)
                 .stream()
                 .map(TrainerMapper::toDTO)
                 .toList();
@@ -167,8 +167,8 @@ public class TraineeServiceImpl implements TraineeService {
     @Secured
     @TraineeOnly
     @Override
-    public List<TrainerDTO> findAssignedTrainers(String traineeUsername) {
-        Trainee trainee = traineeDAO.findByUsername(traineeUsername)
+    public List<TrainerDTO> findAssignedTrainers(String username) {
+        Trainee trainee = traineeDAO.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException(TRAINEE_NOT_FOUND));
 
         return trainee.getTrainers()
@@ -180,11 +180,22 @@ public class TraineeServiceImpl implements TraineeService {
     @Secured
     @TraineeOnly
     @Override
-    public List<TrainingDTO> findTrainings(String traineeUsername, String trainerName, String trainingType,
+    public List<TrainingDTO> findTrainings(String username, String trainerName, String trainingType,
                                            ZonedDateTime fromDate, ZonedDateTime toDate) {
-        return traineeDAO.findTrainings(traineeUsername, trainerName, trainingType, fromDate, toDate)
+        return traineeDAO.findTrainings(username, trainerName, trainingType, fromDate, toDate)
                 .stream()
                 .map(TrainingMapper::toDTO)
                 .toList();
+    }
+
+    @Override
+    public void validateIsActive(String username) {
+        Trainee trainee = traineeDAO.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("Trainee not found with username: " + username));
+
+        if (!trainee.getUser().getIsActive()) {
+            log.warn("Trainee with username '{}' is deactivated.", username);
+            throw new IllegalStateException("Your account is deactivated. Please activate it to perform this action.");
+        }
     }
 }
