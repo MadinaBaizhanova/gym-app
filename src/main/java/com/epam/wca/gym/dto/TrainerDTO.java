@@ -1,17 +1,12 @@
 package com.epam.wca.gym.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.math.BigInteger;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public final class TrainerDTO {
-    private Long trainerId;
-    private Long userId;
-    private String firstName;
-    private String lastName;
-    private String username;
-    private String trainingType;
+public record TrainerDTO(
+        BigInteger id,
+        String firstName,
+        String lastName,
+        String username,
+        String trainingType,
+        Boolean isActive) {
 }

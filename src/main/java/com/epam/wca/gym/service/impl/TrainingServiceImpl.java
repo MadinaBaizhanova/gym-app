@@ -1,116 +1,78 @@
 package com.epam.wca.gym.service.impl;
 
-import com.epam.wca.gym.dao.BaseDAO;
+import com.epam.wca.gym.annotation.CheckActiveTrainee;
+import com.epam.wca.gym.annotation.Secured;
+import com.epam.wca.gym.annotation.TraineeOnly;
 import com.epam.wca.gym.dao.TraineeDAO;
-import com.epam.wca.gym.dao.TrainerDAO;
+import com.epam.wca.gym.dao.TrainingDAO;
 import com.epam.wca.gym.dto.TrainingDTO;
+import com.epam.wca.gym.entity.Trainee;
+import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.Training;
-import com.epam.wca.gym.entity.TrainingType;
-import com.epam.wca.gym.service.AbstractService;
+import com.epam.wca.gym.exception.EntityNotFoundException;
+import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.TrainingService;
-import com.epam.wca.gym.dao.Storage;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
-import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
-
-import static com.epam.wca.gym.utils.NextIdGenerator.calculateNextId;
+import java.util.Set;
 
 @Slf4j
 @Service
-public class TrainingServiceImpl extends AbstractService<Training, TrainingDTO, BaseDAO<Training>> implements TrainingService {
-    private TraineeDAO traineeDao;
-    private TrainerDAO trainerDao;
-    private Storage storage;
-    private BaseDAO<Training> trainingDao;
+@RequiredArgsConstructor
+public class TrainingServiceImpl implements TrainingService {
 
-    @Autowired
-    public TrainingServiceImpl(BaseDAO<Training> trainingDao) {
-        super(trainingDao);
-    }
+    private final TrainingDAO trainingDAO;
+    private final TraineeDAO traineeDAO;
+    private final TransactionTemplate transactionTemplate;
+    private final Validator validator;
 
-    @Autowired
-    public void setTrainingDao(BaseDAO<Training> trainingDao) {
-        this.trainingDao = trainingDao;
-    }
-
-    @Autowired
-    public void setTraineeDao(TraineeDAO traineeDao) {
-        this.traineeDao = traineeDao;
-    }
-
-    @Autowired
-    public void setTrainerDao(TrainerDAO trainerDao) {
-        this.trainerDao = trainerDao;
-    }
-
-    @Autowired
-    public void setStorage(Storage storage) {
-        this.storage = storage;
-    }
-
+    @Secured
+    @TraineeOnly
+    @CheckActiveTrainee
     @Override
     public Optional<Training> create(TrainingDTO dto) {
-        try {
-            Long traineeId = Long.parseLong(dto.getTraineeId());
-            Long trainerId = Long.parseLong(dto.getTrainerId());
-            int trainingDuration = Integer.parseInt(dto.getTrainingDuration());
-            LocalDate trainingDate = LocalDate.parse(dto.getTrainingDate());
-            TrainingType trainingType = TrainingType.valueOf(dto.getTrainingType().toUpperCase());
-
-            return traineeDao.findById(traineeId).flatMap(trainee ->
-                    trainerDao.findById(trainerId).map(trainer -> {
-                        Long id = calculateNextId(storage.getTrainings());
-                        Training training = new Training(id, traineeId, trainerId, dto.getTrainingName(),
-                                trainingType, trainingDate, trainingDuration);
-                        trainingDao.save(training);
-                        log.info("Training session created with ID: {}", id);
-                        return training;
-                    })
-            ).or(() -> {
-                log.warn("Trainee ID: {} or Trainer ID: {} not found. Training creation failed.", traineeId, trainerId);
-
-                return Optional.empty();
-            });
-        } catch (NumberFormatException e) {
-            log.error("Invalid trainee id, trainer id, or duration: {}", e.getMessage());
-
-            return Optional.empty();
-        } catch (DateTimeParseException e) {
-            log.error("Invalid date provided: {}", e.getMessage());
-
-            return Optional.empty();
-        } catch (IllegalArgumentException e) {
-            log.error("Invalid training type provided: {}", e.getMessage());
-
-            return Optional.empty();
+        Set<ConstraintViolation<TrainingDTO>> violations = validator.validate(dto);
+        if (!violations.isEmpty()) {
+            violations.forEach(violation -> log.error(violation.getMessage()));
+            throw new InvalidInputException("Validation failed for the provided training information.");
         }
-    }
 
-    @Override
-    public Optional<TrainingDTO> findById(String trainingId) {
-        return super.findById(trainingId, toTrainingDTO());
-    }
+        return transactionTemplate.execute(status -> {
+            try {
+                Trainee trainee = traineeDAO.findByUsername(dto.traineeUsername())
+                        .orElseThrow(() -> new EntityNotFoundException("Trainee not found"));
 
-    @Override
-    public List<TrainingDTO> findAll() {
-        return super.findAll(toTrainingDTO());
-    }
+                Optional<Trainer> chosenTrainer = trainee.getTrainers().stream()
+                        .filter(trainer -> trainer.getUser().getUsername().equals(dto.trainerUsername()))
+                        .findFirst();
 
-    private static Function<Training, TrainingDTO> toTrainingDTO() {
-        return training -> new TrainingDTO(
-                training.getId(),
-                String.valueOf(training.getTraineeId()),
-                String.valueOf(training.getTrainerId()),
-                training.getTrainingName(),
-                training.getTrainingType().toString(),
-                training.getTrainingDate().toString(),
-                String.valueOf(training.getTrainingDuration())
-        );
+                if (chosenTrainer.isEmpty()) {
+                    log.error("Trainer not found in the trainee's list of favorite trainers.");
+                    return Optional.empty();
+                }
+
+                Training newTraining = new Training();
+                newTraining.setTrainee(trainee);
+                newTraining.setTrainer(chosenTrainer.get());
+                newTraining.setTrainingType(chosenTrainer.get().getTrainingType());
+                newTraining.setTrainingName(dto.trainingName());
+                newTraining.setTrainingDate(dto.trainingDate());
+                newTraining.setTrainingDuration(dto.trainingDuration());
+
+                Training training = trainingDAO.save(newTraining);
+
+                return Optional.of(training);
+            } catch (Exception e) {
+                log.error("Error creating training: {}", e.getMessage());
+                status.setRollbackOnly();
+                return Optional.empty();
+            }
+        });
     }
 }

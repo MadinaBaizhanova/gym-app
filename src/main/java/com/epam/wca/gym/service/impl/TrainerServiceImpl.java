@@ -1,125 +1,101 @@
 package com.epam.wca.gym.service.impl;
 
+import com.epam.wca.gym.annotation.Secured;
+import com.epam.wca.gym.annotation.TrainerOnly;
 import com.epam.wca.gym.dao.TrainerDAO;
+import com.epam.wca.gym.dao.TrainingTypeDAO;
 import com.epam.wca.gym.dto.TrainerDTO;
+import com.epam.wca.gym.dto.TrainingDTO;
 import com.epam.wca.gym.dto.UserDTO;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.entity.User;
-import com.epam.wca.gym.service.AbstractService;
+import com.epam.wca.gym.exception.EntityNotFoundException;
+import com.epam.wca.gym.exception.InvalidInputException;
+import com.epam.wca.gym.mapper.TrainerMapper;
+import com.epam.wca.gym.mapper.TrainingMapper;
 import com.epam.wca.gym.service.TrainerService;
 import com.epam.wca.gym.service.UserService;
-import com.epam.wca.gym.dao.Storage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static com.epam.wca.gym.utils.NextIdGenerator.calculateNextId;
+import static com.epam.wca.gym.utils.Constants.TRAINER_NOT_FOUND;
 
 @Slf4j
 @Service
-public class TrainerServiceImpl extends AbstractService<Trainer, TrainerDTO, TrainerDAO> implements TrainerService {
-    private TrainerDAO trainerDao;
-    private Storage storage;
-    private UserService userService;
+@RequiredArgsConstructor
+public class TrainerServiceImpl implements TrainerService {
 
-    @Autowired
-    public TrainerServiceImpl(TrainerDAO trainerDao) {
-        super(trainerDao);
-    }
+    private final TrainerDAO trainerDAO;
+    private final UserService userService;
+    private final TrainingTypeDAO trainingTypeDAO;
 
-    @Autowired
-    public void setTrainerDao(TrainerDAO trainerDao) {
-        this.trainerDao = trainerDao;
-    }
-
-    @Autowired
-    public void setStorage(Storage storage) {
-        this.storage = storage;
-    }
-
-    @Autowired
-    public void setUserService(UserService userService) {
-        this.userService = userService;
-    }
-
+    @Transactional
     @Override
     public Optional<Trainer> create(TrainerDTO dto) {
-        try {
-            TrainingType trainingType = TrainingType.valueOf(dto.getTrainingType().toUpperCase());
+        TrainingType type = trainingTypeDAO.findByName(dto.trainingType().toUpperCase())
+                .orElseThrow(() -> new InvalidInputException("Training Type not found"));
 
-            Optional<User> user = userService.create(new UserDTO(dto.getFirstName(), dto.getLastName()));
+        Optional<User> user = userService.create(new UserDTO(dto.firstName(), dto.lastName()));
 
-            if (user.isEmpty()) {
-                log.error("Trainer cannot be created.");
-                return Optional.empty();
-            }
-
-            Long id = calculateNextId(storage.getTrainers());
-
-            Trainer trainer = new Trainer(id, user.get().getId(), trainingType);
-
-            trainerDao.save(trainer);
-
-            log.info("Trainer created with ID: {}", id);
-
-            return Optional.of(trainer);
-        } catch (IllegalArgumentException e) {
-            log.error("Invalid training type provided: {}", dto.getTrainingType());
-
+        if (user.isEmpty()) {
+            log.error("Trainer creation failed.");
             return Optional.empty();
         }
+
+        Trainer newTrainer = new Trainer();
+        newTrainer.setUser(user.get());
+        newTrainer.setTrainingType(type);
+
+        Trainer trainer = trainerDAO.save(newTrainer);
+
+        log.info("Trainer Registered Successfully!");
+        return Optional.of(trainer);
     }
 
+    @Secured
+    @TrainerOnly
     @Override
-    public boolean update(String trainerId, String newTrainingType) {
-        try {
-            Long id = Long.parseLong(trainerId);
+    public Optional<TrainerDTO> findByUsername(String trainerUsername) {
+        return trainerDAO.findByUsername(trainerUsername)
+                .map(TrainerMapper::toDTO);
+    }
 
-            TrainingType type = TrainingType.valueOf(newTrainingType.toUpperCase());
+    @Secured
+    @TrainerOnly
+    @Transactional
+    @Override
+    public void update(TrainerDTO dto) {
+        Trainer trainer = trainerDAO.findByUsername(dto.username())
+                .orElseThrow(() -> new EntityNotFoundException(TRAINER_NOT_FOUND));
 
-            return trainerDao.findById(id).map(trainer -> {
-                trainerDao.update(id, type);
-                log.info("Trainer with ID: {} updated with new training type: {}", id, type);
-                return true;
-            }).orElseGet(() -> {
-                log.warn("Trainer with ID: {} not found.", id);
-                return false;
-            });
-        } catch (NumberFormatException e) {
-            log.error("Invalid trainer ID provided: {}", trainerId);
-
-            return false;
-        } catch (IllegalArgumentException e) {
-            log.error("Invalid training type provided: {}", newTrainingType);
-
-            return false;
+        if (dto.trainingType() != null && !dto.trainingType().isBlank()) {
+            TrainingType trainingType = trainingTypeDAO.findByName(dto.trainingType().toUpperCase())
+                    .orElseThrow(() -> new InvalidInputException("Training Type not found"));
+            trainer.setTrainingType(trainingType);
         }
+
+        userService.update(new UserDTO(dto.id(), dto.firstName(), dto.lastName(),
+                dto.username(), null, dto.isActive()));
+
+        trainerDAO.update(trainer);
+        log.info("Trainer updated.");
     }
 
+    @Secured
+    @TrainerOnly
     @Override
-    public Optional<TrainerDTO> findById(String trainerId) {
-        return super.findById(trainerId, this::toTrainerDTO);
-    }
-
-    @Override
-    public List<TrainerDTO> findAll() {
-        return super.findAll(this::toTrainerDTO);
-    }
-
-    private TrainerDTO toTrainerDTO(Trainer trainer) {
-        User user = storage.getUsers().get(trainer.getUserId());
-
-        return new TrainerDTO(
-                trainer.getId(),
-                user.getId(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getUsername(),
-                trainer.getTrainingType().toString()
-        );
+    public List<TrainingDTO> findTrainings(String trainerUsername, String traineeName,
+                                           ZonedDateTime fromDate, ZonedDateTime toDate) {
+        return trainerDAO.findTrainings(trainerUsername, traineeName, fromDate, toDate)
+                .stream()
+                .map(TrainingMapper::toDTO)
+                .toList();
     }
 }

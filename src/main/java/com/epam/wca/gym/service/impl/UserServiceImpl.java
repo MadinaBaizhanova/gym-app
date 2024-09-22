@@ -1,95 +1,162 @@
 package com.epam.wca.gym.service.impl;
 
+import com.epam.wca.gym.annotation.Secured;
+import com.epam.wca.gym.dao.TraineeDAO;
+import com.epam.wca.gym.dao.TrainerDAO;
+import com.epam.wca.gym.dao.TrainingDAO;
 import com.epam.wca.gym.dao.UserDAO;
 import com.epam.wca.gym.dto.UserDTO;
+import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.entity.User;
-import com.epam.wca.gym.service.AbstractService;
+import com.epam.wca.gym.exception.EntityNotFoundException;
+import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.UserService;
-import com.epam.wca.gym.dao.Storage;
+import com.epam.wca.gym.utils.PasswordGenerator;
+import com.epam.wca.gym.utils.UsernameGenerator;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
-
-import static com.epam.wca.gym.utils.NextIdGenerator.calculateNextId;
-import static com.epam.wca.gym.utils.PasswordGenerator.generatePassword;
-import static com.epam.wca.gym.utils.UsernameGenerator.generateUsername;
+import java.util.Set;
 
 @Slf4j
 @Service
-public class UserServiceImpl extends AbstractService<User, UserDTO, UserDAO> implements UserService {
-    private Storage storage;
-    private UserDAO userDao;
+@RequiredArgsConstructor
+public class UserServiceImpl implements UserService {
 
-    @Autowired
-    public UserServiceImpl(UserDAO userDao) {
-        super(userDao);
-    }
+    private final UserDAO userDAO;
+    private final UsernameGenerator usernameGenerator;
+    private final Validator validator;
+    private final BCryptPasswordEncoder passwordEncoder;
+    private final TraineeDAO traineeDAO;
+    private final TrainingDAO trainingDAO;
+    private final TrainerDAO trainerDAO;
 
-    @Autowired
-    public void setUserDao(UserDAO userDao) {
-        this.userDao = userDao;
-    }
-
-    @Autowired
-    public void setStorage(Storage storage) {
-        this.storage = storage;
-    }
-
+    @Transactional
     @Override
-    public Optional<User> create(UserDTO userDTO) {
+    public Optional<User> create(UserDTO dto) {
         try {
-            Long id = calculateNextId(storage.getUsers());
+            String username = usernameGenerator.generateUsername(dto.getFirstName(), dto.getLastName());
+            String rawPassword = PasswordGenerator.generatePassword();
+            String hashedPassword = passwordEncoder.encode(rawPassword);
 
-            String username = generateUsername(userDTO.getFirstName(), userDTO.getLastName(), storage.getUsers());
+            User newUser = new User();
+            newUser.setFirstName(dto.getFirstName());
+            newUser.setLastName(dto.getLastName());
+            newUser.setUsername(username);
+            newUser.setPassword(hashedPassword);
+            newUser.setIsActive(true);
 
-            String password = generatePassword();
+            User user = userDAO.save(newUser);
 
-            User user = new User(id, userDTO.getFirstName(), userDTO.getLastName(), username, password, true);
-
-            userDao.save(user);
-
-            log.info("User created with ID: {}", id);
-
+            log.info("User Registered Successfully with Username: {} and Default Password: {}", username, rawPassword);
             return Optional.of(user);
-        } catch (IllegalArgumentException e) {
-            log.error("User creation failed due to invalid input: {}", e.getMessage());
-
+        } catch (InvalidInputException e) {
             return Optional.empty();
         }
     }
 
     @Override
-    public void deactivateUser(Long userId) {
-        userDao.findById(userId).ifPresentOrElse(user -> {
-            user.setActive(false);
+    public Role authenticate(String username, String password) {
+        Optional<User> userOptional = userDAO.findByUsername(username);
 
-            userDao.update(user.getId(), user.isActive());
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
 
-            log.info("User with ID: {} has been deactivated.", userId);
-        }, () -> log.warn("User with ID: {} not found.", userId));
+            if (passwordEncoder.matches(password, user.getPassword())) {
+                if (traineeDAO.findByUsername(username).isPresent()) {
+                    log.info("Authenticated as Trainee: {}", username);
+                    return Role.TRAINEE;
+                }
+                if (trainerDAO.findByUsername(username).isPresent()) {
+                    log.info("Authenticated as Trainer: {}", username);
+                    return Role.TRAINER;
+                }
+            }
+        }
+        log.warn("Authentication failed for username: {}", username);
+        return Role.NONE;
     }
 
+    @Secured
+    @Transactional
     @Override
-    public Optional<UserDTO> findById(String id) {
-        return super.findById(id, toUserDTO());
+    public void activateUser(String username) {
+        userDAO.findByUsername(username).ifPresent(user -> {
+            user.setIsActive(true);
+            userDAO.update(user);
+            log.info("User activated successfully.");
+        });
     }
 
+    @Secured
+    @Transactional
     @Override
-    public List<UserDTO> findAll() {
-        return super.findAll(toUserDTO());
+    public void deactivateUser(String username) {
+        userDAO.findByUsername(username).ifPresent(user -> {
+            user.setIsActive(false);
+            userDAO.update(user);
+
+            traineeDAO.findByUsername(username).ifPresent(trainee -> trainingDAO.deleteByTrainee(username));
+
+            trainerDAO.findByUsername(username).ifPresent(trainer -> {
+                traineeDAO.removeDeactivatedTrainer(trainer.getId());
+
+                trainingDAO.deleteByTrainer(username);
+            });
+            log.info("User deactivated successfully.");
+        });
     }
 
-    private static Function<User, UserDTO> toUserDTO() {
-        return user -> new UserDTO(
-                user.getId(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getUsername(),
-                user.isActive()
-        );
+    @Secured
+    @Transactional
+    @Override
+    public void changePassword(String username, String currentPassword, String newPassword) {
+        userDAO.findByUsername(username).ifPresent(user -> {
+
+            if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+                throw new InvalidInputException("The current password is incorrect.");
+            }
+
+            UserDTO dto = new UserDTO(user.getId(), user.getFirstName(), user.getLastName(),
+                    user.getUsername(), newPassword, user.getIsActive());
+
+            Set<ConstraintViolation<UserDTO>> violations = validator.validate(dto);
+
+            if (!violations.isEmpty()) {
+                StringBuilder message = new StringBuilder();
+                for (ConstraintViolation<UserDTO> violation : violations) {
+                    message.append(violation.getMessage()).append("\n");
+                }
+                throw new InvalidInputException("Invalid password: " + message);
+            }
+
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userDAO.update(user);
+            log.info("Password changed successfully.");
+        });
+    }
+
+    @Secured
+    @Transactional
+    @Override
+    public void update(UserDTO dto) {
+        User user = userDAO.findByUsername(dto.getUsername())
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        String firstName = (dto.getFirstName() != null && !dto.getFirstName().isBlank()) ?
+                dto.getFirstName() : user.getFirstName();
+        String lastName = (dto.getLastName() != null && !dto.getLastName().isBlank()) ?
+                dto.getLastName() : user.getLastName();
+
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+
+        userDAO.update(user);
     }
 }

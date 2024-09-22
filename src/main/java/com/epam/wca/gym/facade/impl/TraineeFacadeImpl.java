@@ -1,51 +1,75 @@
 package com.epam.wca.gym.facade.impl;
 
 import com.epam.wca.gym.dto.TraineeDTO;
+import com.epam.wca.gym.dto.TrainerDTO;
+import com.epam.wca.gym.dto.TrainingDTO;
+import com.epam.wca.gym.entity.Trainee;
+import com.epam.wca.gym.entity.Training;
 import com.epam.wca.gym.facade.TraineeFacade;
 import com.epam.wca.gym.service.TraineeService;
+import com.epam.wca.gym.service.TrainingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 public class TraineeFacadeImpl implements TraineeFacade {
+
     private final TraineeService traineeService;
+    private final TrainingService trainingService;
 
     @Override
-    public void create(String firstName, String lastName, String dateOfBirth, String address) {
-        TraineeDTO dto = toTraineeDTO(firstName, lastName, dateOfBirth, address);
-        traineeService.create(dto);
+    public Optional<Trainee> create(TraineeDTO traineeDTO) {
+        return traineeService.create(traineeDTO);
     }
 
     @Override
-    public void update(String traineeId, String newAddress) {
-        traineeService.update(traineeId, newAddress);
+    public Optional<TraineeDTO> findByUsername(String traineeUsername) {
+        return traineeService.findByUsername(traineeUsername);
     }
 
     @Override
-    public void delete(String traineeId) {
-        traineeService.delete(traineeId);
+    public void deleteByUsername(String traineeUsername) {
+        traineeService.deleteByUsername(traineeUsername);
     }
 
     @Override
-    public Optional<TraineeDTO> findById(String traineeId) {
-        return traineeService.findById(traineeId);
+    public void update(TraineeDTO traineeDTO) {
+        traineeService.update(traineeDTO);
     }
 
     @Override
-    public List<TraineeDTO> findAll() {
-        return traineeService.findAll();
+    public void addTrainer(String traineeUsername, String trainerUsername) {
+        traineeService.addTrainer(traineeUsername, trainerUsername);
     }
 
-    private static TraineeDTO toTraineeDTO(String firstName, String lastName, String dateOfBirth, String address) {
-        TraineeDTO dto = new TraineeDTO();
-        dto.setFirstName(firstName);
-        dto.setLastName(lastName);
-        dto.setDateOfBirth(dateOfBirth);
-        dto.setAddress(address);
-        return dto;
+    @Override
+    public void removeTrainer(String traineeUsername, String trainerUsername) {
+        traineeService.removeTrainer(traineeUsername, trainerUsername);
+    }
+
+    @Override
+    public List<TrainerDTO> findAvailableTrainers(String traineeUsername) {
+        return traineeService.findAvailableTrainers(traineeUsername);
+    }
+
+    @Override
+    public List<TrainerDTO> findAssignedTrainers(String traineeUsername) {
+        return traineeService.findAssignedTrainers(traineeUsername);
+    }
+
+    @Override
+    public List<TrainingDTO> findTrainings(String traineeUsername, String trainerName, String trainingType,
+                                           ZonedDateTime fromDate, ZonedDateTime toDate) {
+        return traineeService.findTrainings(traineeUsername, trainerName, trainingType, fromDate, toDate);
+    }
+
+    @Override
+    public Optional<Training> create(TrainingDTO trainingDTO) {
+        return trainingService.create(trainingDTO);
     }
 }

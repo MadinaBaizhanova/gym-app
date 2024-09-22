@@ -1,238 +1,228 @@
 package com.epam.wca.gym;
 
 import com.epam.wca.gym.dao.TrainerDAO;
+import com.epam.wca.gym.dao.TrainingTypeDAO;
 import com.epam.wca.gym.dto.TrainerDTO;
 import com.epam.wca.gym.dto.UserDTO;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.entity.User;
-import com.epam.wca.gym.service.impl.TrainerServiceImpl;
+import com.epam.wca.gym.exception.EntityNotFoundException;
+import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.UserService;
-import com.epam.wca.gym.dao.Storage;
+import com.epam.wca.gym.service.impl.TrainerServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.*;
-import java.util.stream.Stream;
+import java.math.BigInteger;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class TrainerServiceImplTest {
 
     @Mock
-    private TrainerDAO trainerDao;
+    private TrainerDAO trainerDAO;
 
     @Mock
     private UserService userService;
 
     @Mock
-    private Storage storage;
+    private TrainingTypeDAO trainingTypeDAO;
 
     @InjectMocks
     private TrainerServiceImpl trainerService;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        trainerService.setTrainerDao(trainerDao);
-        trainerService.setUserService(userService);
-        trainerService.setStorage(storage);
+        // Initialization before each test
     }
 
     @Test
-    void create_ShouldReturnOptionalTrainer_WhenValidTrainerIsCreated() {
+    void testCreateTrainer_Success() {
         // Arrange
-        TrainerDTO trainerDTO = new TrainerDTO(null, null, "John", "Doe", "johndoe", "YOGA");
+        TrainerDTO dto = new TrainerDTO(
+                BigInteger.ONE,
+                "John",
+                "Doe",
+                "john.doe",
+                "YOGA",
+                true
+        );
 
-        User mockUser = new User(1L, "John", "Doe", "johndoe", "securePass123", true);
-        when(userService.create(any(UserDTO.class))).thenReturn(Optional.of(mockUser));
-        when(storage.getTrainers()).thenReturn(new HashMap<>());
-        doNothing().when(trainerDao).save(any(Trainer.class));
+        User user = new User();
+        user.setId(BigInteger.ONE);
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setUsername("john.doe");
+
+        TrainingType trainingType = new TrainingType();
+        trainingType.setId(BigInteger.ONE);
+        trainingType.setTrainingTypeName("YOGA");
+
+        Trainer newTrainer = new Trainer();
+        newTrainer.setUser(user);
+        newTrainer.setTrainingType(trainingType);
+
+        when(trainingTypeDAO.findByName("YOGA")).thenReturn(Optional.of(trainingType));
+        when(userService.create(any(UserDTO.class))).thenReturn(Optional.of(user));
+        when(trainerDAO.save(any(Trainer.class))).thenReturn(newTrainer);
 
         // Act
-        Optional<Trainer> result = trainerService.create(trainerDTO);
+        Optional<Trainer> result = trainerService.create(dto);
 
         // Assert
         assertTrue(result.isPresent());
+        Trainer trainer = result.get();
+        assertEquals("John", trainer.getUser().getFirstName());
+        assertEquals("Doe", trainer.getUser().getLastName());
+        assertEquals("john.doe", trainer.getUser().getUsername());
+        assertEquals("YOGA", trainer.getTrainingType().getTrainingTypeName());
+
+        verify(trainingTypeDAO).findByName("YOGA");
         verify(userService).create(any(UserDTO.class));
-        verify(trainerDao).save(any(Trainer.class));
+        verify(trainerDAO).save(any(Trainer.class));
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"INVALID_TYPE", ""})
-    void create_ShouldReturnEmptyOptional_WhenTrainingTypeIsInvalid(String invalidType) {
+    @Test
+    void testCreateTrainer_TrainingTypeNotFound() {
         // Arrange
-        TrainerDTO trainerDTO = new TrainerDTO(null, null, "John", "Doe", "johndoe", invalidType);
+        TrainerDTO dto = new TrainerDTO(
+                BigInteger.ONE,
+                "John",
+                "Doe",
+                "john.doe",
+                "UNKNOWN_TYPE",
+                true
+        );
 
-        // Act
-        Optional<Trainer> result = trainerService.create(trainerDTO);
+        when(trainingTypeDAO.findByName("UNKNOWN_TYPE")).thenReturn(Optional.empty());
 
-        // Assert
-        assertTrue(result.isEmpty());
+        // Act & Assert
+        InvalidInputException exception = assertThrows(InvalidInputException.class, () ->
+                trainerService.create(dto));
+        assertEquals("Training Type not found", exception.getMessage());
+
+        verify(trainingTypeDAO).findByName("UNKNOWN_TYPE");
         verify(userService, never()).create(any(UserDTO.class));
-        verify(trainerDao, never()).save(any(Trainer.class));
+        verify(trainerDAO, never()).save(any(Trainer.class));
     }
 
     @Test
-    void create_ShouldReturnEmptyOptional_WhenUserCreationFails() {
+    void testFindByUsername_Success() {
         // Arrange
-        TrainerDTO trainerDTO = new TrainerDTO(null, null, "John", "Doe", "johndoe", "YOGA");
+        String trainerUsername = "john.doe";
 
-        when(userService.create(any(UserDTO.class))).thenReturn(Optional.empty());
+        User user = new User();
+        user.setUsername(trainerUsername);
+        user.setFirstName("John");
+        user.setLastName("Doe");
+
+        TrainingType trainingType = new TrainingType();
+        trainingType.setTrainingTypeName("YOGA");
+
+        Trainer trainer = new Trainer();
+        trainer.setUser(user);
+        trainer.setTrainingType(trainingType);
+
+        when(trainerDAO.findByUsername(trainerUsername)).thenReturn(Optional.of(trainer));
 
         // Act
-        Optional<Trainer> result = trainerService.create(trainerDTO);
+        Optional<TrainerDTO> result = trainerService.findByUsername(trainerUsername);
 
         // Assert
-        assertTrue(result.isEmpty());
-        verify(userService).create(any(UserDTO.class));
-        verify(trainerDao, never()).save(any(Trainer.class));
+        assertTrue(result.isPresent());
+        TrainerDTO dto = result.get();
+        assertEquals("john.doe", dto.username());
+        assertEquals("YOGA", dto.trainingType());
+
+        verify(trainerDAO).findByUsername(trainerUsername);
     }
 
-    @ParameterizedTest
-    @CsvSource({
-            "1, YOGA",
-            "2, CARDIO"
-    })
-    void update_ShouldReturnTrue_WhenValidTrainerIsUpdated(String trainerIdStr, String newTrainingType) {
+    @Test
+    void testFindByUsername_NotFound() {
         // Arrange
-        Trainer mockTrainer = new Trainer();
-        when(trainerDao.findById(Long.parseLong(trainerIdStr))).thenReturn(Optional.of(mockTrainer));
-        doNothing().when(trainerDao).update(Long.parseLong(trainerIdStr), TrainingType.valueOf(newTrainingType));
+        String trainerUsername = "unknown";
+
+        when(trainerDAO.findByUsername(trainerUsername)).thenReturn(Optional.empty());
 
         // Act
-        boolean result = trainerService.update(trainerIdStr, newTrainingType);
+        Optional<TrainerDTO> result = trainerService.findByUsername(trainerUsername);
 
         // Assert
-        assertTrue(result);
-        verify(trainerDao).findById(Long.parseLong(trainerIdStr));
-        verify(trainerDao).update(Long.parseLong(trainerIdStr), TrainingType.valueOf(newTrainingType));
+        assertFalse(result.isPresent());
+        verify(trainerDAO).findByUsername(trainerUsername);
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"abc", ""})
-    void update_ShouldReturnFalse_WhenTrainerIdIsInvalid(String invalidTrainerIdStr) {
+    @Test
+    void testUpdateTrainer_Success() {
         // Arrange
-        String newTrainingType = "YOGA";
-
-        // Act
-        boolean result = trainerService.update(invalidTrainerIdStr, newTrainingType);
-
-        // Assert
-        assertFalse(result);
-        verify(trainerDao, never()).update(anyLong(), any(TrainingType.class));
-    }
-
-    @ParameterizedTest
-    @MethodSource("provideInvalidTrainerIds")
-    void update_ShouldReturnFalse_WhenTrainerNotFound(String trainerIdStr, String newTrainingType) {
-        // Arrange
-        when(trainerDao.findById(Long.parseLong(trainerIdStr))).thenReturn(Optional.empty());
-
-        // Act
-        boolean result = trainerService.update(trainerIdStr, newTrainingType);
-
-        // Assert
-        assertFalse(result);
-        verify(trainerDao).findById(Long.parseLong(trainerIdStr));
-        verify(trainerDao, never()).update(anyLong(), any(TrainingType.class));
-    }
-
-    private static Stream<Arguments> provideInvalidTrainerIds() {
-        return Stream.of(
-                Arguments.of("999", "YOGA"),
-                Arguments.of("1000", "CARDIO")
+        TrainerDTO dto = new TrainerDTO(
+                BigInteger.ONE,
+                "John",
+                "Doe",
+                "john.doe",
+                "YOGA",
+                true
         );
-    }
 
-    @ParameterizedTest
-    @CsvSource({
-            "1, 1, John, Doe, johndoe, YOGA"
-    })
-    void findById_ShouldReturnTrainerDTO_WhenValidTrainerIsFound(
-            String trainerIdStr, Long userId, String firstName, String lastName, String username,
-            String trainingType) {
-        // Arrange
-        Trainer mockTrainer = new Trainer(Long.parseLong(trainerIdStr), userId, TrainingType.valueOf(trainingType));
-        User mockUser = new User(userId, firstName, lastName, username, "securePass123", true);
+        User user = new User();
+        user.setId(BigInteger.ONE);
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setUsername("john.doe");
 
-        when(trainerDao.findById(Long.parseLong(trainerIdStr))).thenReturn(Optional.of(mockTrainer));
-        when(storage.getUsers()).thenReturn(new HashMap<>(Map.of(userId, mockUser)));
+        TrainingType trainingType = new TrainingType();
+        trainingType.setId(BigInteger.ONE);
+        trainingType.setTrainingTypeName("YOGA");
+
+        Trainer trainer = new Trainer();
+        trainer.setUser(user);
+        trainer.setTrainingType(trainingType);
+
+        when(trainerDAO.findByUsername(dto.username())).thenReturn(Optional.of(trainer));
+        when(trainingTypeDAO.findByName("YOGA")).thenReturn(Optional.of(trainingType));
 
         // Act
-        Optional<TrainerDTO> result = trainerService.findById(trainerIdStr);
+        trainerService.update(dto);
 
         // Assert
-        assertAll(
-                () -> assertTrue(result.isPresent()),
-                () -> assertEquals(Long.parseLong(trainerIdStr), result.get().getTrainerId()),
-                () -> assertEquals(userId, result.get().getUserId()),
-                () -> assertEquals(firstName, result.get().getFirstName()),
-                () -> assertEquals(lastName, result.get().getLastName()),
-                () -> assertEquals(username, result.get().getUsername()),
-                () -> assertEquals(trainingType, result.get().getTrainingType())
+        verify(userService).update(any(UserDTO.class));
+        verify(trainerDAO).update(trainer);
+    }
+
+    @Test
+    void testUpdateTrainer_NotFound() {
+        // Arrange
+        TrainerDTO dto = new TrainerDTO(
+                BigInteger.ONE,
+                "John",
+                "Doe",
+                "unknown",
+                "YOGA",
+                true
         );
-    }
 
-    @Test
-    void findById_ShouldReturnEmpty_WhenTrainerNotFound() {
-        // Arrange
-        String trainerIdStr = "1";
-        when(trainerDao.findById(Long.parseLong(trainerIdStr))).thenReturn(Optional.empty());
+        when(trainerDAO.findByUsername(dto.username())).thenReturn(Optional.empty());
 
-        // Act
-        Optional<TrainerDTO> result = trainerService.findById(trainerIdStr);
+        // Act & Assert
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
+                trainerService.update(dto));
+        assertEquals("Trainer not found", exception.getMessage());
 
-        // Assert
-        assertTrue(result.isEmpty());
-        verify(trainerDao).findById(Long.parseLong(trainerIdStr));
-        verify(storage, never()).getUsers();
-    }
-
-    @Test
-    void findAll_ShouldReturnListOfTrainerDTOs_WhenTrainersExist() {
-        // Arrange
-        Trainer trainer1 = new Trainer(1L, 1L, TrainingType.YOGA);
-        Trainer trainer2 = new Trainer(2L, 2L, TrainingType.CARDIO);
-        List<Trainer> trainers = List.of(trainer1, trainer2);
-
-        User user1 = new User(1L, "John", "Doe", "johndoe", "securePass123", true);
-        User user2 = new User(2L, "Jane", "Smith", "janesmith", "securePass456", true);
-
-        when(trainerDao.findAll()).thenReturn(trainers);
-        when(storage.getUsers()).thenReturn(new HashMap<>(Map.of(1L, user1, 2L, user2)));
-
-        // Act
-        List<TrainerDTO> result = trainerService.findAll();
-
-        // Assert
-        assertAll(
-                () -> assertEquals(2, result.size()),
-                () -> assertEquals("John", result.get(0).getFirstName()),
-                () -> assertEquals("Jane", result.get(1).getFirstName())
-        );
-    }
-
-    @Test
-    void findAll_ShouldReturnEmptyList_WhenNoTrainersExist() {
-        // Arrange
-        when(trainerDao.findAll()).thenReturn(new ArrayList<>());
-
-        // Act
-        List<TrainerDTO> result = trainerService.findAll();
-
-        // Assert
-        assertTrue(result.isEmpty());
-        verify(trainerDao).findAll();
+        verify(userService, never()).update(any(UserDTO.class));
+        verify(trainerDAO, never()).update(any(Trainer.class));
     }
 }

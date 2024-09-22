@@ -1,114 +1,231 @@
 package com.epam.wca.gym;
 
-import com.epam.wca.gym.dao.BaseDAO;
 import com.epam.wca.gym.dao.TraineeDAO;
-import com.epam.wca.gym.dao.TrainerDAO;
+import com.epam.wca.gym.dao.TrainingDAO;
 import com.epam.wca.gym.dto.TrainingDTO;
-import com.epam.wca.gym.entity.Training;
-import com.epam.wca.gym.entity.TrainingType;
-import com.epam.wca.gym.entity.Trainee;
-import com.epam.wca.gym.entity.Trainer;
+import com.epam.wca.gym.entity.*;
+import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.impl.TrainingServiceImpl;
-import com.epam.wca.gym.dao.Storage;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.quality.Strictness;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
-import java.time.LocalDate;
-import java.util.*;
+import java.math.BigInteger;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+@Slf4j
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class TrainingServiceImplTest {
 
     @Mock
-    private BaseDAO<Training> trainingDao;
+    private TrainingDAO trainingDAO;
 
     @Mock
-    private TraineeDAO traineeDao;
+    private TraineeDAO traineeDAO;
 
     @Mock
-    private TrainerDAO trainerDao;
+    private TransactionTemplate transactionTemplate;
 
     @Mock
-    private Storage storage;
+    private Validator validator;
 
     @InjectMocks
     private TrainingServiceImpl trainingService;
 
+    private TrainingDTO trainingDTO;
+
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        trainingService.setTrainingDao(trainingDao);
-        trainingService.setTraineeDao(traineeDao);
-        trainingService.setTrainerDao(trainerDao);
-        trainingService.setStorage(storage);
+        trainingDTO = new TrainingDTO(
+                BigInteger.ONE,
+                "Morning Yoga",
+                "trainer.one",
+                ZonedDateTime.now(),
+                60,
+                "john.doe",
+                "YOGA"
+        );
     }
 
     @Test
-    void create_ShouldReturnOptionalTraining_WhenValidTrainingIsCreated() {
+    void testCreateTraining_ValidationFails() {
         // Arrange
-        TrainingDTO trainingDTO = new TrainingDTO(null, "1", "2", "Morning Yoga", "YOGA", "2023-09-01", "60");
+        ConstraintViolation<TrainingDTO> violation = mock(ConstraintViolation.class);
+        when(violation.getMessage()).thenReturn("Invalid training name");
+        Set<ConstraintViolation<TrainingDTO>> violations = Set.of(violation);
 
-        Trainee mockTrainee = new Trainee(1L, 1L, LocalDate.of(1990, 1, 1), "123 Main St");
-        Trainer mockTrainer = new Trainer(2L, 2L, TrainingType.YOGA);
-        when(traineeDao.findById(1L)).thenReturn(Optional.of(mockTrainee));
-        when(trainerDao.findById(2L)).thenReturn(Optional.of(mockTrainer));
-        when(storage.getTrainings()).thenReturn(new HashMap<>());
-        doNothing().when(trainingDao).save(any(Training.class));
+        when(validator.validate(any(TrainingDTO.class))).thenReturn(violations);
 
-        // Act
-        Optional<Training> result = trainingService.create(trainingDTO);
-
-        // Assert
-        assertTrue(result.isPresent());
-        verify(traineeDao).findById(1L);
-        verify(trainerDao).findById(2L);
-        verify(trainingDao).save(any(Training.class));
+        // Act & Assert
+        InvalidInputException exception = assertThrows(InvalidInputException.class, () -> trainingService.create(trainingDTO));
+        assertEquals("Validation failed for the provided training information.", exception.getMessage());
+        verify(validator).validate(any(TrainingDTO.class));
+        verify(traineeDAO, never()).findByUsername(anyString());
+        verify(trainingDAO, never()).save(any(Training.class));
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"INVALID_ID", "abc", ""})
-    void create_ShouldReturnEmptyOptional_WhenInvalidTraineeOrTrainerIdIsProvided(String invalidId) {
+    @Test
+    void testCreateTraining_TraineeNotFound() {
         // Arrange
-        TrainingDTO trainingDTO = new TrainingDTO(null, invalidId, invalidId, "Morning Yoga", "YOGA", "2023-09-01", "60");
+        when(validator.validate(any(TrainingDTO.class))).thenReturn(Collections.emptySet());
+        when(traineeDAO.findByUsername("john.doe")).thenReturn(Optional.empty());
+        TransactionStatus transactionStatus = mock(TransactionStatus.class);
+        when(transactionTemplate.execute(any())).thenAnswer(invocation -> {
+            TransactionCallback<?> callback = invocation.getArgument(0, TransactionCallback.class);
+            return callback.doInTransaction(transactionStatus);
+        });
 
         // Act
         Optional<Training> result = trainingService.create(trainingDTO);
 
         // Assert
-        assertTrue(result.isEmpty());
-        verify(traineeDao, never()).findById(anyLong());
-        verify(trainerDao, never()).findById(anyLong());
-        verify(trainingDao, never()).save(any(Training.class));
+        assertFalse(result.isPresent());
+        verify(traineeDAO).findByUsername("john.doe");
+        verify(trainingDAO, never()).save(any(Training.class));
+        verify(transactionStatus).setRollbackOnly();
     }
 
-    @ParameterizedTest
-    @CsvSource({
-            "1, 2, Morning Yoga, INVALID_TYPE, 2023-09-01, 60",
-            "1, 2, Morning Yoga, YOGA, invalid-date, 60",
-            "1, 2, Morning Yoga, YOGA, 2023-09-01, invalid-duration"
-    })
-    void create_ShouldReturnEmptyOptional_WhenInvalidDataIsProvided(
-            String traineeId, String trainerId, String trainingName, String trainingType, String trainingDate, String trainingDuration) {
+    @Test
+    void testCreateTraining_TrainerNotFoundInTraineeList() {
         // Arrange
-        TrainingDTO trainingDTO = new TrainingDTO(null, traineeId, trainerId, trainingName, trainingType, trainingDate, trainingDuration);
+        User traineeUser = new User();
+        traineeUser.setUsername("john.doe");
+        Trainee trainee = new Trainee();
+        trainee.setUser(traineeUser);
+        trainee.setTrainers(new ArrayList<>());
+
+        when(validator.validate(any(TrainingDTO.class))).thenReturn(Collections.emptySet());
+        when(traineeDAO.findByUsername("john.doe")).thenReturn(Optional.of(trainee));
+
+        TransactionStatus transactionStatus = mock(TransactionStatus.class);
+
+        when(transactionTemplate.execute(any())).thenAnswer(invocation -> {
+            TransactionCallback<?> callback = invocation.getArgument(0, TransactionCallback.class);
+            return callback.doInTransaction(transactionStatus);  // Use mocked transactionStatus
+        });
 
         // Act
         Optional<Training> result = trainingService.create(trainingDTO);
 
         // Assert
-        assertTrue(result.isEmpty());
-        verify(traineeDao, never()).findById(anyLong());
-        verify(trainerDao, never()).findById(anyLong());
-        verify(trainingDao, never()).save(any(Training.class));
+        assertFalse(result.isPresent());
+        verify(traineeDAO).findByUsername("john.doe");
+        verify(trainingDAO, never()).save(any(Training.class));
+    }
+
+    @Test
+    void testCreateTraining_TransactionFails() {
+        // Arrange
+        User traineeUser = new User();
+        traineeUser.setUsername("john.doe");
+        Trainee trainee = new Trainee();
+        trainee.setUser(traineeUser);
+
+        User trainerUser = new User();
+        trainerUser.setUsername("trainer.one");
+        Trainer trainer = new Trainer();
+        trainer.setUser(trainerUser);
+
+        trainee.setTrainers(Collections.singletonList(trainer));
+
+        when(validator.validate(any(TrainingDTO.class))).thenReturn(Collections.emptySet());
+        when(traineeDAO.findByUsername("john.doe")).thenReturn(Optional.of(trainee));
+
+        TransactionStatus transactionStatus = mock(TransactionStatus.class);
+
+        when(transactionTemplate.execute(any(TransactionCallback.class)))
+                .thenAnswer(invocation -> {
+                    TransactionCallback<Optional<Training>> callback = invocation.getArgument(0);
+                    return callback.doInTransaction(transactionStatus);
+                });
+
+        // Act
+        Optional<Training> result = trainingService.create(trainingDTO);
+
+        // Assert
+        assertFalse(result.isPresent());
+        verify(traineeDAO).findByUsername("john.doe");
+        verify(trainingDAO, never()).save(any(Training.class));
+    }
+
+    @Test
+    void testCreateTraining_Success() {
+        //Arrange
+        User traineeUser = new User();
+        traineeUser.setUsername("john.doe");
+
+        Trainee trainee = new Trainee();
+        trainee.setUser(traineeUser);
+
+        User trainerUser = new User();
+        trainerUser.setUsername("trainer.one");
+
+        Trainer trainer = new Trainer();
+        trainer.setUser(trainerUser);
+
+        TrainingType trainingType = new TrainingType();
+        trainingType.setTrainingTypeName("YOGA");
+        trainer.setTrainingType(trainingType);
+
+        trainee.setTrainers(Collections.singletonList(trainer));
+
+        when(validator.validate(any(TrainingDTO.class))).thenReturn(Collections.emptySet());
+        when(traineeDAO.findByUsername("john.doe")).thenReturn(Optional.of(trainee));
+
+        TransactionStatus transactionStatus = mock(TransactionStatus.class);
+        when(transactionTemplate.execute(any(TransactionCallback.class)))
+                .thenAnswer(invocation -> {
+                    TransactionCallback<Optional<Training>> callback = invocation.getArgument(0);
+                    return callback.doInTransaction(transactionStatus);
+                });
+
+        Training newTraining = new Training();
+        newTraining.setTrainingName("Morning Yoga");
+        newTraining.setTrainingType(trainingType);
+
+        when(trainingDAO.save(any(Training.class))).thenReturn(newTraining);
+
+        // Act
+        Optional<Training> result = trainingService.create(new TrainingDTO(
+                BigInteger.ONE,
+                "Morning Yoga",
+                "YOGA",
+                ZonedDateTime.now(),
+                60,
+                "john.doe",
+                "trainer.one"
+        ));
+
+        // Assert
+        assertAll(
+                () -> assertTrue(result.isPresent()),
+                () -> assertEquals("Morning Yoga", result.get().getTrainingName())
+        );
+
+        verify(trainingDAO).save(any(Training.class));
     }
 }

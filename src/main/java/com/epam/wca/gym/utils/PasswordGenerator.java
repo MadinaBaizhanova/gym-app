@@ -2,7 +2,7 @@ package com.epam.wca.gym.utils;
 
 import lombok.experimental.UtilityClass;
 
-import java.util.Random;
+import java.security.SecureRandom;
 
 import static com.epam.wca.gym.utils.Constants.PASSWORD_CHARACTERS;
 import static com.epam.wca.gym.utils.Constants.PASSWORD_GENERATION_START_INDEX;
@@ -11,7 +11,7 @@ import static com.epam.wca.gym.utils.Constants.PASSWORD_LENGTH;
 @UtilityClass
 public final class PasswordGenerator {
 
-    private static final Random random = new Random();
+    private static final SecureRandom random = new SecureRandom();
 
     public static String generatePassword() {
         StringBuilder password = new StringBuilder(PASSWORD_LENGTH);
