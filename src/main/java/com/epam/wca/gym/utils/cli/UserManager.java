@@ -17,8 +17,18 @@ import static com.epam.wca.gym.utils.Constants.ENTER_YOUR_FIRST_NAME;
 import static com.epam.wca.gym.utils.Constants.ENTER_YOUR_LAST_NAME;
 import static com.epam.wca.gym.utils.Constants.TIME_ZONED;
 
+/**
+ * @deprecated
+ * <p>
+ * This class previously served as a helper class for the GymApplication class.
+ * </p>
+ * Due to the new, RESTful, version of the application, the responsibilities of this class have been moved
+ * to {@link com.epam.wca.gym.controller.UserController}
+ */
+
 @Slf4j
 @UtilityClass
+@Deprecated(since = "1.2")
 public class UserManager {
 
     public static void register(Scanner scanner, GymFacade gymFacade) {
@@ -113,7 +123,7 @@ public class UserManager {
         String address = scanner.nextLine();
 
         TraineeDTO traineeDTO = new TraineeDTO(null, firstName, lastName, null, dateOfBirth, address,
-                true);
+                true, null);
 
         try {
             gymFacade.trainee().create(traineeDTO);
@@ -132,7 +142,8 @@ public class UserManager {
         log.info("Enter Training Type (available types: FITNESS, YOGA, ZUMBA, STRETCHING, CARDIO, CROSSFIT): ");
         String trainingType = scanner.nextLine();
 
-        TrainerDTO trainerDTO = new TrainerDTO(null, firstName, lastName, null, trainingType, true);
+        TrainerDTO trainerDTO = new TrainerDTO(null, firstName, lastName, null,
+                trainingType, true, null);
 
         try {
             gymFacade.trainer().create(trainerDTO);

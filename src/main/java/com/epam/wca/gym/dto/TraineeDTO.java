@@ -2,6 +2,7 @@ package com.epam.wca.gym.dto;
 
 import java.math.BigInteger;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 public record TraineeDTO(
         BigInteger id,
@@ -10,5 +11,6 @@ public record TraineeDTO(
         String username,
         ZonedDateTime dateOfBirth,
         String address,
-        Boolean isActive) {
+        Boolean isActive,
+        List<TrainerInListDTO> trainers) {
 }

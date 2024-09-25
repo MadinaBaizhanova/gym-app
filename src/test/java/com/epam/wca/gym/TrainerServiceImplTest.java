@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -59,7 +60,8 @@ class TrainerServiceImplTest {
                 "Doe",
                 "john.doe",
                 "YOGA",
-                true
+                true,
+                new ArrayList<>()
         );
 
         User user = new User();
@@ -105,7 +107,8 @@ class TrainerServiceImplTest {
                 "Doe",
                 "john.doe",
                 "UNKNOWN_TYPE",
-                true
+                true,
+                new ArrayList<>()
         );
 
         when(trainingTypeDAO.findByName("UNKNOWN_TYPE")).thenReturn(Optional.empty());
@@ -136,6 +139,7 @@ class TrainerServiceImplTest {
         Trainer trainer = new Trainer();
         trainer.setUser(user);
         trainer.setTrainingType(trainingType);
+        trainer.setTrainees(new ArrayList<>());
 
         when(trainerDAO.findByUsername(trainerUsername)).thenReturn(Optional.of(trainer));
 
@@ -175,7 +179,8 @@ class TrainerServiceImplTest {
                 "Doe",
                 "john.doe",
                 "YOGA",
-                true
+                true,
+                new ArrayList<>()
         );
 
         User user = new User();
@@ -191,6 +196,7 @@ class TrainerServiceImplTest {
         Trainer trainer = new Trainer();
         trainer.setUser(user);
         trainer.setTrainingType(trainingType);
+        trainer.setTrainees(new ArrayList<>());
 
         when(trainerDAO.findByUsername(dto.username())).thenReturn(Optional.of(trainer));
         when(trainingTypeDAO.findByName("YOGA")).thenReturn(Optional.of(trainingType));
@@ -212,7 +218,8 @@ class TrainerServiceImplTest {
                 "Doe",
                 "unknown",
                 "YOGA",
-                true
+                true,
+                new ArrayList<>()
         );
 
         when(trainerDAO.findByUsername(dto.username())).thenReturn(Optional.empty());

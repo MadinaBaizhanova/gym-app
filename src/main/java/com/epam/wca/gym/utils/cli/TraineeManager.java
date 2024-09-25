@@ -1,7 +1,8 @@
 package com.epam.wca.gym.utils.cli;
 
+import com.epam.wca.gym.dto.FindTrainingDTO;
 import com.epam.wca.gym.dto.TraineeDTO;
-import com.epam.wca.gym.dto.TrainerDTO;
+import com.epam.wca.gym.dto.TrainerInListDTO;
 import com.epam.wca.gym.dto.TrainingDTO;
 import com.epam.wca.gym.entity.Training;
 import com.epam.wca.gym.facade.GymFacade;
@@ -20,8 +21,18 @@ import static com.epam.wca.gym.utils.Constants.BACK_TO_MAIN_MENU;
 import static com.epam.wca.gym.utils.Constants.TIME_ZONED;
 import static com.epam.wca.gym.utils.Constants.TRAINING_DURATION_INITIALIZATION;
 
+/**
+ * @deprecated
+ * <p>
+ * This class previously served as a helper class for the GymApplication class.
+ * </p>
+ * Due to the new, RESTful, version of the application, the responsibilities of this class have been moved
+ * to {@link com.epam.wca.gym.controller.TraineeController}
+ */
+
 @Slf4j
 @UtilityClass
+@Deprecated(since = "1.2")
 public class TraineeManager {
 
     public static void showTraineeManagement(Scanner scanner, GymFacade gymFacade, SecurityService securityService) {
@@ -103,7 +114,7 @@ public class TraineeManager {
         }
 
         TraineeDTO updatedDTO = new TraineeDTO(null, firstName, lastName, username,
-                dateOfBirth, address, true);
+                dateOfBirth, address, true, null);
         try {
             gymFacade.trainee().update(updatedDTO);
         } catch (Exception e) {
@@ -138,7 +149,7 @@ public class TraineeManager {
     private static void viewAvailableTrainers(GymFacade gymFacade, SecurityService securityService) {
         String traineeUsername = securityService.getAuthenticatedUsername();
         try {
-            List<TrainerDTO> availableTrainers = gymFacade.trainee().findAvailableTrainers(traineeUsername);
+            List<TrainerInListDTO> availableTrainers = gymFacade.trainee().findAvailableTrainers(traineeUsername);
             if (availableTrainers.isEmpty()) {
                 log.info("No available trainers.");
             } else {
@@ -152,7 +163,7 @@ public class TraineeManager {
     private static void viewAssignedTrainers(GymFacade gymFacade, SecurityService securityService) {
         String traineeUsername = securityService.getAuthenticatedUsername();
         try {
-            List<TrainerDTO> assignedTrainers = gymFacade.trainee().findAssignedTrainers(traineeUsername);
+            List<TrainerInListDTO> assignedTrainers = gymFacade.trainee().findAssignedTrainers(traineeUsername);
             if (assignedTrainers.isEmpty()) {
                 log.info("No trainers assigned.");
             } else {
@@ -196,8 +207,8 @@ public class TraineeManager {
             }
         }
 
-        List<TrainingDTO> trainings = gymFacade.trainee().findTrainings(traineeUsername, trainerName,
-                trainingType, fromDate, toDate);
+        List<TrainingDTO> trainings = gymFacade.trainee().findTrainings(new FindTrainingDTO(traineeUsername, trainerName,
+                trainingType, fromDate, toDate));
         if (trainings.isEmpty()) {
             log.info("No trainings found.");
         } else {

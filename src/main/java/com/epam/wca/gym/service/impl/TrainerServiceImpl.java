@@ -4,6 +4,7 @@ import com.epam.wca.gym.annotation.Secured;
 import com.epam.wca.gym.annotation.TrainerOnly;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingTypeDAO;
+import com.epam.wca.gym.dto.FindTrainingDTO;
 import com.epam.wca.gym.dto.TrainerDTO;
 import com.epam.wca.gym.dto.TrainingDTO;
 import com.epam.wca.gym.dto.UserDTO;
@@ -21,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,14 +64,14 @@ public class TrainerServiceImpl implements TrainerService {
     @Override
     public Optional<TrainerDTO> findByUsername(String trainerUsername) {
         return trainerDAO.findByUsername(trainerUsername)
-                .map(TrainerMapper::toDTO);
+                .map(TrainerMapper::toTrainerDTO);
     }
 
     @Secured
     @TrainerOnly
     @Transactional
     @Override
-    public void update(TrainerDTO dto) {
+    public TrainerDTO update(TrainerDTO dto) {
         Trainer trainer = trainerDAO.findByUsername(dto.username())
                 .orElseThrow(() -> new EntityNotFoundException(TRAINER_NOT_FOUND));
 
@@ -86,16 +86,17 @@ public class TrainerServiceImpl implements TrainerService {
 
         trainerDAO.update(trainer);
         log.info("Trainer updated.");
+
+        return TrainerMapper.toTrainerDTO(trainer);
     }
 
     @Secured
     @TrainerOnly
     @Override
-    public List<TrainingDTO> findTrainings(String trainerUsername, String traineeName,
-                                           ZonedDateTime fromDate, ZonedDateTime toDate) {
-        return trainerDAO.findTrainings(trainerUsername, traineeName, fromDate, toDate)
+    public List<TrainingDTO> findTrainings(FindTrainingDTO dto) {
+        return trainerDAO.findTrainings(dto.username(), dto.name(), dto.fromDate(), dto.toDate())
                 .stream()
-                .map(TrainingMapper::toDTO)
+                .map(TrainingMapper::toTrainingDTO)
                 .toList();
     }
 }

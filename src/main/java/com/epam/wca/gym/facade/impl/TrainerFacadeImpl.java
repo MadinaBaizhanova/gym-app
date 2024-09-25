@@ -1,5 +1,6 @@
 package com.epam.wca.gym.facade.impl;
 
+import com.epam.wca.gym.dto.FindTrainingDTO;
 import com.epam.wca.gym.dto.TrainerDTO;
 import com.epam.wca.gym.dto.TrainingDTO;
 import com.epam.wca.gym.entity.Trainer;
@@ -8,12 +9,21 @@ import com.epam.wca.gym.service.TrainerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * @deprecated
+ * <p>
+ * This class previously served as a facade for trainer-related operations.
+ * It provided a layer between the service layer and the command line interface represented by GymApplication class.
+ * </p>
+ * The responsibilities of this class have been moved to {@link com.epam.wca.gym.controller.TrainerController}
+ */
+
 @Component
 @RequiredArgsConstructor
+@Deprecated(since = "1.2")
 public class TrainerFacadeImpl implements TrainerFacade {
 
     private final TrainerService trainerService;
@@ -34,8 +44,7 @@ public class TrainerFacadeImpl implements TrainerFacade {
     }
 
     @Override
-    public List<TrainingDTO> findTrainings(String trainerUsername, String traineeName,
-                                           ZonedDateTime fromDate, ZonedDateTime toDate) {
-        return trainerService.findTrainings(trainerUsername, traineeName, fromDate, toDate);
+    public List<TrainingDTO> findTrainings(FindTrainingDTO dto) {
+        return trainerService.findTrainings(dto);
     }
 }

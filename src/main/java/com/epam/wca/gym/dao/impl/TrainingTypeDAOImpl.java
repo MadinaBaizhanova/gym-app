@@ -7,6 +7,7 @@ import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -27,6 +28,13 @@ public class TrainingTypeDAOImpl implements TrainingTypeDAO {
                             .setParameter("name", trainingTypeName)
                             .uniqueResult()
             );
+        }
+    }
+
+    @Override
+    public List<TrainingType> findAll() {
+        try (Session session = sessionFactory.openSession()) {
+            return session.createQuery("FROM TrainingType", TrainingType.class).list();
         }
     }
 }

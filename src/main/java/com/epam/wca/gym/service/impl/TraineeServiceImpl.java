@@ -6,8 +6,9 @@ import com.epam.wca.gym.annotation.TraineeOnly;
 import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.UserDAO;
+import com.epam.wca.gym.dto.FindTrainingDTO;
 import com.epam.wca.gym.dto.TraineeDTO;
-import com.epam.wca.gym.dto.TrainerDTO;
+import com.epam.wca.gym.dto.TrainerInListDTO;
 import com.epam.wca.gym.dto.TrainingDTO;
 import com.epam.wca.gym.dto.UserDTO;
 import com.epam.wca.gym.entity.Trainee;
@@ -25,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -67,7 +67,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public Optional<TraineeDTO> findByUsername(String username) {
         return traineeDAO.findByUsername(username)
-                .map(TraineeMapper::toDTO);
+                .map(TraineeMapper::toTraineeDTO);
     }
 
     @Secured
@@ -86,7 +86,7 @@ public class TraineeServiceImpl implements TraineeService {
     @TraineeOnly
     @Transactional
     @Override
-    public void update(TraineeDTO dto) {
+    public TraineeDTO update(TraineeDTO dto) {
         Trainee trainee = traineeDAO.findByUsername(dto.username())
                 .orElseThrow(() -> new EntityNotFoundException(TRAINEE_NOT_FOUND));
 
@@ -96,11 +96,13 @@ public class TraineeServiceImpl implements TraineeService {
 
         trainee.setAddress((dto.address() != null && !dto.address().isBlank()) ? dto.address() : trainee.getAddress());
 
-        userService.update(new UserDTO(dto.id(), dto.firstName(), dto.lastName(),
+        userService.update(new UserDTO(trainee.getUser().getId(), dto.firstName(), dto.lastName(),
                 dto.username(), null, dto.isActive()));
 
         traineeDAO.update(trainee);
         log.info("Trainee updated.");
+
+        return TraineeMapper.toTraineeDTO(trainee);
     }
 
     @Secured
@@ -157,7 +159,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Secured
     @TraineeOnly
     @Override
-    public List<TrainerDTO> findAvailableTrainers(String username) {
+    public List<TrainerInListDTO> findAvailableTrainers(String username) {
         return traineeDAO.findAvailableTrainers(username)
                 .stream()
                 .map(TrainerMapper::toDTO)
@@ -167,7 +169,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Secured
     @TraineeOnly
     @Override
-    public List<TrainerDTO> findAssignedTrainers(String username) {
+    public List<TrainerInListDTO> findAssignedTrainers(String username) {
         Trainee trainee = traineeDAO.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException(TRAINEE_NOT_FOUND));
 
@@ -180,11 +182,11 @@ public class TraineeServiceImpl implements TraineeService {
     @Secured
     @TraineeOnly
     @Override
-    public List<TrainingDTO> findTrainings(String username, String trainerName, String trainingType,
-                                           ZonedDateTime fromDate, ZonedDateTime toDate) {
-        return traineeDAO.findTrainings(username, trainerName, trainingType, fromDate, toDate)
+    public List<TrainingDTO> findTrainings(FindTrainingDTO dto) {
+        return traineeDAO.findTrainings(dto.username(), dto.name(), dto.trainingType(),
+                        dto.fromDate(), dto.toDate())
                 .stream()
-                .map(TrainingMapper::toDTO)
+                .map(TrainingMapper::toTrainingDTO)
                 .toList();
     }
 

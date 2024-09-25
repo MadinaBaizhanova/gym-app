@@ -6,7 +6,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class TrainingMapper {
-    public static TrainingDTO toDTO(Training training) {
+    public static TrainingDTO toTrainingDTO(Training training) {
         return new TrainingDTO(
                 training.getId(),
                 training.getTrainingName(),

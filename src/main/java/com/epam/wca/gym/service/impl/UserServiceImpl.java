@@ -37,6 +37,8 @@ public class UserServiceImpl implements UserService {
     private final TrainingDAO trainingDAO;
     private final TrainerDAO trainerDAO;
 
+    private static final ThreadLocal<String> rawPasswordHolder = new ThreadLocal<>();
+
     @Transactional
     @Override
     public Optional<User> create(UserDTO dto) {
@@ -44,6 +46,8 @@ public class UserServiceImpl implements UserService {
             String username = usernameGenerator.generateUsername(dto.getFirstName(), dto.getLastName());
             String rawPassword = PasswordGenerator.generatePassword();
             String hashedPassword = passwordEncoder.encode(rawPassword);
+
+            rawPasswordHolder.set(rawPassword);
 
             User newUser = new User();
             newUser.setFirstName(dto.getFirstName());
@@ -158,5 +162,15 @@ public class UserServiceImpl implements UserService {
         user.setLastName(lastName);
 
         userDAO.update(user);
+    }
+
+    @Override
+    public String getRawPassword() {
+        return rawPasswordHolder.get();
+    }
+
+    @Override
+    public void clearRawPassword() {
+        rawPasswordHolder.remove();
     }
 }

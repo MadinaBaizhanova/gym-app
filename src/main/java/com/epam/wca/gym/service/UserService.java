@@ -14,4 +14,8 @@ public interface UserService extends BaseService<User, UserDTO> {
     void deactivateUser(String username);
 
     void changePassword(String username, String currentPassword, String newPassword);
+
+    String getRawPassword();
+
+    void clearRawPassword();
 }

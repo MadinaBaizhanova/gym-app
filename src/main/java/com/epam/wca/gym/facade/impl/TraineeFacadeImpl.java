@@ -1,8 +1,6 @@
 package com.epam.wca.gym.facade.impl;
 
-import com.epam.wca.gym.dto.TraineeDTO;
-import com.epam.wca.gym.dto.TrainerDTO;
-import com.epam.wca.gym.dto.TrainingDTO;
+import com.epam.wca.gym.dto.*;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Training;
 import com.epam.wca.gym.facade.TraineeFacade;
@@ -11,12 +9,21 @@ import com.epam.wca.gym.service.TrainingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * @deprecated
+ * <p>
+ * This class previously served as a facade for trainee-related operations.
+ * It provided a layer between the service layer and the command line interface represented by GymApplication class.
+ * </p>
+ * The responsibilities of this class have been moved to {@link com.epam.wca.gym.controller.TraineeController}
+ */
+
 @Component
 @RequiredArgsConstructor
+@Deprecated(since = "1.2")
 public class TraineeFacadeImpl implements TraineeFacade {
 
     private final TraineeService traineeService;
@@ -53,19 +60,18 @@ public class TraineeFacadeImpl implements TraineeFacade {
     }
 
     @Override
-    public List<TrainerDTO> findAvailableTrainers(String traineeUsername) {
+    public List<TrainerInListDTO> findAvailableTrainers(String traineeUsername) {
         return traineeService.findAvailableTrainers(traineeUsername);
     }
 
     @Override
-    public List<TrainerDTO> findAssignedTrainers(String traineeUsername) {
+    public List<TrainerInListDTO> findAssignedTrainers(String traineeUsername) {
         return traineeService.findAssignedTrainers(traineeUsername);
     }
 
     @Override
-    public List<TrainingDTO> findTrainings(String traineeUsername, String trainerName, String trainingType,
-                                           ZonedDateTime fromDate, ZonedDateTime toDate) {
-        return traineeService.findTrainings(traineeUsername, trainerName, trainingType, fromDate, toDate);
+    public List<TrainingDTO> findTrainings(FindTrainingDTO dto) {
+        return traineeService.findTrainings(dto);
     }
 
     @Override

@@ -74,7 +74,8 @@ class TraineeServiceImplTest {
                 "john.doe",
                 ZonedDateTime.now().minusYears(25),
                 "123 Main St",
-                true
+                true,
+                new ArrayList<>()
         );
 
         User user = new User();
@@ -119,7 +120,8 @@ class TraineeServiceImplTest {
                 "john.doe",
                 ZonedDateTime.now().minusYears(25),
                 "123 Main St",
-                true
+                true,
+                new ArrayList<>()
         );
 
         when(userService.create(any(UserDTO.class))).thenReturn(Optional.empty());
@@ -142,6 +144,7 @@ class TraineeServiceImplTest {
         User user = new User();
         user.setUsername(username);
         trainee.setUser(user);
+        trainee.setTrainers(new ArrayList<>());
 
         when(traineeDAO.findByUsername(username)).thenReturn(Optional.of(trainee));
 
@@ -180,7 +183,8 @@ class TraineeServiceImplTest {
                 "john.doe",
                 ZonedDateTime.now().minusYears(25),
                 "456 Elm St",
-                true
+                true,
+                new ArrayList<>()
         );
 
         User user = new User();
@@ -193,6 +197,7 @@ class TraineeServiceImplTest {
         trainee.setId(BigInteger.ONE);
         trainee.setUser(user);
         trainee.setAddress("123 Main St");
+        trainee.setTrainers(new ArrayList<>());
 
         when(traineeDAO.findByUsername(dto.username())).thenReturn(Optional.of(trainee));
 
@@ -215,7 +220,8 @@ class TraineeServiceImplTest {
                 "nonexistent.user",
                 ZonedDateTime.now().minusYears(25),
                 "456 Elm St",
-                true
+                true,
+                new ArrayList<>()
         );
 
         when(traineeDAO.findByUsername(dto.username())).thenReturn(Optional.empty());

@@ -1,5 +1,6 @@
 package com.epam.wca.gym.utils.cli;
 
+import com.epam.wca.gym.dto.FindTrainingDTO;
 import com.epam.wca.gym.dto.TrainerDTO;
 import com.epam.wca.gym.dto.TrainingDTO;
 import com.epam.wca.gym.facade.GymFacade;
@@ -17,8 +18,18 @@ import static com.epam.wca.gym.utils.Constants.ACCESS_DENIED;
 import static com.epam.wca.gym.utils.Constants.BACK_TO_MAIN_MENU;
 import static com.epam.wca.gym.utils.Constants.TIME_ZONED;
 
+/**
+ * @deprecated
+ * <p>
+ * This class previously served as a helper class for the GymApplication class.
+ * </p>
+ * Due to the new, RESTful, version of the application, the responsibilities of this class have been moved
+ * to {@link com.epam.wca.gym.controller.TrainerController}
+ */
+
 @Slf4j
 @UtilityClass
+@Deprecated(since = "1.2")
 public class TrainerManager {
 
     public static void showTrainerManagement(Scanner scanner, GymFacade gymFacade, SecurityService securityService) {
@@ -70,7 +81,8 @@ public class TrainerManager {
         log.info("Enter new Training Type (leave blank to keep unchanged): ");
         String trainingType = scanner.nextLine();
 
-        TrainerDTO updatedDTO = new TrainerDTO(null, firstName, lastName, username, trainingType, true);
+        TrainerDTO updatedDTO = new TrainerDTO(null, firstName, lastName, username, trainingType, true,
+                null);
         try {
             gymFacade.trainer().update(updatedDTO);
         } catch (Exception e) {
@@ -108,7 +120,8 @@ public class TrainerManager {
             }
         }
 
-        List<TrainingDTO> trainings = gymFacade.trainer().findTrainings(trainerUsername, traineeName, fromDate, toDate);
+        List<TrainingDTO> trainings = gymFacade.trainer().findTrainings(new FindTrainingDTO(
+                trainerUsername, traineeName, null, fromDate, toDate));
         if (trainings.isEmpty()) {
             log.info("No trainings found.");
         } else {
