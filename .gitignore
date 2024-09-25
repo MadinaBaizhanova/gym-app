@@ -1,6 +1,7 @@
 # Ignore IntelliJ IDEA files
 .idea/
 *.iml
+/out/artifacts/
 /out/artifacts/gym_app_war_exploded/WEB-INF/
 /src/main/webapp/WEB-INF/
 
@@ -24,7 +25,6 @@ target/
 .idea/compiler.xml
 .idea/libraries/
 *.iws
-*.iml
 *.ipr
 
 ### Eclipse ###
