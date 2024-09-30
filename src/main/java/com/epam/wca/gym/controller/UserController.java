@@ -63,7 +63,7 @@ public class UserController {
 
         Role role = userService.authenticate(username, password);
         if (role == Role.NONE) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials.");
         }
 
         return ResponseEntity.ok("Login successful. User role: " + role);
