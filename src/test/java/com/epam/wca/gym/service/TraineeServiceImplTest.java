@@ -3,8 +3,10 @@ package com.epam.wca.gym;
 import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.UserDAO;
-import com.epam.wca.gym.dto.TraineeDTO;
-import com.epam.wca.gym.dto.UserDTO;
+import com.epam.wca.gym.dto.trainee.TraineeDTO;
+import com.epam.wca.gym.dto.trainee.TraineeUpdateDTO;
+import com.epam.wca.gym.dto.user.UserDTO;
+import com.epam.wca.gym.dto.trainee.TraineeRegistrationDTO;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.User;
@@ -67,15 +69,16 @@ class TraineeServiceImplTest {
     @Test
     void testCreateTrainee_Success() {
         // Arrange
-        TraineeDTO dto = new TraineeDTO(
-                BigInteger.ONE,
+        TraineeRegistrationDTO dto = new TraineeRegistrationDTO(
+//                BigInteger.ONE,
                 "John",
                 "Doe",
-                "john.doe",
-                ZonedDateTime.now().minusYears(25),
-                "123 Main St",
-                true,
-                new ArrayList<>()
+//                "john.doe",
+                ZonedDateTime.now().minusYears(25).toString(),
+                "123 Main St"
+//                ,
+//                true,
+//                new ArrayList<>()
         );
 
         User user = new User();
@@ -87,7 +90,7 @@ class TraineeServiceImplTest {
         Trainee newTrainee = new Trainee();
         newTrainee.setId(BigInteger.ONE);
         newTrainee.setUser(user);
-        newTrainee.setDateOfBirth(dto.dateOfBirth());
+        newTrainee.setDateOfBirth(ZonedDateTime.parse(dto.dateOfBirth()));
         newTrainee.setAddress(dto.address());
 
         when(userService.create(any(UserDTO.class))).thenReturn(Optional.of(user));
@@ -102,8 +105,8 @@ class TraineeServiceImplTest {
         assertAll(
                 () -> assertEquals(dto.firstName(), trainee.getUser().getFirstName()),
                 () -> assertEquals(dto.lastName(), trainee.getUser().getLastName()),
-                () -> assertEquals(dto.username(), trainee.getUser().getUsername()),
-                () -> assertEquals(dto.dateOfBirth(), trainee.getDateOfBirth()),
+//                () -> assertEquals(dto.username(), trainee.getUser().getUsername()),
+                () -> assertEquals(ZonedDateTime.parse(dto.dateOfBirth()), trainee.getDateOfBirth()),
                 () -> assertEquals(dto.address(), trainee.getAddress())
         );
         verify(userService).create(any(UserDTO.class));
@@ -113,15 +116,16 @@ class TraineeServiceImplTest {
     @Test
     void testCreateTrainee_UserCreationFails() {
         // Arrange
-        TraineeDTO dto = new TraineeDTO(
-                BigInteger.ONE,
+        TraineeRegistrationDTO dto = new TraineeRegistrationDTO(
+//                BigInteger.ONE,
                 "John",
                 "Doe",
-                "john.doe",
-                ZonedDateTime.now().minusYears(25),
-                "123 Main St",
-                true,
-                new ArrayList<>()
+//                "john.doe",
+                ZonedDateTime.now().minusYears(25).toString(),
+                "123 Main St"
+//                ,
+//                true,
+//                new ArrayList<>()
         );
 
         when(userService.create(any(UserDTO.class))).thenReturn(Optional.empty());
@@ -176,15 +180,12 @@ class TraineeServiceImplTest {
     @Test
     void testUpdateTrainee_Success() {
         // Arrange
-        TraineeDTO dto = new TraineeDTO(
-                BigInteger.ONE,
+        TraineeUpdateDTO dto = new TraineeUpdateDTO(
                 "John",
                 "Doe",
                 "john.doe",
-                ZonedDateTime.now().minusYears(25),
-                "456 Elm St",
-                true,
-                new ArrayList<>()
+                ZonedDateTime.now().minusYears(25).toString(),
+                "456 Elm St"
         );
 
         User user = new User();
@@ -213,15 +214,12 @@ class TraineeServiceImplTest {
     @Test
     void testUpdateTrainee_NotFound() {
         // Arrange
-        TraineeDTO dto = new TraineeDTO(
-                BigInteger.ONE,
+        TraineeUpdateDTO dto = new TraineeUpdateDTO(
                 "John",
                 "Doe",
                 "nonexistent.user",
-                ZonedDateTime.now().minusYears(25),
-                "456 Elm St",
-                true,
-                new ArrayList<>()
+                ZonedDateTime.now().minusYears(25).toString(),
+                "456 Elm St"
         );
 
         when(traineeDAO.findByUsername(dto.username())).thenReturn(Optional.empty());
@@ -359,7 +357,7 @@ class TraineeServiceImplTest {
 
         // Act & Assert
         Exception exception = assertThrows(IllegalStateException.class, () -> traineeService.addTrainer(traineeUsername, trainerUsername));
-        assertEquals("Cannot add a deactivated trainer.", exception.getMessage());
+        assertEquals("Impossible to add a deactivated trainer.", exception.getMessage());
         verify(traineeDAO, never()).update(trainee);
     }
 

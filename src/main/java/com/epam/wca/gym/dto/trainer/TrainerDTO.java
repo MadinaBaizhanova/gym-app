@@ -10,5 +10,5 @@ public record TrainerDTO(
         String username,
         String trainingType,
         Boolean isActive,
-        List<TraineeInListDTO> trainees) {
+        List<TraineeForTrainerDTO> trainees) {
 }

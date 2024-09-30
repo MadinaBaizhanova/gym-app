@@ -4,7 +4,7 @@ import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingDAO;
 import com.epam.wca.gym.dao.UserDAO;
-import com.epam.wca.gym.dto.UserDTO;
+import com.epam.wca.gym.dto.user.UserDTO;
 import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;

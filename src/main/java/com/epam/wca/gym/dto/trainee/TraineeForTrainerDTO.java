@@ -1,6 +1,6 @@
 package com.epam.wca.gym.dto;
 
-public record TraineeInListDTO(
+public record TraineeForTrainerDTO(
         String firstName,
         String lastName,
         String username) {

@@ -2,8 +2,9 @@ package com.epam.wca.gym;
 
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingTypeDAO;
-import com.epam.wca.gym.dto.TrainerDTO;
-import com.epam.wca.gym.dto.UserDTO;
+import com.epam.wca.gym.dto.trainer.TrainerDTO;
+import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
+import com.epam.wca.gym.dto.user.UserDTO;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.entity.User;
@@ -54,14 +55,10 @@ class TrainerServiceImplTest {
     @Test
     void testCreateTrainer_Success() {
         // Arrange
-        TrainerDTO dto = new TrainerDTO(
-                BigInteger.ONE,
+        TrainerRegistrationDTO dto = new TrainerRegistrationDTO(
                 "John",
                 "Doe",
-                "john.doe",
-                "YOGA",
-                true,
-                new ArrayList<>()
+                "YOGA"
         );
 
         User user = new User();
@@ -101,20 +98,16 @@ class TrainerServiceImplTest {
     @Test
     void testCreateTrainer_TrainingTypeNotFound() {
         // Arrange
-        TrainerDTO dto = new TrainerDTO(
-                BigInteger.ONE,
+        TrainerRegistrationDTO dto = new TrainerRegistrationDTO(
                 "John",
                 "Doe",
-                "john.doe",
-                "UNKNOWN_TYPE",
-                true,
-                new ArrayList<>()
+                "UNKNOWN_TYPE"
         );
 
         when(trainingTypeDAO.findByName("UNKNOWN_TYPE")).thenReturn(Optional.empty());
 
         // Act & Assert
-        InvalidInputException exception = assertThrows(InvalidInputException.class, () ->
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
                 trainerService.create(dto));
         assertEquals("Training Type not found", exception.getMessage());
 
@@ -174,7 +167,6 @@ class TrainerServiceImplTest {
     void testUpdateTrainer_Success() {
         // Arrange
         TrainerDTO dto = new TrainerDTO(
-                BigInteger.ONE,
                 "John",
                 "Doe",
                 "john.doe",
@@ -213,7 +205,6 @@ class TrainerServiceImplTest {
     void testUpdateTrainer_NotFound() {
         // Arrange
         TrainerDTO dto = new TrainerDTO(
-                BigInteger.ONE,
                 "John",
                 "Doe",
                 "unknown",
