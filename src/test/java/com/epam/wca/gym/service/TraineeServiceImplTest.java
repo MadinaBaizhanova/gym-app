@@ -1,4 +1,4 @@
-package com.epam.wca.gym;
+package com.epam.wca.gym.service;
 
 import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
@@ -11,8 +11,6 @@ import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.exception.EntityNotFoundException;
-import com.epam.wca.gym.service.SecurityService;
-import com.epam.wca.gym.service.UserService;
 import com.epam.wca.gym.service.impl.TraineeServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;

@@ -7,14 +7,12 @@
     <artifactId>gym-app</artifactId>
     <version>1.2</version>
     <packaging>war</packaging>
-
     <name>gym-app</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-
         <spring.version>6.1.10</spring.version>
         <spring.security.crypto.version>6.3.3</spring.security.crypto.version>
         <postgresql.version>42.7.3</postgresql.version>
@@ -24,14 +22,20 @@
         <jakarta.validation.version>3.0.2</jakarta.validation.version>
         <jakarta.el.version>4.0.2</jakarta.el.version>
         <jakarta.el.api.version>6.0.1</jakarta.el.api.version>
+        <jakarta.annotation.api.vesion>2.1.1</jakarta.annotation.api.vesion>
+        <jakarta.servlet.api.version>6.1.0</jakarta.servlet.api.version>
+        <jackson.version>2.15.2</jackson.version>
+        <json.path.version>2.9.0</json.path.version>
         <junit.jupiter.version>5.10.2</junit.jupiter.version>
+        <hamcrest.version>2.2</hamcrest.version>
         <mockito.version>4.11.0</mockito.version>
+        <jacoco.version>0.8.7</jacoco.version>
         <lombok.version>1.18.24</lombok.version>
         <slf4j.version>2.0.7</slf4j.version>
         <logback.version>1.5.7</logback.version>
-        <jacoco.version>0.8.7</jacoco.version>
         <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
         <maven.surefire.plugin.version>2.22.1</maven.surefire.plugin.version>
+        <maven.war.plugin.version>3.2.2</maven.war.plugin.version>
     </properties>
 
     <dependencies>
@@ -128,7 +132,7 @@
         <dependency>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
-            <version>2.1.1</version>
+            <version>${jakarta.annotation.api.vesion}</version>
         </dependency>
 
         <dependency>
@@ -171,7 +175,6 @@
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
-
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
@@ -187,20 +190,55 @@
         <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
-            <version>6.1.0</version>
+            <version>${jakarta.servlet.api.version}</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.15.2</version>
+            <version>${jackson.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>2.15.2</version>
+            <version>${jackson.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>${spring.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
+            <version>${json.path.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest</artifactId>
+            <version>${hamcrest.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -264,7 +302,7 @@
 
             <plugin>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.2.2</version>
+                <version>${maven.war.plugin.version}</version>
             </plugin>
         </plugins>
     </build>

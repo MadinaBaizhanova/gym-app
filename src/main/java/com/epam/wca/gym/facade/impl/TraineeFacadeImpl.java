@@ -1,6 +1,11 @@
 package com.epam.wca.gym.facade.impl;
 
-import com.epam.wca.gym.dto.*;
+import com.epam.wca.gym.dto.trainee.TraineeDTO;
+import com.epam.wca.gym.dto.trainee.TraineeRegistrationDTO;
+import com.epam.wca.gym.dto.trainee.TraineeUpdateDTO;
+import com.epam.wca.gym.dto.trainer.TrainerForTraineeDTO;
+import com.epam.wca.gym.dto.training.FindTrainingDTO;
+import com.epam.wca.gym.dto.training.TrainingDTO;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Training;
 import com.epam.wca.gym.facade.TraineeFacade;
@@ -30,7 +35,7 @@ public class TraineeFacadeImpl implements TraineeFacade {
     private final TrainingService trainingService;
 
     @Override
-    public Optional<Trainee> create(TraineeDTO traineeDTO) {
+    public Optional<Trainee> create(TraineeRegistrationDTO traineeDTO) {
         return traineeService.create(traineeDTO);
     }
 
@@ -45,7 +50,7 @@ public class TraineeFacadeImpl implements TraineeFacade {
     }
 
     @Override
-    public void update(TraineeDTO traineeDTO) {
+    public void update(TraineeUpdateDTO traineeDTO) {
         traineeService.update(traineeDTO);
     }
 
@@ -60,12 +65,12 @@ public class TraineeFacadeImpl implements TraineeFacade {
     }
 
     @Override
-    public List<TrainerInListDTO> findAvailableTrainers(String traineeUsername) {
+    public List<TrainerForTraineeDTO> findAvailableTrainers(String traineeUsername) {
         return traineeService.findAvailableTrainers(traineeUsername);
     }
 
     @Override
-    public List<TrainerInListDTO> findAssignedTrainers(String traineeUsername) {
+    public List<TrainerForTraineeDTO> findAssignedTrainers(String traineeUsername) {
         return traineeService.findAssignedTrainers(traineeUsername);
     }
 

@@ -1,10 +1,12 @@
-package com.epam.wca.gym.dto;
+package com.epam.wca.gym.dto.trainee;
 
-import java.time.ZonedDateTime;
+import com.epam.wca.gym.validation.ValidZonedDateTime;
 
 public record TraineeUpdateDTO(
         String firstName,
         String lastName,
-        ZonedDateTime dateOfBirth,
+        String username,
+        @ValidZonedDateTime
+        String dateOfBirth,
         String address) {
 }

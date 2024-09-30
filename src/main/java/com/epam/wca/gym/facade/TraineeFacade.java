@@ -1,9 +1,11 @@
 package com.epam.wca.gym.facade;
 
-import com.epam.wca.gym.dto.FindTrainingDTO;
-import com.epam.wca.gym.dto.TraineeDTO;
-import com.epam.wca.gym.dto.TrainerInListDTO;
-import com.epam.wca.gym.dto.TrainingDTO;
+import com.epam.wca.gym.dto.trainee.TraineeUpdateDTO;
+import com.epam.wca.gym.dto.training.FindTrainingDTO;
+import com.epam.wca.gym.dto.trainee.TraineeDTO;
+import com.epam.wca.gym.dto.trainer.TrainerForTraineeDTO;
+import com.epam.wca.gym.dto.training.TrainingDTO;
+import com.epam.wca.gym.dto.trainee.TraineeRegistrationDTO;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Training;
 
@@ -23,21 +25,21 @@ import java.util.Optional;
 @Deprecated(since = "1.2")
 public interface TraineeFacade {
 
-    Optional<Trainee> create(TraineeDTO traineeDTO);
+    Optional<Trainee> create(TraineeRegistrationDTO traineeDTO);
 
     Optional<TraineeDTO> findByUsername(String username);
 
     void deleteByUsername(String username);
 
-    void update(TraineeDTO traineeDTO);
+    void update(TraineeUpdateDTO traineeDTO);
 
     void addTrainer(String traineeUsername, String trainerUsername);
 
     void removeTrainer(String traineeUsername, String trainerUsername);
 
-    List<TrainerInListDTO> findAvailableTrainers(String traineeUsername);
+    List<TrainerForTraineeDTO> findAvailableTrainers(String traineeUsername);
 
-    List<TrainerInListDTO> findAssignedTrainers(String traineeUsername);
+    List<TrainerForTraineeDTO> findAssignedTrainers(String traineeUsername);
 
     List<TrainingDTO> findTrainings(FindTrainingDTO dto);
 

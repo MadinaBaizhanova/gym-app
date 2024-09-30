@@ -1,10 +1,10 @@
-package com.epam.wca.gym.dto;
+package com.epam.wca.gym.dto.trainer;
 
-import java.math.BigInteger;
+import com.epam.wca.gym.dto.trainee.TraineeForTrainerDTO;
+
 import java.util.List;
 
 public record TrainerDTO(
-        BigInteger id,
         String firstName,
         String lastName,
         String username,

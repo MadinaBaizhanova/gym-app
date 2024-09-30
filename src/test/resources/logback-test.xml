@@ -1,0 +1,12 @@
+<configuration>
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>C:/Users/mabai/Downloads/EpamLab/gym-app/src/test/resources/logs/application.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%date{yyyy-MM-dd HH:mm:ss} %-5level %logger{36}:%line - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref="FILE" />
+    </root>
+</configuration>

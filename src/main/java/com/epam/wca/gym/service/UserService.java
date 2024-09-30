@@ -1,6 +1,6 @@
 package com.epam.wca.gym.service;
 
-import com.epam.wca.gym.dto.UserDTO;
+import com.epam.wca.gym.dto.user.UserDTO;
 import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.entity.User;
 

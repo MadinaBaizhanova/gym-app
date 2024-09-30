@@ -1,8 +1,8 @@
 package com.epam.wca.gym.utils.cli;
 
-import com.epam.wca.gym.dto.FindTrainingDTO;
-import com.epam.wca.gym.dto.TrainerDTO;
-import com.epam.wca.gym.dto.TrainingDTO;
+import com.epam.wca.gym.dto.training.FindTrainingDTO;
+import com.epam.wca.gym.dto.trainer.TrainerDTO;
+import com.epam.wca.gym.dto.training.TrainingDTO;
 import com.epam.wca.gym.facade.GymFacade;
 import com.epam.wca.gym.service.SecurityService;
 import lombok.experimental.UtilityClass;
@@ -81,7 +81,7 @@ public class TrainerManager {
         log.info("Enter new Training Type (leave blank to keep unchanged): ");
         String trainingType = scanner.nextLine();
 
-        TrainerDTO updatedDTO = new TrainerDTO(null, firstName, lastName, username, trainingType, true,
+        TrainerDTO updatedDTO = new TrainerDTO(firstName, lastName, username, trainingType, true,
                 null);
         try {
             gymFacade.trainer().update(updatedDTO);

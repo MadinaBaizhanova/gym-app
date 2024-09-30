@@ -1,7 +1,7 @@
 package com.epam.wca.gym.service.impl;
 
 import com.epam.wca.gym.dao.TrainingTypeDAO;
-import com.epam.wca.gym.dto.TrainingTypeDTO;
+import com.epam.wca.gym.dto.type.TrainingTypeDTO;
 import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.service.TrainingTypeService;
 import lombok.RequiredArgsConstructor;

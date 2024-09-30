@@ -4,10 +4,11 @@ import com.epam.wca.gym.annotation.Secured;
 import com.epam.wca.gym.annotation.TrainerOnly;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingTypeDAO;
-import com.epam.wca.gym.dto.FindTrainingDTO;
-import com.epam.wca.gym.dto.TrainerDTO;
-import com.epam.wca.gym.dto.TrainingDTO;
-import com.epam.wca.gym.dto.UserDTO;
+import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
+import com.epam.wca.gym.dto.training.FindTrainingDTO;
+import com.epam.wca.gym.dto.trainer.TrainerDTO;
+import com.epam.wca.gym.dto.training.TrainingDTO;
+import com.epam.wca.gym.dto.user.UserDTO;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.entity.User;
@@ -38,9 +39,9 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Transactional
     @Override
-    public Optional<Trainer> create(TrainerDTO dto) {
+    public Optional<Trainer> create(TrainerRegistrationDTO dto) {
         TrainingType type = trainingTypeDAO.findByName(dto.trainingType().toUpperCase())
-                .orElseThrow(() -> new InvalidInputException("Training Type not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Training Type not found"));
 
         Optional<User> user = userService.create(new UserDTO(dto.firstName(), dto.lastName()));
 
@@ -81,7 +82,7 @@ public class TrainerServiceImpl implements TrainerService {
             trainer.setTrainingType(trainingType);
         }
 
-        userService.update(new UserDTO(dto.id(), dto.firstName(), dto.lastName(),
+        userService.update(new UserDTO(trainer.getUser().getId(), dto.firstName(), dto.lastName(),
                 dto.username(), null, dto.isActive()));
 
         trainerDAO.update(trainer);

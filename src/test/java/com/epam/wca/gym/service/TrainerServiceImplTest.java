@@ -1,4 +1,4 @@
-package com.epam.wca.gym;
+package com.epam.wca.gym.service;
 
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingTypeDAO;
@@ -9,8 +9,6 @@ import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.exception.EntityNotFoundException;
-import com.epam.wca.gym.exception.InvalidInputException;
-import com.epam.wca.gym.service.UserService;
 import com.epam.wca.gym.service.impl.TrainerServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

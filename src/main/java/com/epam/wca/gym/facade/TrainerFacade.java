@@ -1,8 +1,9 @@
 package com.epam.wca.gym.facade;
 
-import com.epam.wca.gym.dto.FindTrainingDTO;
-import com.epam.wca.gym.dto.TrainerDTO;
-import com.epam.wca.gym.dto.TrainingDTO;
+import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
+import com.epam.wca.gym.dto.training.FindTrainingDTO;
+import com.epam.wca.gym.dto.trainer.TrainerDTO;
+import com.epam.wca.gym.dto.training.TrainingDTO;
 import com.epam.wca.gym.entity.Trainer;
 
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.Optional;
 @Deprecated(since = "1.2")
 public interface TrainerFacade {
 
-    Optional<Trainer> create(TrainerDTO trainerDTO);
+    Optional<Trainer> create(TrainerRegistrationDTO trainerDTO);
 
     Optional<TrainerDTO> findByUsername(String trainerUsername);
 

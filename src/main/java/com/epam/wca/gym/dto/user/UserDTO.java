@@ -1,4 +1,4 @@
-package com.epam.wca.gym.dto;
+package com.epam.wca.gym.dto.user;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -13,6 +13,7 @@ import java.math.BigInteger;
 @AllArgsConstructor
 public final class UserDTO {
 
+    public static final int PASSWORD_MIN_SIZE = 10;
     private BigInteger id;
 
     private final String firstName;
@@ -22,7 +23,7 @@ public final class UserDTO {
     private String username;
 
     @NotNull(message = "Password cannot be null.")
-    @Size(min = 10, message = "Password must be at least 10 characters long.")
+    @Size(min = PASSWORD_MIN_SIZE, message = "Password must be at least 10 characters long.")
     private String password;
 
     private Boolean isActive;

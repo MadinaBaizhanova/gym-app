@@ -5,7 +5,7 @@ import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingDAO;
 import com.epam.wca.gym.dao.UserDAO;
-import com.epam.wca.gym.dto.UserDTO;
+import com.epam.wca.gym.dto.user.UserDTO;
 import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.exception.EntityNotFoundException;
@@ -135,7 +135,7 @@ public class UserServiceImpl implements UserService {
             if (!violations.isEmpty()) {
                 StringBuilder message = new StringBuilder();
                 for (ConstraintViolation<UserDTO> violation : violations) {
-                    message.append(violation.getMessage()).append("\n");
+                    message.append(violation.getMessage());
                 }
                 throw new InvalidInputException("Invalid password: " + message);
             }

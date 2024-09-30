@@ -1,4 +1,4 @@
-package com.epam.wca.gym.dto;
+package com.epam.wca.gym.dto.trainee;
 
 public record TraineeForTrainerDTO(
         String firstName,

@@ -1,8 +1,9 @@
 package com.epam.wca.gym.facade.impl;
 
-import com.epam.wca.gym.dto.FindTrainingDTO;
-import com.epam.wca.gym.dto.TrainerDTO;
-import com.epam.wca.gym.dto.TrainingDTO;
+import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
+import com.epam.wca.gym.dto.training.FindTrainingDTO;
+import com.epam.wca.gym.dto.trainer.TrainerDTO;
+import com.epam.wca.gym.dto.training.TrainingDTO;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.facade.TrainerFacade;
 import com.epam.wca.gym.service.TrainerService;
@@ -29,7 +30,7 @@ public class TrainerFacadeImpl implements TrainerFacade {
     private final TrainerService trainerService;
 
     @Override
-    public Optional<Trainer> create(TrainerDTO trainerDTO) {
+    public Optional<Trainer> create(TrainerRegistrationDTO trainerDTO) {
         return trainerService.create(trainerDTO);
     }
 

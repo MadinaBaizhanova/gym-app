@@ -1,4 +1,4 @@
-package com.epam.wca.gym;
+package com.epam.wca.gym.service;
 
 import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;

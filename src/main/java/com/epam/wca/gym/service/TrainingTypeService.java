@@ -1,6 +1,6 @@
 package com.epam.wca.gym.service;
 
-import com.epam.wca.gym.dto.TrainingTypeDTO;
+import com.epam.wca.gym.dto.type.TrainingTypeDTO;
 
 import java.util.List;
 

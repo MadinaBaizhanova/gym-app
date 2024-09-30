@@ -1,16 +1,19 @@
 package com.epam.wca.gym.controller;
 
-import com.epam.wca.gym.dto.FindTrainingDTO;
-import com.epam.wca.gym.dto.TraineeDTO;
-import com.epam.wca.gym.dto.TraineeUpdateDTO;
-import com.epam.wca.gym.dto.TrainerInListDTO;
-import com.epam.wca.gym.dto.TrainingDTO;
+import com.epam.wca.gym.dto.training.FindTrainingDTO;
+import com.epam.wca.gym.dto.trainee.TraineeDTO;
+import com.epam.wca.gym.dto.trainee.TraineeUpdateDTO;
+import com.epam.wca.gym.dto.trainer.TrainerForTraineeDTO;
+import com.epam.wca.gym.dto.training.TrainingDTO;
+import com.epam.wca.gym.dto.trainee.TraineeRegistrationDTO;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Training;
+import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.SecurityService;
 import com.epam.wca.gym.service.TraineeService;
 import com.epam.wca.gym.service.TrainingService;
 import com.epam.wca.gym.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,7 +43,7 @@ public class TraineeController {
     private final TrainingService trainingService;
 
     @PostMapping("/register")
-    public ResponseEntity<Map<String, String>> register(@RequestBody TraineeDTO dto) {
+    public ResponseEntity<Map<String, String>> register(@Valid @RequestBody TraineeRegistrationDTO dto) {
         Optional<Trainee> registeredTrainee = traineeService.create(dto);
 
         if (registeredTrainee.isPresent()) {
@@ -53,9 +56,8 @@ public class TraineeController {
             response.put("username", username);
             response.put("password", rawPassword);
 
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         }
-
         return status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Trainee registration failed."));
     }
 
@@ -69,11 +71,11 @@ public class TraineeController {
     }
 
     @PutMapping("/update-profile")
-    public ResponseEntity<TraineeDTO> updateProfile(@RequestBody TraineeUpdateDTO dto) {
+    public ResponseEntity<TraineeDTO> updateProfile(@Valid @RequestBody TraineeUpdateDTO dto) {
         String username = securityService.getAuthenticatedUsername();
 
-        TraineeDTO updatedTrainee = traineeService.update(new TraineeDTO(null, dto.firstName(),
-                dto.lastName(), username, dto.dateOfBirth(), dto.address(), null, null));
+        TraineeDTO updatedTrainee = traineeService.update(new TraineeUpdateDTO(dto.firstName(),
+                dto.lastName(), username, dto.dateOfBirth(), dto.address()));
 
         return ResponseEntity.ok(updatedTrainee);
     }
@@ -84,20 +86,20 @@ public class TraineeController {
 
         traineeService.deleteByUsername(username);
 
-        return ResponseEntity.ok("Trainee profile deleted successfully.");
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/available-trainers")
-    public ResponseEntity<List<TrainerInListDTO>> getAvailableTrainers() {
+    public ResponseEntity<List<TrainerForTraineeDTO>> getAvailableTrainers() {
         String username = securityService.getAuthenticatedUsername();
 
-        List<TrainerInListDTO> availableTrainers = traineeService.findAvailableTrainers(username);
+        List<TrainerForTraineeDTO> availableTrainers = traineeService.findAvailableTrainers(username);
 
         return ResponseEntity.ok(availableTrainers);
     }
 
     @PutMapping("/update-trainers")
-    public ResponseEntity<List<TrainerInListDTO>> updateTrainers(@RequestBody Map<String, String> requestBody) {
+    public ResponseEntity<List<TrainerForTraineeDTO>> updateTrainers(@RequestBody Map<String, String> requestBody) {
         String username = securityService.getAuthenticatedUsername();
         String trainerUsername = requestBody.get("trainerUsername");
         String action = requestBody.get("action").toLowerCase();
@@ -107,15 +109,15 @@ public class TraineeController {
         } else if ("remove".equals(action)) {
             traineeService.removeTrainer(username, trainerUsername);
         } else {
-            return ResponseEntity.badRequest().body(null);
+            throw new InvalidInputException("Invalid action values. Allowed values are 'add' and 'remove'!");
         }
 
-        List<TrainerInListDTO> updatedTrainers = traineeService.findAssignedTrainers(username);
+        List<TrainerForTraineeDTO> updatedTrainers = traineeService.findAssignedTrainers(username);
         return ResponseEntity.ok(updatedTrainers);
     }
 
     @PostMapping("/add-training")
-    public ResponseEntity<String> scheduleTraining(@RequestBody TrainingDTO dto) {
+    public ResponseEntity<String> scheduleTraining(@Valid @RequestBody TrainingDTO dto) {
         String username = securityService.getAuthenticatedUsername();
 
         Optional<Training> scheduledTraining = trainingService.create(new TrainingDTO(
@@ -123,14 +125,14 @@ public class TraineeController {
                 username, dto.trainerUsername()));
 
         if (scheduledTraining.isPresent()) {
-            return ResponseEntity.ok("Training session scheduled successfully.");
+            return ResponseEntity.status(HttpStatus.CREATED).body("Training session scheduled successfully.");
         } else {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error scheduling training session.");
         }
     }
 
     @GetMapping("/trainings")
-    public ResponseEntity<List<TrainingDTO>> getTrainings(@RequestBody FindTrainingDTO dto) {
+    public ResponseEntity<List<TrainingDTO>> getTrainings(@Valid @RequestBody FindTrainingDTO dto) {
         String username = securityService.getAuthenticatedUsername();
 
         List<TrainingDTO> trainings = traineeService.findTrainings(new FindTrainingDTO(username, dto.name(),

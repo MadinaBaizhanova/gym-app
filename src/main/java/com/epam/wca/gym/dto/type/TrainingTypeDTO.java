@@ -1,4 +1,4 @@
-package com.epam.wca.gym.dto.trainingType;
+package com.epam.wca.gym.dto.type;
 
 import java.math.BigInteger;
 

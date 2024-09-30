@@ -1,13 +1,15 @@
 package com.epam.wca.gym.controller;
 
-import com.epam.wca.gym.dto.FindTrainingDTO;
-import com.epam.wca.gym.dto.TrainerDTO;
-import com.epam.wca.gym.dto.TrainerUpdateDTO;
-import com.epam.wca.gym.dto.TrainingDTO;
+import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
+import com.epam.wca.gym.dto.training.FindTrainingDTO;
+import com.epam.wca.gym.dto.trainer.TrainerDTO;
+import com.epam.wca.gym.dto.trainer.TrainerUpdateDTO;
+import com.epam.wca.gym.dto.training.TrainingDTO;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.service.SecurityService;
 import com.epam.wca.gym.service.TrainerService;
 import com.epam.wca.gym.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,8 +37,8 @@ public class TrainerController {
     private final SecurityService securityService;
 
     @PostMapping("/register")
-    public ResponseEntity<Map<String, String>> register(@RequestBody TrainerDTO trainerDTO) {
-        Optional<Trainer> registeredTrainer = trainerService.create(trainerDTO);
+    public ResponseEntity<Map<String, String>> register(@Valid @RequestBody TrainerRegistrationDTO dto) {
+        Optional<Trainer> registeredTrainer = trainerService.create(dto);
 
         if (registeredTrainer.isPresent()) {
             String username = registeredTrainer.get().getUser().getUsername();
@@ -48,7 +50,7 @@ public class TrainerController {
             response.put("username", username);
             response.put("password", rawPassword);
 
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         }
 
         return status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Trainer registration failed."));
@@ -64,17 +66,17 @@ public class TrainerController {
     }
 
     @PutMapping("/update-profile")
-    public ResponseEntity<TrainerDTO> updateProfile(@RequestBody TrainerUpdateDTO dto) {
+    public ResponseEntity<TrainerDTO> updateProfile(@Valid @RequestBody TrainerUpdateDTO dto) {
         String username = securityService.getAuthenticatedUsername();
 
-        TrainerDTO updatedTrainer = trainerService.update(new TrainerDTO(null, dto.firstName(),
+        TrainerDTO updatedTrainer = trainerService.update(new TrainerDTO(dto.firstName(),
                 dto.lastName(), username, dto.trainingType(), null, null));
 
         return ResponseEntity.ok(updatedTrainer);
     }
 
     @GetMapping("/trainings")
-    public ResponseEntity<List<TrainingDTO>> getTrainings(@RequestBody FindTrainingDTO dto) {
+    public ResponseEntity<List<TrainingDTO>> getTrainings(@Valid @RequestBody FindTrainingDTO dto) {
         String username = securityService.getAuthenticatedUsername();
 
         List<TrainingDTO> trainings = trainerService.findTrainings(new FindTrainingDTO(username, dto.name(),

@@ -1,7 +1,6 @@
-package com.epam.wca.gym;
+package com.epam.wca.gym.controller;
 
 import com.epam.wca.gym.config.AppConfig;
-import com.epam.wca.gym.controller.UserController;
 import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.service.UserService;
 import org.junit.jupiter.api.BeforeEach;

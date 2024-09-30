@@ -1,4 +1,4 @@
-package com.epam.wca.gym;
+package com.epam.wca.gym.controller;
 
 import com.epam.wca.gym.config.AppConfig;
 import com.epam.wca.gym.dto.type.TrainingTypeDTO;

@@ -1,4 +1,6 @@
-package com.epam.wca.gym.dto;
+package com.epam.wca.gym.dto.trainee;
+
+import com.epam.wca.gym.dto.trainer.TrainerForTraineeDTO;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -10,5 +12,5 @@ public record TraineeDTO(
         ZonedDateTime dateOfBirth,
         String address,
         Boolean isActive,
-        List<TrainerInListDTO> trainers) {
+        List<TrainerForTraineeDTO> trainers) {
 }

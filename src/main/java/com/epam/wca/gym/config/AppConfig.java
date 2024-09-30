@@ -8,8 +8,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+import lombok.RequiredArgsConstructor;
 import org.hibernate.SessionFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -26,26 +26,38 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import javax.sql.DataSource;
 import java.util.List;
 import java.util.Objects;
 
+@EnableWebMvc
+@EnableAspectJAutoProxy
+@EnableTransactionManagement
 @Configuration
 @ComponentScan(basePackages = "com.epam.wca.gym")
-@EnableTransactionManagement
-@EnableAspectJAutoProxy
-@EnableWebMvc
+@RequiredArgsConstructor
 @PropertySource("classpath:application.properties")
 public class AppConfig implements WebMvcConfigurer {
 
     private final Environment environment;
     private final ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
+    private final LoggingInterceptor loggingInterceptor;
 
-    @Autowired
-    public AppConfig(Environment environment) {
-        this.environment = environment;
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(loggingInterceptor)
+                .addPathPatterns("/**");
+    }
+
+    @Override
+    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+        MappingJackson2HttpMessageConverter jsonConverter = new MappingJackson2HttpMessageConverter();
+        jsonConverter.setObjectMapper(objectMapper());
+        converters.add(jsonConverter);
     }
 
     @Bean
@@ -102,15 +114,10 @@ public class AppConfig implements WebMvcConfigurer {
         return objectMapper;
     }
 
-    @Override
-    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
-        MappingJackson2HttpMessageConverter jsonConverter = new MappingJackson2HttpMessageConverter();
-        jsonConverter.setObjectMapper(objectMapper());
-        converters.add(jsonConverter);
-    }
-
     @Bean
-    public AuthenticationFilter authenticationFilter(UserService userService, SecurityService securityService) {
-        return new AuthenticationFilter(userService, securityService);
+    public AuthenticationFilter authenticationFilter(UserService userService,
+                                                     SecurityService securityService,
+                                                     RequestMappingHandlerMapping handlerMapping) {
+        return new AuthenticationFilter(userService, securityService, handlerMapping);
     }
 }

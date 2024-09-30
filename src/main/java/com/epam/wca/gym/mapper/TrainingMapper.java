@@ -1,6 +1,6 @@
 package com.epam.wca.gym.mapper;
 
-import com.epam.wca.gym.dto.TrainingDTO;
+import com.epam.wca.gym.dto.training.TrainingDTO;
 import com.epam.wca.gym.entity.Training;
 import lombok.experimental.UtilityClass;
 
