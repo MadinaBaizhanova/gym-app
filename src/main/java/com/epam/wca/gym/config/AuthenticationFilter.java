@@ -19,13 +19,14 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.epam.wca.gym.utils.Constants.BASE64_PASSWORD;
+import static com.epam.wca.gym.utils.Constants.BASE64_USERNAME;
+import static com.epam.wca.gym.utils.Constants.LIMIT;
+
 @Component
 @RequiredArgsConstructor
 public class AuthenticationFilter extends HttpFilter {
 
-    public static final int LIMIT = 2;
-    public static final int BASE64_USERNAME = 0;
-    public static final int BASE64_PASSWORD = 1;
     private final transient UserService userService;
     private final transient SecurityService securityService;
     private final transient RequestMappingHandlerMapping handlerMapping;

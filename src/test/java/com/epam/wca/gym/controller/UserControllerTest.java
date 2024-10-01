@@ -88,6 +88,6 @@ class UserControllerTest {
                         .param("password", password)
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isUnauthorized())
-                .andExpect(content().string("Invalid credentials"));
+                .andExpect(content().string("Invalid credentials."));
     }
 }

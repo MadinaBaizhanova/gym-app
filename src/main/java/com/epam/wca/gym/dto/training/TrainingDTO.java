@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigInteger;
 import java.time.ZonedDateTime;
 
+import static com.epam.wca.gym.utils.Constants.DURATION_MIN_SIZE;
+
 public record TrainingDTO(
         BigInteger id,
 
@@ -25,5 +27,4 @@ public record TrainingDTO(
 
         String traineeUsername,
         String trainerUsername) {
-    public static final int DURATION_MIN_SIZE = 30;
 }

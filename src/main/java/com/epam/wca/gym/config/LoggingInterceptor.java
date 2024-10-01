@@ -9,11 +9,11 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.UUID;
 
+import static com.epam.wca.gym.utils.Constants.TRANSACTION_ID_HEADER;
+
 @Slf4j
 @Component
 public class LoggingInterceptor implements HandlerInterceptor {
-
-    private static final String TRANSACTION_ID_HEADER = "transactionId";
 
     @Override
     public boolean preHandle(HttpServletRequest request, @NonNull HttpServletResponse response,

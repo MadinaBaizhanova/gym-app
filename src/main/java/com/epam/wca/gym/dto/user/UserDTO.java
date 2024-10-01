@@ -8,12 +8,13 @@ import lombok.RequiredArgsConstructor;
 
 import java.math.BigInteger;
 
+import static com.epam.wca.gym.utils.Constants.PASSWORD_MIN_SIZE;
+
 @Data
 @RequiredArgsConstructor
 @AllArgsConstructor
 public final class UserDTO {
 
-    public static final int PASSWORD_MIN_SIZE = 10;
     private BigInteger id;
 
     private final String firstName;
