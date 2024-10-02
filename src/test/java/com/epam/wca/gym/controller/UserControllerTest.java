@@ -2,6 +2,8 @@ package com.epam.wca.gym.controller;
 
 import com.epam.wca.gym.config.AppConfig;
 import com.epam.wca.gym.entity.Role;
+import com.epam.wca.gym.exception.GlobalExceptionHandler;
+import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,8 +20,10 @@ import org.springframework.test.context.web.WebAppConfiguration;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {AppConfig.class})
@@ -37,7 +41,9 @@ class UserControllerTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        this.mockMvc = MockMvcBuilders.standaloneSetup(userController).build();
+        this.mockMvc = MockMvcBuilders.standaloneSetup(userController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 
     @Test
@@ -49,7 +55,7 @@ class UserControllerTest {
         when(userService.authenticate(username, password)).thenReturn(Role.TRAINEE);
 
         // Act & Assert
-        mockMvc.perform(get("/user/login")
+        mockMvc.perform(get("/api/v1/user/auth")
                         .param("username", username)
                         .param("password", password))
                 .andExpect(status().isOk())
@@ -60,14 +66,14 @@ class UserControllerTest {
 
     @Test
     void login_ShouldReturnOkAndRoleTrainer_WhenCredentialsAreValid() throws Exception {
-        // Arrange: Valid credentials for a TRAINER
+        // Arrange
         String username = "jane_doe";
         String password = "password123";
 
         when(userService.authenticate(username, password)).thenReturn(Role.TRAINER);
 
         // Act & Assert
-        mockMvc.perform(get("/user/login")
+        mockMvc.perform(get("/api/v1/user/auth")
                         .param("username", username)
                         .param("password", password))
                 .andExpect(status().isOk())
@@ -75,19 +81,19 @@ class UserControllerTest {
     }
 
     @Test
-    void login_ShouldReturnUnauthorized_WhenCredentialsAreInvalid() throws Exception {
+    void login_ShouldReturnTeapotStatus_WhenCredentialsAreInvalid() throws Exception {
         // Arrange
         String username = "john_doe";
         String password = "wrongPassword";
 
-        when(userService.authenticate(username, password)).thenReturn(Role.NONE);
+        when(userService.authenticate(username, password)).thenThrow(new InvalidInputException("Invalid credentials provided!"));
 
         // Act & Assert
-        mockMvc.perform(get("/user/login")
+        mockMvc.perform(get("/api/v1/user/auth")
                         .param("username", username)
                         .param("password", password)
                         .contentType(APPLICATION_JSON))
-                .andExpect(status().isUnauthorized())
-                .andExpect(content().string("Invalid credentials."));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Invalid credentials provided!"));
     }
 }

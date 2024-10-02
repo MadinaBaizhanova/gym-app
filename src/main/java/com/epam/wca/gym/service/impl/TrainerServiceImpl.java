@@ -39,33 +39,29 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Transactional
     @Override
-    public Optional<Trainer> create(TrainerRegistrationDTO dto) {
+    public Trainer create(TrainerRegistrationDTO dto) {
         TrainingType type = trainingTypeDAO.findByName(dto.trainingType().toUpperCase())
                 .orElseThrow(() -> new EntityNotFoundException("Training Type not found"));
 
-        Optional<User> user = userService.create(new UserDTO(dto.firstName(), dto.lastName()));
-
-        if (user.isEmpty()) {
-            log.error("Trainer creation failed.");
-            return Optional.empty();
-        }
+        User user = userService.create(new UserDTO(dto.firstName(), dto.lastName()));
 
         Trainer newTrainer = new Trainer();
-        newTrainer.setUser(user.get());
+        newTrainer.setUser(user);
         newTrainer.setTrainingType(type);
 
         Trainer trainer = trainerDAO.save(newTrainer);
 
         log.info("Trainer Registered Successfully!");
-        return Optional.of(trainer);
+        return trainer;
     }
 
     @Secured
     @TrainerOnly
     @Override
-    public Optional<TrainerDTO> findByUsername(String trainerUsername) {
+    public TrainerDTO findByUsername(String trainerUsername) {
         return trainerDAO.findByUsername(trainerUsername)
-                .map(TrainerMapper::toTrainerDTO);
+                .map(TrainerMapper::toTrainerDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Trainer not found with username: " + trainerUsername));
     }
 
     @Secured

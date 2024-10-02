@@ -20,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.quality.Strictness;
 import org.mockito.junit.jupiter.MockitoSettings;
 
-import java.math.BigInteger;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,7 +50,6 @@ class TrainingServiceImplTest {
     @BeforeEach
     void setUp() {
         trainingDTO = new TrainingDTO(
-                BigInteger.ONE,
                 "Morning Yoga",
                 "trainer.one",
                 ZonedDateTime.now(),
@@ -124,8 +122,7 @@ class TrainingServiceImplTest {
         when(trainingDAO.save(any(Training.class))).thenReturn(newTraining);
 
         // Act
-        Optional<Training> result = trainingService.create(new TrainingDTO(
-                BigInteger.ONE,
+        Training result = trainingService.create(new TrainingDTO(
                 "Morning Yoga",
                 "YOGA",
                 ZonedDateTime.now(),
@@ -136,8 +133,9 @@ class TrainingServiceImplTest {
 
         // Assert
         assertAll(
-                () -> assertTrue(result.isPresent()),
-                () -> assertEquals("Morning Yoga", result.get().getTrainingName())
+                () -> assertNotNull(result),
+                () -> assertEquals("Morning Yoga", result.getTrainingName()),
+                () -> assertEquals("YOGA", result.getTrainingType().getTrainingTypeName())
         );
 
         verify(trainingDAO).save(any(Training.class));

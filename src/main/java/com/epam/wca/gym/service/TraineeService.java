@@ -9,11 +9,10 @@ import com.epam.wca.gym.dto.trainee.TraineeRegistrationDTO;
 import com.epam.wca.gym.entity.Trainee;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface TraineeService extends BaseService<Trainee, TraineeRegistrationDTO> {
 
-    Optional<TraineeDTO> findByUsername(String username);
+    TraineeDTO findByUsername(String username);
 
     TraineeDTO update(TraineeUpdateDTO dto);
 

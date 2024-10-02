@@ -20,7 +20,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -65,7 +65,7 @@ class TrainingTypeControllerTest {
         when(trainingTypeService.getAllTrainingTypes()).thenReturn(trainingTypes);
 
         // Act & Assert
-        mockMvc.perform(get("/training-types")
+        mockMvc.perform(get("/api/v1/training-types")
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()").value(trainingTypes.size()))

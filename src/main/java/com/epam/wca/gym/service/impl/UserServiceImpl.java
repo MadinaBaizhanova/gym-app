@@ -41,28 +41,24 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public Optional<User> create(UserDTO dto) {
-        try {
-            String username = usernameGenerator.generateUsername(dto.getFirstName(), dto.getLastName());
-            String rawPassword = PasswordGenerator.generatePassword();
-            String hashedPassword = passwordEncoder.encode(rawPassword);
+    public User create(UserDTO dto) {
+        String username = usernameGenerator.generateUsername(dto.getFirstName(), dto.getLastName());
+        String rawPassword = PasswordGenerator.generatePassword();
+        String hashedPassword = passwordEncoder.encode(rawPassword);
 
-            rawPasswordHolder.set(rawPassword);
+        rawPasswordHolder.set(rawPassword);
 
-            User newUser = new User();
-            newUser.setFirstName(dto.getFirstName());
-            newUser.setLastName(dto.getLastName());
-            newUser.setUsername(username);
-            newUser.setPassword(hashedPassword);
-            newUser.setIsActive(true);
+        User newUser = new User();
+        newUser.setFirstName(dto.getFirstName());
+        newUser.setLastName(dto.getLastName());
+        newUser.setUsername(username);
+        newUser.setPassword(hashedPassword);
+        newUser.setIsActive(true);
 
-            User user = userDAO.save(newUser);
+        User user = userDAO.save(newUser);
 
-            log.info("User Registered Successfully with Username: {} and Default Password: {}", username, rawPassword);
-            return Optional.of(user);
-        } catch (InvalidInputException e) {
-            return Optional.empty();
-        }
+        log.info("User Registered Successfully with Username: {} and Default Password: {}", username, rawPassword);
+        return user;
     }
 
     @Override
@@ -84,7 +80,7 @@ public class UserServiceImpl implements UserService {
             }
         }
         log.warn("Authentication failed for username: {}", username);
-        return Role.NONE;
+        throw new InvalidInputException("Invalid credentials provided!");
     }
 
     @Secured
@@ -142,7 +138,7 @@ public class UserServiceImpl implements UserService {
 
             user.setPassword(passwordEncoder.encode(newPassword));
             userDAO.update(user);
-            log.info("Password changed successfully.");
+            log.info("Password changed successfully!");
         });
     }
 

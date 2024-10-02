@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
-import java.util.Optional;
 import java.util.Scanner;
 
 import static com.epam.wca.gym.utils.Constants.ACCESS_DENIED;
@@ -62,7 +61,7 @@ public class TrainerManager {
     private static void viewProfile(GymFacade gymFacade, SecurityService securityService) {
         String username = securityService.getAuthenticatedUsername();
         try {
-            Optional<TrainerDTO> trainer = gymFacade.trainer().findByUsername(username);
+            TrainerDTO trainer = gymFacade.trainer().findByUsername(username);
             log.info("Trainer Profile: {}", trainer);
         } catch (Exception e) {
             log.error("Error viewing profile: {}", e.getMessage());

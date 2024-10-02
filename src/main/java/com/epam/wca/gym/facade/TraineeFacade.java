@@ -10,7 +10,6 @@ import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Training;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * @deprecated
@@ -25,9 +24,9 @@ import java.util.Optional;
 @Deprecated(since = "1.2")
 public interface TraineeFacade {
 
-    Optional<Trainee> create(TraineeRegistrationDTO traineeDTO);
+    Trainee create(TraineeRegistrationDTO traineeDTO);
 
-    Optional<TraineeDTO> findByUsername(String username);
+    TraineeDTO findByUsername(String username);
 
     void deleteByUsername(String username);
 
@@ -43,5 +42,5 @@ public interface TraineeFacade {
 
     List<TrainingDTO> findTrainings(FindTrainingDTO dto);
 
-    Optional<Training> create(TrainingDTO trainingDTO);
+    Training create(TrainingDTO trainingDTO);
 }

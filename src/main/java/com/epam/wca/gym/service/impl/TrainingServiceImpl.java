@@ -31,7 +31,7 @@ public class TrainingServiceImpl implements TrainingService {
     @CheckActiveTrainee
     @Transactional
     @Override
-    public Optional<Training> create(TrainingDTO dto) {
+    public Training create(TrainingDTO dto) {
         Trainee trainee = traineeDAO.findByUsername(dto.traineeUsername())
                 .orElseThrow(() -> new EntityNotFoundException("Trainee not found"));
 
@@ -51,8 +51,6 @@ public class TrainingServiceImpl implements TrainingService {
         newTraining.setTrainingDate(dto.trainingDate());
         newTraining.setTrainingDuration(dto.trainingDuration());
 
-        Training training = trainingDAO.save(newTraining);
-
-        return Optional.of(training);
+        return trainingDAO.save(newTraining);
     }
 }

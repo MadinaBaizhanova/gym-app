@@ -11,11 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
- * @deprecated
- * <p>
+ * @deprecated <p>
  * This class previously served as a facade for trainer-related operations.
  * It provided a layer between the service layer and the command line interface represented by GymApplication class.
  * </p>
@@ -30,12 +28,12 @@ public class TrainerFacadeImpl implements TrainerFacade {
     private final TrainerService trainerService;
 
     @Override
-    public Optional<Trainer> create(TrainerRegistrationDTO trainerDTO) {
+    public Trainer create(TrainerRegistrationDTO trainerDTO) {
         return trainerService.create(trainerDTO);
     }
 
     @Override
-    public Optional<TrainerDTO> findByUsername(String trainerUsername) {
+    public TrainerDTO findByUsername(String trainerUsername) {
         return trainerService.findByUsername(trainerUsername);
     }
 

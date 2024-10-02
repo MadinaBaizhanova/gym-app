@@ -7,11 +7,9 @@ import com.epam.wca.gym.dto.training.TrainingDTO;
 import com.epam.wca.gym.entity.Trainer;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
- * @deprecated
- * <p>
+ * @deprecated <p>
  * This interface previously served as a facade interface for trainer-related operations.
  * It provided a layer between the service layer and the command line interface represented by GymApplication class.
  * </p>
@@ -22,9 +20,9 @@ import java.util.Optional;
 @Deprecated(since = "1.2")
 public interface TrainerFacade {
 
-    Optional<Trainer> create(TrainerRegistrationDTO trainerDTO);
+    Trainer create(TrainerRegistrationDTO trainerDTO);
 
-    Optional<TrainerDTO> findByUsername(String trainerUsername);
+    TrainerDTO findByUsername(String trainerUsername);
 
     void update(TrainerDTO trainerDTO);
 

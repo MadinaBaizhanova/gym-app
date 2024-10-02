@@ -1,6 +1,7 @@
 package com.epam.wca.gym.config;
 
 import com.epam.wca.gym.entity.Role;
+import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.SecurityService;
 import com.epam.wca.gym.service.UserService;
 import jakarta.servlet.FilterChain;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
-import javax.security.sasl.AuthenticationException;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.HashSet;
@@ -34,10 +34,10 @@ public class AuthenticationFilter extends HttpFilter {
     private static final Set<String> PUBLIC_ENDPOINTS = new HashSet<>();
 
     static {
-        PUBLIC_ENDPOINTS.add("/trainee/register");
-        PUBLIC_ENDPOINTS.add("/trainer/register");
-        PUBLIC_ENDPOINTS.add("/user/login");
-        PUBLIC_ENDPOINTS.add("/training-types");
+        PUBLIC_ENDPOINTS.add("/api/v1/trainee/registration");
+        PUBLIC_ENDPOINTS.add("/api/v1/trainer/registration");
+        PUBLIC_ENDPOINTS.add("/api/v1/user/auth");
+        PUBLIC_ENDPOINTS.add("/api/v1/training-types");
     }
 
     @Override
@@ -67,15 +67,11 @@ public class AuthenticationFilter extends HttpFilter {
 
                 Role role = userService.authenticate(username, password);
 
-                if (role == Role.NONE) {
-                    sendErrorResponse(response, "Invalid credentials.");
-                    return;
-                }
-
                 securityService.login(username, role);
+
                 chain.doFilter(request, response);
-            } catch (AuthenticationException e) {
-                sendErrorResponse(response, "Invalid authorization header.");
+            } catch (InvalidInputException e) {
+                sendErrorResponse(response, "Invalid credentials provided!");
             }
         } else {
             sendErrorResponse(response, "Wrong or missing authorization header.");

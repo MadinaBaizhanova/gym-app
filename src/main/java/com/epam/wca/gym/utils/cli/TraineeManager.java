@@ -83,7 +83,7 @@ public class TraineeManager {
     private static void viewProfile(GymFacade gymFacade, SecurityService securityService) {
         String username = securityService.getAuthenticatedUsername();
         try {
-            Optional<TraineeDTO> trainee = gymFacade.trainee().findByUsername(username);
+            TraineeDTO trainee = gymFacade.trainee().findByUsername(username);
             log.info("Trainee Profile: {}", trainee);
         } catch (Exception e) {
             log.error("Error viewing profile: {}", e.getMessage());
@@ -237,12 +237,12 @@ public class TraineeManager {
             log.error("Invalid Training Duration. Please enter a valid numeric value.");
         }
 
-        TrainingDTO trainingDTO = new TrainingDTO(null, trainingName, null, trainingDate,
+        TrainingDTO trainingDTO = new TrainingDTO(trainingName, null, trainingDate,
                 trainingDuration, traineeUsername, trainerUsername);
 
         try {
-            Optional<Training> createdTraining = gymFacade.trainee().create(trainingDTO);
-            createdTraining.ifPresent(training -> log.info("Training added successfully with ID: {}", training.getId()));
+            Training training = gymFacade.trainee().create(trainingDTO);
+            log.info("Training added successfully with ID: {}", training.getId());
         } catch (Exception e) {
             log.error("Error adding training: {}", e.getMessage());
         }

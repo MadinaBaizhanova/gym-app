@@ -47,30 +47,26 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Transactional
     @Override
-    public Optional<Trainee> create(TraineeRegistrationDTO dto) {
-        Optional<User> user = userService.create(new UserDTO(dto.firstName(), dto.lastName()));
-
-        if (user.isEmpty()) {
-            log.error("Trainee creation failed.");
-            return Optional.empty();
-        }
+    public Trainee create(TraineeRegistrationDTO dto) {
+        User user = userService.create(new UserDTO(dto.firstName(), dto.lastName()));
 
         Trainee newTrainee = new Trainee();
-        newTrainee.setUser(user.get());
+        newTrainee.setUser(user);
         newTrainee.setDateOfBirth(isNullOrEmpty(dto.dateOfBirth()) ? null : ZonedDateTime.parse(dto.dateOfBirth()));
         newTrainee.setAddress(dto.address());
         Trainee trainee = traineeDAO.save(newTrainee);
         log.info("Trainee Registered Successfully!");
 
-        return Optional.of(trainee);
+        return trainee;
     }
 
     @Secured
     @TraineeOnly
     @Override
-    public Optional<TraineeDTO> findByUsername(String username) {
+    public TraineeDTO findByUsername(String username) {
         return traineeDAO.findByUsername(username)
-                .map(TraineeMapper::toTraineeDTO);
+                .map(TraineeMapper::toTraineeDTO)
+                .orElseThrow(() -> new EntityNotFoundException("Trainee not found with username: " + username));
     }
 
     @Secured

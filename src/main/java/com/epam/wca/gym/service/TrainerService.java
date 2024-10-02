@@ -7,11 +7,10 @@ import com.epam.wca.gym.dto.training.TrainingDTO;
 import com.epam.wca.gym.entity.Trainer;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface TrainerService extends BaseService<Trainer, TrainerRegistrationDTO> {
 
-    Optional<TrainerDTO> findByUsername(String username);
+    TrainerDTO findByUsername(String username);
 
     TrainerDTO update(TrainerDTO dto);
 

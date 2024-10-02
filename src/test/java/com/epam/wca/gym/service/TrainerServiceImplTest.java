@@ -21,10 +21,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -74,19 +71,18 @@ class TrainerServiceImplTest {
         newTrainer.setTrainingType(trainingType);
 
         when(trainingTypeDAO.findByName("YOGA")).thenReturn(Optional.of(trainingType));
-        when(userService.create(any(UserDTO.class))).thenReturn(Optional.of(user));
+        when(userService.create(any(UserDTO.class))).thenReturn(user);
         when(trainerDAO.save(any(Trainer.class))).thenReturn(newTrainer);
 
         // Act
-        Optional<Trainer> result = trainerService.create(dto);
+        Trainer result = trainerService.create(dto);
 
         // Assert
-        assertTrue(result.isPresent());
-        Trainer trainer = result.get();
-        assertEquals("John", trainer.getUser().getFirstName());
-        assertEquals("Doe", trainer.getUser().getLastName());
-        assertEquals("john.doe", trainer.getUser().getUsername());
-        assertEquals("YOGA", trainer.getTrainingType().getTrainingTypeName());
+        assertNotNull(result);
+        assertEquals("John", result.getUser().getFirstName());
+        assertEquals("Doe", result.getUser().getLastName());
+        assertEquals("john.doe", result.getUser().getUsername());
+        assertEquals("YOGA", result.getTrainingType().getTrainingTypeName());
 
         verify(trainingTypeDAO).findByName("YOGA");
         verify(userService).create(any(UserDTO.class));
@@ -135,13 +131,12 @@ class TrainerServiceImplTest {
         when(trainerDAO.findByUsername(trainerUsername)).thenReturn(Optional.of(trainer));
 
         // Act
-        Optional<TrainerDTO> result = trainerService.findByUsername(trainerUsername);
+        TrainerDTO result = trainerService.findByUsername(trainerUsername);
 
         // Assert
-        assertTrue(result.isPresent());
-        TrainerDTO dto = result.get();
-        assertEquals("john.doe", dto.username());
-        assertEquals("YOGA", dto.trainingType());
+        assertNotNull(result);
+        assertEquals("john.doe", result.username());
+        assertEquals("YOGA", result.trainingType());
 
         verify(trainerDAO).findByUsername(trainerUsername);
     }
@@ -153,11 +148,11 @@ class TrainerServiceImplTest {
 
         when(trainerDAO.findByUsername(trainerUsername)).thenReturn(Optional.empty());
 
-        // Act
-        Optional<TrainerDTO> result = trainerService.findByUsername(trainerUsername);
+        // Act & Assert
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
+                trainerService.findByUsername(trainerUsername));
 
-        // Assert
-        assertFalse(result.isPresent());
+        assertEquals("Trainer not found with username: " + trainerUsername, exception.getMessage());
         verify(trainerDAO).findByUsername(trainerUsername);
     }
 

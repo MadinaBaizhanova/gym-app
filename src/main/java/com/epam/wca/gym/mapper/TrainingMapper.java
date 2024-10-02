@@ -8,7 +8,6 @@ import lombok.experimental.UtilityClass;
 public class TrainingMapper {
     public static TrainingDTO toTrainingDTO(Training training) {
         return new TrainingDTO(
-                training.getId(),
                 training.getTrainingName(),
                 training.getTrainingType().getTrainingTypeName(),
                 training.getTrainingDate(),

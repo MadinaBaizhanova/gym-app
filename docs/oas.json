@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8080/gym-app",
+      "url": "http://localhost:8080/gym-app/api/v1",
       "description": "Gym CRM Application Local Server."
     }
   ],
@@ -43,7 +43,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "An unexpected error occurred while running the application. Please try later.."
+                      "example": "An unexpected error occurred while running the application. Please try later..."
                     }
                   }
                 }
@@ -53,7 +53,7 @@
         }
       }
     },
-    "/user/change-password": {
+    "/user/password": {
       "put": {
         "summary": "Change User's password",
         "operationId": "changePassword",
@@ -123,7 +123,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "Invalid credentials."
+                      "example": "Invalid credentials provided!"
                     }
                   }
                 }
@@ -137,111 +137,9 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Resource not found. You are trying to use a non-existing endpoint."
-                    },
                     "error": {
-                      "type": "string",
-                      "example": "Damn! Resource not found."
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "418": {
-            "description": "I'm a teapot - wrong HTTP request method.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "You tried to use an unsupported method for this endpoint."
-                    },
-                    "error": {
-                      "type": "string",
-                      "example": "Damn! Wrong HTTP request method."
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "An unexpected error occurred while running the application. Please try later.."
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/user/activate": {
-      "patch": {
-        "summary": "Activate User",
-        "operationId": "activateUser",
-        "tags": [
-          "User"
-        ],
-        "security": [
-          {
-            "basicAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "User activated successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - invalid credentials",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "Invalid credentials."
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Resource not found - non-existing endpoint",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
                       "type": "string",
                       "example": "Damn! Resource not found. You are trying to use a non-existing endpoint"
-                    },
-                    "error": {
-                      "type": "string",
-                      "example": "Damn! Resource not found."
                     }
                   }
                 }
@@ -277,7 +175,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "An unexpected error occurred while running the application. Please try later.."
+                      "example": "An unexpected error occurred while running the application. Please try later..."
                     }
                   }
                 }
@@ -287,10 +185,10 @@
         }
       }
     },
-    "/user/deactivate": {
+    "/user/status/active": {
       "patch": {
-        "summary": "Deactivate User",
-        "operationId": "deactivateUser",
+        "summary": "Activate User",
+        "operationId": "activate",
         "tags": [
           "User"
         ],
@@ -301,7 +199,7 @@
         ],
         "responses": {
           "200": {
-            "description": "User deactivated successfully.",
+            "description": "User activated successfully!",
             "content": {
               "application/json": {
                 "schema": {
@@ -319,7 +217,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "Invalid credentials."
+                      "example": "Invalid credentials provided!"
                     }
                   }
                 }
@@ -333,13 +231,9 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Resource not found. You are trying to use a non-existing endpoint."
-                    },
                     "error": {
                       "type": "string",
-                      "example": "Damn! Resource not found."
+                      "example": "Damn! Resource not found. You are trying to use a non-existing endpoint"
                     }
                   }
                 }
@@ -375,7 +269,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "An unexpected error occurred while running the application. Please try later.."
+                      "example": "An unexpected error occurred while running the application. Please try later..."
                     }
                   }
                 }
@@ -385,7 +279,101 @@
         }
       }
     },
-    "/user/login": {
+    "/user/status/inactive": {
+      "patch": {
+        "summary": "Deactivate User",
+        "operationId": "deactivate",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deactivated successfully!",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Invalid credentials provided!"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found - non-existing endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Resource not found. You are trying to use a non-existing endpoint"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "418": {
+            "description": "I'm a teapot - wrong HTTP request method.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "You tried to use an unsupported method for this endpoint."
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Wrong HTTP request method."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "An unexpected error occurred while running the application. Please try later..."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/auth": {
       "get": {
         "summary": "Log in a user",
         "operationId": "login",
@@ -427,8 +415,8 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized - invalid credentials",
+          "400": {
+            "description": "Bad Request - invalid input",
             "content": {
               "application/json": {
                 "schema": {
@@ -436,7 +424,23 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "Invalid credentials."
+                      "example": "Invalid credentials provided!"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found - non-existing endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Resource not found. You are trying to use a non-existing endpoint"
                     }
                   }
                 }
@@ -472,7 +476,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "An unexpected error occurred while running the application. Please try later."
+                      "example": "An unexpected error occurred while running the application. Please try later..."
                     }
                   }
                 }
@@ -482,7 +486,7 @@
         }
       }
     },
-    "/trainer/register": {
+    "/trainer/registration": {
       "post": {
         "summary": "Register a new Trainer",
         "operationId": "registerTrainer",
@@ -548,8 +552,8 @@
               }
             }
           },
-          "418": {
-            "description": "I'm a teapot - invalid request body.",
+          "404": {
+            "description": "Resource not found - non-existing endpoint",
             "content": {
               "application/json": {
                 "schema": {
@@ -557,11 +561,27 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "Damn! Invalid request body."
-                    },
+                      "example": "Damn! Resource not found. You are trying to use a non-existing endpoint"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "418": {
+            "description": "I'm a teapot - wrong HTTP request method.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
                     "message": {
                       "type": "string",
-                      "example": "Wrong request body used for this endpoint."
+                      "example": "You tried to use an unsupported method for this endpoint."
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Wrong HTTP request method."
                     }
                   }
                 }
@@ -577,7 +597,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "An unexpected error occurred while running the application. Please try later."
+                      "example": "An unexpected error occurred while running the application. Please try later..."
                     }
                   }
                 }
@@ -616,7 +636,7 @@
               "application/json": {
                 "schema": {
                   "type": "string",
-                  "example": "Invalid credentials."
+                  "example": "Invalid credentials provided!"
                 }
               }
             }
@@ -631,10 +651,6 @@
                     "error": {
                       "type": "string",
                       "example": "Damn! Resource not found. You are trying to use a non-existing endpoint"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Resource not found."
                     }
                   }
                 }
@@ -648,13 +664,13 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "Damn! Wrong HTTP request method."
-                    },
                     "message": {
                       "type": "string",
                       "example": "You tried to use an unsupported method for this endpoint."
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Wrong HTTP request method."
                     }
                   }
                 }
@@ -670,7 +686,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "An unexpected error occurred while running the application. Please try later."
+                      "example": "An unexpected error occurred while running the application. Please try later..."
                     }
                   }
                 }
@@ -680,7 +696,7 @@
         }
       }
     },
-    "/trainer/update-profile": {
+    "/trainer/profile": {
       "put": {
         "summary": "Update Trainer Profile",
         "operationId": "updateProfile",
@@ -722,7 +738,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "Invalid training type. Please provide one of the following training types: Fitness, Yoga, Zumba, Stretching, Cardio, or Crossfit.\""
+                      "example": "Invalid training type. Please provide one of the following training types: Fitness, Yoga, Zumba, Stretching, Cardio, or Crossfit."
                     }
                   }
                 }
@@ -738,7 +754,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "Invalid credentials."
+                      "example": "Invalid credentials provided!"
                     }
                   }
                 }
@@ -755,10 +771,6 @@
                     "error": {
                       "type": "string",
                       "example": "Damn! Resource not found. You are trying to use a non-existing endpoint"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Resource not found."
                     }
                   }
                 }
@@ -772,13 +784,13 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "Damn! Wrong HTTP request method."
-                    },
                     "message": {
                       "type": "string",
                       "example": "You tried to use an unsupported method for this endpoint."
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Wrong HTTP request method."
                     }
                   }
                 }
@@ -794,7 +806,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "An unexpected error occurred while running the application. Please try later."
+                      "example": "An unexpected error occurred while running the application. Please try later..."
                     }
                   }
                 }
@@ -816,16 +828,37 @@
             "basicAuth": []
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FindTrainingDTO"
-              }
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Filter by Trainee First or Last Name",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "description": "Filter trainings starting from this date",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "description": "Filter trainings ending by this date",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
             }
           }
-        },
+        ],
         "responses": {
           "200": {
             "description": "List of trainings retrieved successfully.",
@@ -849,7 +882,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "Invalid credentials."
+                      "example": "Invalid credentials provided!"
                     }
                   }
                 }
@@ -866,10 +899,6 @@
                     "error": {
                       "type": "string",
                       "example": "Damn! Resource not found. You are trying to use a non-existing endpoint"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Resource not found."
                     }
                   }
                 }
@@ -877,19 +906,19 @@
             }
           },
           "418": {
-            "description": "I'm a teapot - Invalid request body.",
+            "description": "I'm a teapot - wrong HTTP request method.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "Damn! Invalid request body."
-                    },
                     "message": {
                       "type": "string",
-                      "example": "Wrong request body used for this endpoint."
+                      "example": "You tried to use an unsupported method for this endpoint."
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Wrong HTTP request method."
                     }
                   }
                 }
@@ -905,7 +934,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "An unexpected error occurred while running the application. Please try later."
+                      "example": "An unexpected error occurred while running the application. Please try later..."
                     }
                   }
                 }
@@ -915,7 +944,7 @@
         }
       }
     },
-    "/trainee/register": {
+    "/trainee/registration": {
       "post": {
         "summary": "Register a new Trainee",
         "operationId": "registerTrainee",
@@ -981,8 +1010,8 @@
               }
             }
           },
-          "418": {
-            "description": "I'm a teapot - invalid request body.",
+          "404": {
+            "description": "Resource not found - non-existing endpoint",
             "content": {
               "application/json": {
                 "schema": {
@@ -990,11 +1019,27 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "Damn! Invalid request body."
-                    },
+                      "example": "Damn! Resource not found. You are trying to use a non-existing endpoint"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "418": {
+            "description": "I'm a teapot - wrong HTTP request method.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
                     "message": {
                       "type": "string",
-                      "example": "Wrong request body used for this endpoint."
+                      "example": "You tried to use an unsupported method for this endpoint."
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Wrong HTTP request method."
                     }
                   }
                 }
@@ -1010,7 +1055,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "An unexpected error occurred while running the application. Please try later."
+                      "example": "An unexpected error occurred while running the application. Please try later..."
                     }
                   }
                 }
@@ -1049,7 +1094,7 @@
               "application/json": {
                 "schema": {
                   "type": "string",
-                  "example": "Invalid credentials."
+                  "example": "Invalid credentials provided!"
                 }
               }
             }
@@ -1064,10 +1109,6 @@
                     "error": {
                       "type": "string",
                       "example": "Damn! Resource not found. You are trying to use a non-existing endpoint"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Resource not found."
                     }
                   }
                 }
@@ -1081,13 +1122,13 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "Damn! Wrong HTTP request method."
-                    },
                     "message": {
                       "type": "string",
                       "example": "You tried to use an unsupported method for this endpoint."
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Wrong HTTP request method."
                     }
                   }
                 }
@@ -1103,7 +1144,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "An unexpected error occurred while running the application. Please try later."
+                      "example": "An unexpected error occurred while running the application. Please try later..."
                     }
                   }
                 }
@@ -1113,7 +1154,7 @@
         }
       }
     },
-    "/trainee/update-profile": {
+    "/trainee/profile": {
       "put": {
         "summary": "Update Trainee Profile",
         "operationId": "updateTraineeProfile",
@@ -1171,7 +1212,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "Invalid credentials."
+                      "example": "Invalid credentials provided!"
                     }
                   }
                 }
@@ -1188,10 +1229,6 @@
                     "error": {
                       "type": "string",
                       "example": "Damn! Resource not found. You are trying to use a non-existing endpoint"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Resource not found."
                     }
                   }
                 }
@@ -1205,13 +1242,13 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "Damn! Wrong HTTP request method."
-                    },
                     "message": {
                       "type": "string",
                       "example": "You tried to use an unsupported method for this endpoint."
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Wrong HTTP request method."
                     }
                   }
                 }
@@ -1227,7 +1264,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "An unexpected error occurred while running the application. Please try later."
+                      "example": "An unexpected error occurred while running the application. Please try later..."
                     }
                   }
                 }
@@ -1237,7 +1274,7 @@
         }
       }
     },
-    "/trainee/delete-profile": {
+    "/trainee/profile": {
       "delete": {
         "summary": "Delete Trainee Profile",
         "operationId": "deleteTraineeProfile",
@@ -1262,7 +1299,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "Invalid credentials."
+                      "example": "Invalid credentials provided!"
                     }
                   }
                 }
@@ -1279,10 +1316,6 @@
                     "error": {
                       "type": "string",
                       "example": "Damn! Resource not found. You are trying to use a non-existing endpoint"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Resource not found."
                     }
                   }
                 }
@@ -1296,13 +1329,13 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "Damn! Wrong HTTP request method."
-                    },
                     "message": {
                       "type": "string",
                       "example": "You tried to use an unsupported method for this endpoint."
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Wrong HTTP request method."
                     }
                   }
                 }
@@ -1318,7 +1351,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "An unexpected error occurred while running the application. Please try later."
+                      "example": "An unexpected error occurred while running the application. Please try later..."
                     }
                   }
                 }
@@ -1328,7 +1361,7 @@
         }
       }
     },
-    "/trainee/available-trainers": {
+    "/trainee/trainers": {
       "get": {
         "summary": "Get Available Trainers for Trainee",
         "operationId": "getAvailableTrainers",
@@ -1363,7 +1396,43 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "Invalid credentials."
+                      "example": "Invalid credentials provided!"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found - non-existing endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Resource not found. You are trying to use a non-existing endpoint"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "418": {
+            "description": "I'm a teapot - wrong HTTP request method.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "You tried to use an unsupported method for this endpoint."
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Wrong HTTP request method."
                     }
                   }
                 }
@@ -1379,7 +1448,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "An unexpected error occurred while running the application. Please try later."
+                      "example": "An unexpected error occurred while running the application. Please try later..."
                     }
                   }
                 }
@@ -1389,7 +1458,7 @@
         }
       }
     },
-    "/trainee/update-trainers": {
+    "/trainee/trainers": {
       "put": {
         "summary": "Update Trainee's Trainers",
         "operationId": "updateTrainers",
@@ -1462,7 +1531,43 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "Invalid credentials."
+                      "example": "Invalid credentials provided!"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found - non-existing endpoint or an entity was not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Trainer with this username was not found. Please specify the existing active trainer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "418": {
+            "description": "I'm a teapot - wrong HTTP request method.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "You tried to use an unsupported method for this endpoint."
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Wrong HTTP request method."
                     }
                   }
                 }
@@ -1478,7 +1583,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "An unexpected error occurred while running the application. Please try later."
+                      "example": "An unexpected error occurred while running the application. Please try later..."
                     }
                   }
                 }
@@ -1488,7 +1593,7 @@
         }
       }
     },
-    "/trainee/add-training": {
+    "/trainee/trainings": {
       "post": {
         "summary": "Schedule a Training Session",
         "operationId": "scheduleTraining",
@@ -1512,12 +1617,12 @@
         },
         "responses": {
           "201": {
-            "description": "Training session scheduled successfully.",
+            "description": "Training session scheduled successfully!",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "string",
-                  "example": "Training session scheduled successfully."
+                  "example": "Training session scheduled successfully!"
                 }
               }
             }
@@ -1533,17 +1638,6 @@
               }
             }
           },
-          "404": {
-            "description": "Not Found - error scheduling training session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string",
-                  "example": "Trainer not found in the trainee's list of favorite trainers."
-                }
-              }
-            }
-          },
           "401": {
             "description": "Unauthorized - invalid credentials",
             "content": {
@@ -1553,7 +1647,43 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "Invalid credentials."
+                      "example": "Invalid credentials provided!"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found - non-existing endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Resource not found. You are trying to use a non-existing endpoint"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "418": {
+            "description": "I'm a teapot - wrong HTTP request method.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "You tried to use an unsupported method for this endpoint."
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Wrong HTTP request method."
                     }
                   }
                 }
@@ -1569,7 +1699,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "An unexpected error occurred while running the application. Please try later."
+                      "example": "An unexpected error occurred while running the application. Please try later..."
                     }
                   }
                 }
@@ -1591,16 +1721,46 @@
             "basicAuth": []
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FindTrainingDTO"
-              }
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Filter by training name",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "trainingType",
+            "in": "query",
+            "description": "Filter by training type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "description": "Filter trainings starting from this date",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "description": "Filter trainings ending by this date",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
             }
           }
-        },
+        ],
         "responses": {
           "200": {
             "description": "List of trainings retrieved successfully.",
@@ -1624,7 +1784,43 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "Invalid credentials."
+                      "example": "Invalid credentials provided!"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found - non-existing endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Resource not found. You are trying to use a non-existing endpoint"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "418": {
+            "description": "I'm a teapot - wrong HTTP request method.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "You tried to use an unsupported method for this endpoint."
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Damn! Wrong HTTP request method."
                     }
                   }
                 }
@@ -1640,7 +1836,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "An unexpected error occurred while running the application. Please try later."
+                      "example": "An unexpected error occurred while running the application. Please try later..."
                     }
                   }
                 }
@@ -1659,7 +1855,7 @@
       }
     },
     "schemas": {
-      "TrainingTypeDTO": {
+      "TrainingTypeDTO":  {
         "type": "object",
         "properties": {
           "id": {
@@ -1761,7 +1957,8 @@
             "type": "string"
           },
           "trainingType": {
-            "type": "string"
+            "type": "string",
+            "description": "Valid Training Type"
           }
         },
         "required": [
@@ -1770,38 +1967,9 @@
           "trainingType"
         ]
       },
-      "FindTrainingDTO": {
-        "type": "object",
-        "properties": {
-          "username": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "trainingType": {
-            "type": "string"
-          },
-          "fromDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "toDate": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "username"
-        ]
-      },
       "TrainingDTO": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
           "trainingName": {
             "type": "string"
           },

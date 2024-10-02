@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * @deprecated
@@ -35,12 +34,12 @@ public class TraineeFacadeImpl implements TraineeFacade {
     private final TrainingService trainingService;
 
     @Override
-    public Optional<Trainee> create(TraineeRegistrationDTO traineeDTO) {
+    public Trainee create(TraineeRegistrationDTO traineeDTO) {
         return traineeService.create(traineeDTO);
     }
 
     @Override
-    public Optional<TraineeDTO> findByUsername(String traineeUsername) {
+    public TraineeDTO findByUsername(String traineeUsername) {
         return traineeService.findByUsername(traineeUsername);
     }
 
@@ -80,7 +79,7 @@ public class TraineeFacadeImpl implements TraineeFacade {
     }
 
     @Override
-    public Optional<Training> create(TrainingDTO trainingDTO) {
+    public Training create(TrainingDTO trainingDTO) {
         return trainingService.create(trainingDTO);
     }
 }
