@@ -236,7 +236,7 @@ class UserServiceImplTest {
                 .thenReturn(Optional.of(user));
 
         // Act
-        userService.activateUser("user");
+        userService.activate("user");
 
         // Assert
         assertTrue(user.getIsActive());
@@ -250,7 +250,7 @@ class UserServiceImplTest {
                 .thenReturn(Optional.empty());
 
         // Act
-        userService.activateUser("nonExistentUser");
+        userService.activate("nonExistentUser");
 
         // Assert
         verify(userDAO, never()).update(any(User.class));
@@ -277,7 +277,7 @@ class UserServiceImplTest {
         when(mockTrainer.getId()).thenReturn(BigInteger.ONE);
 
         // Act
-        userService.deactivateUser("user");
+        userService.deactivate("user");
 
         // Assert
         assertFalse(user.getIsActive());
@@ -294,7 +294,7 @@ class UserServiceImplTest {
                 .thenReturn(Optional.empty());
 
         // Act
-        userService.deactivateUser("nonExistentUser");
+        userService.deactivate("nonExistentUser");
 
         // Assert
         verify(userDAO, never()).update(any(User.class));

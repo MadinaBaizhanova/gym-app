@@ -21,12 +21,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.ZonedDateTime;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/trainer")
+@RequestMapping("/api/v1/trainers")
 @RequiredArgsConstructor
 public class TrainerController {
 
@@ -34,7 +33,7 @@ public class TrainerController {
     private final UserService userService;
     private final SecurityService securityService;
 
-    @PostMapping("/registration")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, String> register(@Valid @RequestBody TrainerRegistrationDTO dto) {
         String username = trainerService.create(dto).getUser().getUsername();
@@ -42,32 +41,34 @@ public class TrainerController {
 
         userService.clearRawPassword();
 
-        Map<String, String> response = new LinkedHashMap<>();
-        response.put("username", username);
-        response.put("password", rawPassword);
-
-        return response;
+        return Map.of(
+                "username", username,
+                "password", rawPassword
+        );
     }
 
-    @GetMapping("/profile")
-    @ResponseStatus(HttpStatus.OK)
-    public TrainerDTO get() {
+    @GetMapping
+    public TrainerDTO getByUsername() {
         String username = securityService.getAuthenticatedUsername();
 
         return trainerService.findByUsername(username);
     }
 
-    @PutMapping("/profile")
-    @ResponseStatus(HttpStatus.OK)
+    @PutMapping
     public TrainerDTO update(@Valid @RequestBody TrainerUpdateDTO dto) {
         String username = securityService.getAuthenticatedUsername();
 
-        return trainerService.update(new TrainerDTO(dto.firstName(),
-                dto.lastName(), username, dto.trainingType(), null, null));
+        var trainer = TrainerUpdateDTO.builder()
+                .firstName(dto.firstName())
+                .lastName(dto.lastName())
+                .username(username)
+                .trainingType(dto.trainingType())
+                .build();
+
+        return trainerService.update(trainer);
     }
 
     @GetMapping("/trainings")
-    @ResponseStatus(HttpStatus.OK)
     public List<TrainingDTO> getTrainings(
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "fromDate", required = false) ZonedDateTime fromDate,
@@ -75,6 +76,14 @@ public class TrainerController {
 
         String username = securityService.getAuthenticatedUsername();
 
-        return trainerService.findTrainings(new FindTrainingDTO(username, name, null, fromDate, toDate));
+        var training = FindTrainingDTO.builder()
+                .username(username)
+                .name(name)
+                .trainingType(null)
+                .fromDate(fromDate)
+                .toDate(toDate)
+                .build();
+
+        return trainerService.findTrainings(training);
     }
 }

@@ -25,12 +25,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.ZonedDateTime;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/trainee")
+@RequestMapping("/api/v1/trainees")
 @RequiredArgsConstructor
 public class TraineeController {
 
@@ -39,7 +38,7 @@ public class TraineeController {
     private final SecurityService securityService;
     private final TrainingService trainingService;
 
-    @PostMapping("/registration")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, String> register(@Valid @RequestBody TraineeRegistrationDTO dto) {
         String username = traineeService.create(dto).getUser().getUsername();
@@ -47,42 +46,43 @@ public class TraineeController {
 
         userService.clearRawPassword();
 
-        Map<String, String> response = new LinkedHashMap<>();
-        response.put("username", username);
-        response.put("password", rawPassword);
-
-        return response;
+        return Map.of(
+                "username", username,
+                "password", rawPassword
+        );
     }
 
-    @GetMapping("/profile")
-    @ResponseStatus(HttpStatus.OK)
-    public TraineeDTO get() {
+    @GetMapping
+    public TraineeDTO getByUsername() {
         String username = securityService.getAuthenticatedUsername();
 
         return traineeService.findByUsername(username);
     }
 
-    @PutMapping("/profile")
-    @ResponseStatus(HttpStatus.OK)
+    @PutMapping
     public TraineeDTO update(@Valid @RequestBody TraineeUpdateDTO dto) {
         String username = securityService.getAuthenticatedUsername();
 
-        return traineeService.update(new TraineeUpdateDTO(dto.firstName(),
-                dto.lastName(), username, dto.dateOfBirth(), dto.address()));
+        var trainee = TraineeUpdateDTO.builder()
+                .firstName(dto.firstName())
+                .lastName(dto.lastName())
+                .username(username)
+                .dateOfBirth(dto.dateOfBirth())
+                .address(dto.address())
+                .build();
+
+        return traineeService.update(trainee);
     }
 
-    @DeleteMapping("/profile")
+    @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public String delete() {
+    public void delete() {
         String username = securityService.getAuthenticatedUsername();
 
         traineeService.deleteByUsername(username);
-
-        return "Trainee Profile deleted successfully!";
     }
 
     @GetMapping("/trainers")
-    @ResponseStatus(HttpStatus.OK)
     public List<TrainerForTraineeDTO> getAvailableTrainers() {
         String username = securityService.getAuthenticatedUsername();
 
@@ -90,21 +90,16 @@ public class TraineeController {
     }
 
     @PutMapping("/trainers")
-    @ResponseStatus(HttpStatus.OK)
     public List<TrainerForTraineeDTO> updateTrainers(@RequestBody Map<String, String> requestBody) {
         String username = securityService.getAuthenticatedUsername();
         String trainerUsername = requestBody.get("trainerUsername");
         String action = requestBody.get("action").toLowerCase();
 
+        // TODO: move this to the corresponding Service class + add Transaction Management
         switch (action) {
-            case "add":
-                traineeService.addTrainer(username, trainerUsername);
-                break;
-            case "remove":
-                traineeService.removeTrainer(username, trainerUsername);
-                break;
-            default:
-                throw new InvalidInputException("Invalid action values. Allowed values are 'add' and 'remove'!");
+            case "add" -> traineeService.addTrainer(username, trainerUsername);
+            case "remove" -> traineeService.removeTrainer(username, trainerUsername);
+            default -> throw new InvalidInputException("Invalid action values. Allowed values are 'add' and 'remove'!");
         }
 
         return traineeService.findAssignedTrainers(username);
@@ -112,17 +107,22 @@ public class TraineeController {
 
     @PostMapping("/trainings")
     @ResponseStatus(HttpStatus.CREATED)
-    public String schedule(@Valid @RequestBody TrainingDTO dto) {
+    public void schedule(@Valid @RequestBody TrainingDTO dto) {
         String username = securityService.getAuthenticatedUsername();
 
-        trainingService.create(new TrainingDTO(dto.trainingName(), null, dto.trainingDate(),
-                dto.trainingDuration(), username, dto.trainerUsername()));
+        var training = TrainingDTO.builder()
+                .trainingName(dto.trainingName())
+                .trainingType(null)
+                .trainingDate(dto.trainingDate())
+                .trainingDuration(dto.trainingDuration())
+                .traineeUsername(username)
+                .trainerUsername(dto.trainerUsername())
+                .build();
 
-        return "Training session scheduled successfully!";
+        trainingService.create(training);
     }
 
     @GetMapping("/trainings")
-    @ResponseStatus(HttpStatus.OK)
     public List<TrainingDTO> getTrainings(
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "trainingType", required = false) String trainingType,
@@ -131,6 +131,15 @@ public class TraineeController {
 
         String username = securityService.getAuthenticatedUsername();
 
-        return traineeService.findTrainings(new FindTrainingDTO(username, name, trainingType, fromDate, toDate));
+        var training = FindTrainingDTO.builder()
+                .username(username)
+                .name(name)
+                .trainingType(trainingType)
+                .fromDate(fromDate)
+                .toDate(toDate)
+                .build();
+
+        return traineeService.findTrainings(training);
     }
 }
+// TODO: add the 403 Forbidden response status when a Trainer tries to access Trainee's endpoint and vice versa

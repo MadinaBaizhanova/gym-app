@@ -34,23 +34,23 @@ public class TraineeFacadeImpl implements TraineeFacade {
     private final TrainingService trainingService;
 
     @Override
-    public Trainee create(TraineeRegistrationDTO traineeDTO) {
-        return traineeService.create(traineeDTO);
+    public Trainee create(TraineeRegistrationDTO dto) {
+        return traineeService.create(dto);
     }
 
     @Override
-    public TraineeDTO findByUsername(String traineeUsername) {
-        return traineeService.findByUsername(traineeUsername);
+    public TraineeDTO findByUsername(String username) {
+        return traineeService.findByUsername(username);
     }
 
     @Override
-    public void deleteByUsername(String traineeUsername) {
-        traineeService.deleteByUsername(traineeUsername);
+    public void deleteByUsername(String username) {
+        traineeService.deleteByUsername(username);
     }
 
     @Override
-    public void update(TraineeUpdateDTO traineeDTO) {
-        traineeService.update(traineeDTO);
+    public void update(TraineeUpdateDTO dto) {
+        traineeService.update(dto);
     }
 
     @Override
@@ -64,13 +64,13 @@ public class TraineeFacadeImpl implements TraineeFacade {
     }
 
     @Override
-    public List<TrainerForTraineeDTO> findAvailableTrainers(String traineeUsername) {
-        return traineeService.findAvailableTrainers(traineeUsername);
+    public List<TrainerForTraineeDTO> findAvailableTrainers(String username) {
+        return traineeService.findAvailableTrainers(username);
     }
 
     @Override
-    public List<TrainerForTraineeDTO> findAssignedTrainers(String traineeUsername) {
-        return traineeService.findAssignedTrainers(traineeUsername);
+    public List<TrainerForTraineeDTO> findAssignedTrainers(String username) {
+        return traineeService.findAssignedTrainers(username);
     }
 
     @Override
@@ -79,7 +79,7 @@ public class TraineeFacadeImpl implements TraineeFacade {
     }
 
     @Override
-    public Training create(TrainingDTO trainingDTO) {
-        return trainingService.create(trainingDTO);
+    public Training create(TrainingDTO dto) {
+        return trainingService.create(dto);
     }
 }

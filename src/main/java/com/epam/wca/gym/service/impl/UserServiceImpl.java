@@ -86,7 +86,7 @@ public class UserServiceImpl implements UserService {
     @Secured
     @Transactional
     @Override
-    public void activateUser(String username) {
+    public void activate(String username) {
         userDAO.findByUsername(username).ifPresent(user -> {
             user.setIsActive(true);
             userDAO.update(user);
@@ -97,7 +97,7 @@ public class UserServiceImpl implements UserService {
     @Secured
     @Transactional
     @Override
-    public void deactivateUser(String username) {
+    public void deactivate(String username) {
         userDAO.findByUsername(username).ifPresent(user -> {
             user.setIsActive(false);
             userDAO.update(user);

@@ -38,6 +38,7 @@ public class TrainerDAOImpl extends AbstractDAO<Trainer> implements TrainerDAO {
     @Override
     public List<Training> findTrainings(String trainerUsername, String traineeName,
                                         ZonedDateTime fromDate, ZonedDateTime toDate) {
+        // TODO: try to replace multiple parameters by FindTrainingQuery (FindTrainingDTO)
         try (Session session = sessionFactory.openSession()) {
             CriteriaBuilder cb = session.getCriteriaBuilder();
             CriteriaQuery<Training> cq = cb.createQuery(Training.class);

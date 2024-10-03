@@ -55,7 +55,7 @@ class UserControllerTest {
         when(userService.authenticate(username, password)).thenReturn(Role.TRAINEE);
 
         // Act & Assert
-        mockMvc.perform(get("/api/v1/user/auth")
+        mockMvc.perform(get("/api/v1/users/auth")
                         .param("username", username)
                         .param("password", password))
                 .andExpect(status().isOk())
@@ -73,7 +73,7 @@ class UserControllerTest {
         when(userService.authenticate(username, password)).thenReturn(Role.TRAINER);
 
         // Act & Assert
-        mockMvc.perform(get("/api/v1/user/auth")
+        mockMvc.perform(get("/api/v1/users/auth")
                         .param("username", username)
                         .param("password", password))
                 .andExpect(status().isOk())
@@ -89,7 +89,7 @@ class UserControllerTest {
         when(userService.authenticate(username, password)).thenThrow(new InvalidInputException("Invalid credentials provided!"));
 
         // Act & Assert
-        mockMvc.perform(get("/api/v1/user/auth")
+        mockMvc.perform(get("/api/v1/users/auth")
                         .param("username", username)
                         .param("password", password)
                         .contentType(APPLICATION_JSON))

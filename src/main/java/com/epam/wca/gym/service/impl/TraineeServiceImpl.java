@@ -15,7 +15,6 @@ import com.epam.wca.gym.dto.user.UserDTO;
 import com.epam.wca.gym.dto.trainee.TraineeRegistrationDTO;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
-import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.exception.EntityNotFoundException;
 import com.epam.wca.gym.mapper.TraineeMapper;
 import com.epam.wca.gym.mapper.TrainerMapper;
@@ -39,6 +38,8 @@ import static com.epam.wca.gym.utils.Constants.TRAINEE_NOT_FOUND;
 @RequiredArgsConstructor
 public class TraineeServiceImpl implements TraineeService {
 
+    private static final String MISSED_TRAINING_TEMPLATE = "Trainee not found with username: %s";
+
     private final TraineeDAO traineeDAO;
     private final TrainerDAO trainerDAO;
     private final UserService userService;
@@ -48,13 +49,13 @@ public class TraineeServiceImpl implements TraineeService {
     @Transactional
     @Override
     public Trainee create(TraineeRegistrationDTO dto) {
-        User user = userService.create(new UserDTO(dto.firstName(), dto.lastName()));
+        var user = userService.create(new UserDTO(dto.firstName(), dto.lastName()));
 
-        Trainee newTrainee = new Trainee();
+        var newTrainee = new Trainee();
         newTrainee.setUser(user);
         newTrainee.setDateOfBirth(isNullOrEmpty(dto.dateOfBirth()) ? null : ZonedDateTime.parse(dto.dateOfBirth()));
         newTrainee.setAddress(dto.address());
-        Trainee trainee = traineeDAO.save(newTrainee);
+        var trainee = traineeDAO.save(newTrainee);
         log.info("Trainee Registered Successfully!");
 
         return trainee;
@@ -66,7 +67,8 @@ public class TraineeServiceImpl implements TraineeService {
     public TraineeDTO findByUsername(String username) {
         return traineeDAO.findByUsername(username)
                 .map(TraineeMapper::toTraineeDTO)
-                .orElseThrow(() -> new EntityNotFoundException("Trainee not found with username: " + username));
+                .orElseThrow(() -> new EntityNotFoundException(MISSED_TRAINING_TEMPLATE.formatted(username)));
+        // TODO: String Template, (.formatted()), try to use it in all other methods and classes where possible
     }
 
     @Secured
@@ -94,6 +96,8 @@ public class TraineeServiceImpl implements TraineeService {
 
         trainee.setAddress(isNullOrEmpty(dto.address()) ? trainee.getAddress() : dto.address());
 
+        // TODO: consider adding a new UserUpdateDTO use it here
+        // TODO: consider applying the @Builder annotation everywhere where possible
         userService.update(new UserDTO(trainee.getUser().getId(), dto.firstName(), dto.lastName(),
                 dto.username(), null, null));
 
@@ -200,7 +204,8 @@ public class TraineeServiceImpl implements TraineeService {
         }
     }
 
-    private boolean isNullOrEmpty(String dateOfBirth) {
-        return dateOfBirth == null || dateOfBirth.isEmpty();
+    private boolean isNullOrEmpty(String parameter) {
+        return parameter == null || parameter.isEmpty();
     }
+    // TODO: apache commons (3 version), add dependency, StringUtils, try to move to default/static methods in interface
 }

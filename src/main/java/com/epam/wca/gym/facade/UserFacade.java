@@ -17,9 +17,9 @@ public interface UserFacade {
 
     Role authenticate(String username, String password);
 
-    void activateUser(String username);
+    void activate(String username);
 
-    void deactivateUser(String username);
+    void deactivate(String username);
 
     void changePassword(String username, String currentPassword, String newPassword);
 }

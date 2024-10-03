@@ -11,13 +11,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.HandlerExecutionChain;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import java.io.IOException;
 import java.util.Base64;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
 
 import static com.epam.wca.gym.utils.Constants.BASE64_PASSWORD;
 import static com.epam.wca.gym.utils.Constants.BASE64_USERNAME;
@@ -29,28 +26,28 @@ public class AuthenticationFilter extends HttpFilter {
 
     private final transient UserService userService;
     private final transient SecurityService securityService;
-    private final transient RequestMappingHandlerMapping handlerMapping;
 
-    private static final Set<String> PUBLIC_ENDPOINTS = new HashSet<>();
-
-    static {
-        PUBLIC_ENDPOINTS.add("/api/v1/trainee/registration");
-        PUBLIC_ENDPOINTS.add("/api/v1/trainer/registration");
-        PUBLIC_ENDPOINTS.add("/api/v1/user/auth");
-        PUBLIC_ENDPOINTS.add("/api/v1/training-types");
-    }
+    private static final Map<String, String> ALLOWED_ENDPOINTS = Map.of(
+            "/api/v1/trainees", "POST",
+            "/api/v1/trainers", "POST",
+            "/api/v1/users/auth", "GET",
+            "/api/v1/types", "GET"
+    );
 
     @Override
     public void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
 
-        if (!handlerExists(request)) {
+        String requestUri = request.getRequestURI().substring(request.getContextPath().length());
+        String requestMethod = request.getMethod();
+        String allowedMethod = ALLOWED_ENDPOINTS.get(requestUri);
+
+        if (request.getRequestDispatcher(requestUri) == null) {
             chain.doFilter(request, response);
             return;
         }
 
-        String requestUri = request.getRequestURI().substring(request.getContextPath().length());
-        if (PUBLIC_ENDPOINTS.contains(requestUri)) {
+        if (allowedMethod != null && allowedMethod.equals(requestMethod)) {
             chain.doFilter(request, response);
             return;
         }
@@ -80,17 +77,6 @@ public class AuthenticationFilter extends HttpFilter {
 
     private void sendErrorResponse(HttpServletResponse response, String message) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType("text/plain");
-        response.setCharacterEncoding("UTF-8");
         response.getWriter().write(message);
-    }
-
-    private boolean handlerExists(HttpServletRequest request) {
-        try {
-            HandlerExecutionChain handler = handlerMapping.getHandler(request);
-            return (handler != null);
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

@@ -10,9 +10,9 @@ public interface UserService extends BaseService<User, UserDTO> {
 
     void update(UserDTO dto);
 
-    void activateUser(String username);
+    void activate(String username);
 
-    void deactivateUser(String username);
+    void deactivate(String username);
 
     void changePassword(String username, String currentPassword, String newPassword);
 

@@ -28,5 +28,5 @@ public interface TraineeService extends BaseService<Trainee, TraineeRegistration
 
     List<TrainingDTO> findTrainings(FindTrainingDTO dto);
 
-    void validateIsActive(String traineeUsername);
+    void validateIsActive(String username);
 }

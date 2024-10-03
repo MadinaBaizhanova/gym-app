@@ -140,13 +140,13 @@ public class UserManager {
 
     private void activateUser(GymFacade gymFacade, SecurityService securityService) {
         String username = securityService.getAuthenticatedUsername();
-        gymFacade.user().activateUser(username);
+        gymFacade.user().activate(username);
         log.info("User {} activated successfully.", username);
     }
 
     private void deactivateUser(GymFacade gymFacade, SecurityService securityService) {
         String username = securityService.getAuthenticatedUsername();
-        gymFacade.user().deactivateUser(username);
+        gymFacade.user().deactivate(username);
         log.info("User {} deactivated successfully.", username);
     }
 

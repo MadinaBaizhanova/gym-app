@@ -12,7 +12,7 @@
     }
   ],
   "paths": {
-    "/training-types": {
+    "/types": {
       "get": {
         "summary": "Get all Training Types in Gym CRM",
         "operationId": "getTrainingTypes",
@@ -53,7 +53,7 @@
         }
       }
     },
-    "/user/password": {
+    "/users/password": {
       "put": {
         "summary": "Change User's password",
         "operationId": "changePassword",
@@ -185,7 +185,7 @@
         }
       }
     },
-    "/user/status/active": {
+    "/users/status/active": {
       "patch": {
         "summary": "Activate User",
         "operationId": "activate",
@@ -279,7 +279,7 @@
         }
       }
     },
-    "/user/status/inactive": {
+    "/users/status/inactive": {
       "patch": {
         "summary": "Deactivate User",
         "operationId": "deactivate",
@@ -373,7 +373,7 @@
         }
       }
     },
-    "/user/auth": {
+    "/users/auth": {
       "get": {
         "summary": "Log in a user",
         "operationId": "login",
@@ -486,7 +486,7 @@
         }
       }
     },
-    "/trainer/registration": {
+    "/trainers": {
       "post": {
         "summary": "Register a new Trainer",
         "operationId": "registerTrainer",
@@ -607,7 +607,7 @@
         }
       }
     },
-    "/trainer/profile": {
+    "/trainers": {
       "get": {
         "summary": "Get Trainer Profile",
         "operationId": "getTrainerProfile",
@@ -696,7 +696,7 @@
         }
       }
     },
-    "/trainer/profile": {
+    "/trainers": {
       "put": {
         "summary": "Update Trainer Profile",
         "operationId": "updateProfile",
@@ -816,7 +816,7 @@
         }
       }
     },
-    "/trainer/trainings": {
+    "/trainers/trainings": {
       "get": {
         "summary": "Get all Trainings scheduled for a Trainer",
         "operationId": "getTrainerTrainings",
@@ -944,7 +944,7 @@
         }
       }
     },
-    "/trainee/registration": {
+    "/trainees": {
       "post": {
         "summary": "Register a new Trainee",
         "operationId": "registerTrainee",
@@ -1065,7 +1065,7 @@
         }
       }
     },
-    "/trainee/profile": {
+    "/trainees": {
       "get": {
         "summary": "Get Trainee Profile",
         "operationId": "getTraineeProfile",
@@ -1154,7 +1154,7 @@
         }
       }
     },
-    "/trainee/profile": {
+    "/trainees": {
       "put": {
         "summary": "Update Trainee Profile",
         "operationId": "updateTraineeProfile",
@@ -1274,7 +1274,7 @@
         }
       }
     },
-    "/trainee/profile": {
+    "/trainees": {
       "delete": {
         "summary": "Delete Trainee Profile",
         "operationId": "deleteTraineeProfile",
@@ -1361,7 +1361,7 @@
         }
       }
     },
-    "/trainee/trainers": {
+    "/trainees/trainers": {
       "get": {
         "summary": "Get Available Trainers for Trainee",
         "operationId": "getAvailableTrainers",
@@ -1458,7 +1458,7 @@
         }
       }
     },
-    "/trainee/trainers": {
+    "/trainees/trainers": {
       "put": {
         "summary": "Update Trainee's Trainers",
         "operationId": "updateTrainers",
@@ -1484,10 +1484,16 @@
                   "action": {
                     "type": "string",
                     "example": "add",
-                    "enum": ["add", "remove"]
+                    "enum": [
+                      "add",
+                      "remove"
+                    ]
                   }
                 },
-                "required": ["trainerUsername", "action"]
+                "required": [
+                  "trainerUsername",
+                  "action"
+                ]
               }
             }
           }
@@ -1593,7 +1599,7 @@
         }
       }
     },
-    "/trainee/trainings": {
+    "/trainees/trainings": {
       "post": {
         "summary": "Schedule a Training Session",
         "operationId": "scheduleTraining",
@@ -1709,7 +1715,7 @@
         }
       }
     },
-    "/trainee/trainings": {
+    "/trainees/trainings": {
       "get": {
         "summary": "Get List of Trainings for Trainee",
         "operationId": "getTraineeTrainings",
@@ -1855,7 +1861,7 @@
       }
     },
     "schemas": {
-      "TrainingTypeDTO":  {
+      "TrainingTypeDTO": {
         "type": "object",
         "properties": {
           "id": {

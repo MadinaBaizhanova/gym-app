@@ -4,6 +4,7 @@ import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingTypeDAO;
 import com.epam.wca.gym.dto.trainer.TrainerDTO;
 import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
+import com.epam.wca.gym.dto.trainer.TrainerUpdateDTO;
 import com.epam.wca.gym.dto.user.UserDTO;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.TrainingType;
@@ -159,13 +160,11 @@ class TrainerServiceImplTest {
     @Test
     void testUpdateTrainer_Success() {
         // Arrange
-        TrainerDTO dto = new TrainerDTO(
+        TrainerUpdateDTO dto = new TrainerUpdateDTO(
                 "John",
                 "Doe",
                 "john.doe",
-                "YOGA",
-                true,
-                new ArrayList<>()
+                "YOGA"
         );
 
         User user = new User();
@@ -197,13 +196,11 @@ class TrainerServiceImplTest {
     @Test
     void testUpdateTrainer_NotFound() {
         // Arrange
-        TrainerDTO dto = new TrainerDTO(
+        TrainerUpdateDTO dto = new TrainerUpdateDTO(
                 "John",
                 "Doe",
                 "unknown",
-                "YOGA",
-                true,
-                new ArrayList<>()
+                "YOGA"
         );
 
         when(trainerDAO.findByUsername(dto.username())).thenReturn(Optional.empty());

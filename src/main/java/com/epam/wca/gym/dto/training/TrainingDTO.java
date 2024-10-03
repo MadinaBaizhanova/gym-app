@@ -4,11 +4,13 @@ import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 
 import java.time.ZonedDateTime;
 
 import static com.epam.wca.gym.utils.Constants.DURATION_MIN_SIZE;
 
+@Builder
 public record TrainingDTO(
         @NotBlank(message = "Training name cannot be empty.")
         String trainingName,

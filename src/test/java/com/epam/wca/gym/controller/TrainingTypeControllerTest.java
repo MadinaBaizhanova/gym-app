@@ -65,7 +65,7 @@ class TrainingTypeControllerTest {
         when(trainingTypeService.getAllTrainingTypes()).thenReturn(trainingTypes);
 
         // Act & Assert
-        mockMvc.perform(get("/api/v1/training-types")
+        mockMvc.perform(get("/api/v1/types")
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()").value(trainingTypes.size()))

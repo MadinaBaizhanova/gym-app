@@ -1,5 +1,6 @@
 package com.epam.wca.gym.utils.cli;
 
+import com.epam.wca.gym.dto.trainer.TrainerUpdateDTO;
 import com.epam.wca.gym.dto.training.FindTrainingDTO;
 import com.epam.wca.gym.dto.trainer.TrainerDTO;
 import com.epam.wca.gym.dto.training.TrainingDTO;
@@ -18,8 +19,7 @@ import static com.epam.wca.gym.utils.Constants.BACK_TO_MAIN_MENU;
 import static com.epam.wca.gym.utils.Constants.TIME_ZONED;
 
 /**
- * @deprecated
- * <p>
+ * @deprecated <p>
  * This class previously served as a helper class for the GymApplication class.
  * </p>
  * Due to the new, RESTful, version of the application, the responsibilities of this class have been moved
@@ -80,8 +80,7 @@ public class TrainerManager {
         log.info("Enter new Training Type (leave blank to keep unchanged): ");
         String trainingType = scanner.nextLine();
 
-        TrainerDTO updatedDTO = new TrainerDTO(firstName, lastName, username, trainingType, true,
-                null);
+        TrainerUpdateDTO updatedDTO = new TrainerUpdateDTO(firstName, lastName, username, trainingType);
         try {
             gymFacade.trainer().update(updatedDTO);
         } catch (Exception e) {

@@ -28,13 +28,13 @@ public class UserFacadeImpl implements UserFacade {
     }
 
     @Override
-    public void activateUser(String username) {
-        userService.activateUser(username);
+    public void activate(String username) {
+        userService.activate(username);
     }
 
     @Override
-    public void deactivateUser(String username) {
-        userService.deactivateUser(username);
+    public void deactivate(String username) {
+        userService.deactivate(username);
     }
 
     @Override

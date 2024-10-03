@@ -1,6 +1,7 @@
 package com.epam.wca.gym.facade.impl;
 
 import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
+import com.epam.wca.gym.dto.trainer.TrainerUpdateDTO;
 import com.epam.wca.gym.dto.training.FindTrainingDTO;
 import com.epam.wca.gym.dto.trainer.TrainerDTO;
 import com.epam.wca.gym.dto.training.TrainingDTO;
@@ -28,18 +29,18 @@ public class TrainerFacadeImpl implements TrainerFacade {
     private final TrainerService trainerService;
 
     @Override
-    public Trainer create(TrainerRegistrationDTO trainerDTO) {
-        return trainerService.create(trainerDTO);
+    public Trainer create(TrainerRegistrationDTO dto) {
+        return trainerService.create(dto);
     }
 
     @Override
-    public TrainerDTO findByUsername(String trainerUsername) {
-        return trainerService.findByUsername(trainerUsername);
+    public TrainerDTO findByUsername(String username) {
+        return trainerService.findByUsername(username);
     }
 
     @Override
-    public void update(TrainerDTO trainerDTO) {
-        trainerService.update(trainerDTO);
+    public void update(TrainerUpdateDTO dto) {
+        trainerService.update(dto);
     }
 
     @Override

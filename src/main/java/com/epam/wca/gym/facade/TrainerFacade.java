@@ -1,6 +1,7 @@
 package com.epam.wca.gym.facade;
 
 import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
+import com.epam.wca.gym.dto.trainer.TrainerUpdateDTO;
 import com.epam.wca.gym.dto.training.FindTrainingDTO;
 import com.epam.wca.gym.dto.trainer.TrainerDTO;
 import com.epam.wca.gym.dto.training.TrainingDTO;
@@ -20,11 +21,11 @@ import java.util.List;
 @Deprecated(since = "1.2")
 public interface TrainerFacade {
 
-    Trainer create(TrainerRegistrationDTO trainerDTO);
+    Trainer create(TrainerRegistrationDTO dto);
 
-    TrainerDTO findByUsername(String trainerUsername);
+    TrainerDTO findByUsername(String username);
 
-    void update(TrainerDTO trainerDTO);
+    void update(TrainerUpdateDTO dto);
 
     List<TrainingDTO> findTrainings(FindTrainingDTO dto);
 }

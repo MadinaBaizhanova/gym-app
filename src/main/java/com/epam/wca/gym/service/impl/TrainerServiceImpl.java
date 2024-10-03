@@ -5,6 +5,7 @@ import com.epam.wca.gym.annotation.TrainerOnly;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingTypeDAO;
 import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
+import com.epam.wca.gym.dto.trainer.TrainerUpdateDTO;
 import com.epam.wca.gym.dto.training.FindTrainingDTO;
 import com.epam.wca.gym.dto.trainer.TrainerDTO;
 import com.epam.wca.gym.dto.training.TrainingDTO;
@@ -24,7 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 import static com.epam.wca.gym.utils.Constants.TRAINER_NOT_FOUND;
 
@@ -58,17 +58,17 @@ public class TrainerServiceImpl implements TrainerService {
     @Secured
     @TrainerOnly
     @Override
-    public TrainerDTO findByUsername(String trainerUsername) {
-        return trainerDAO.findByUsername(trainerUsername)
+    public TrainerDTO findByUsername(String username) {
+        return trainerDAO.findByUsername(username)
                 .map(TrainerMapper::toTrainerDTO)
-                .orElseThrow(() -> new EntityNotFoundException("Trainer not found with username: " + trainerUsername));
+                .orElseThrow(() -> new EntityNotFoundException("Trainer not found with username: " + username));
     }
 
     @Secured
     @TrainerOnly
     @Transactional
     @Override
-    public TrainerDTO update(TrainerDTO dto) {
+    public TrainerDTO update(TrainerUpdateDTO dto) {
         Trainer trainer = trainerDAO.findByUsername(dto.username())
                 .orElseThrow(() -> new EntityNotFoundException(TRAINER_NOT_FOUND));
 
@@ -78,8 +78,9 @@ public class TrainerServiceImpl implements TrainerService {
             trainer.setTrainingType(trainingType);
         }
 
+        // TODO: consider adding a new UserUpdateDTO use it here
         userService.update(new UserDTO(trainer.getUser().getId(), dto.firstName(), dto.lastName(),
-                dto.username(), null, dto.isActive()));
+                dto.username(), null, null));
 
         trainerDAO.update(trainer);
         log.info("Trainer updated.");

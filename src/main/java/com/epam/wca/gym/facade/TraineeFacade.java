@@ -24,23 +24,23 @@ import java.util.List;
 @Deprecated(since = "1.2")
 public interface TraineeFacade {
 
-    Trainee create(TraineeRegistrationDTO traineeDTO);
+    Trainee create(TraineeRegistrationDTO dto);
 
     TraineeDTO findByUsername(String username);
 
     void deleteByUsername(String username);
 
-    void update(TraineeUpdateDTO traineeDTO);
+    void update(TraineeUpdateDTO dto);
 
     void addTrainer(String traineeUsername, String trainerUsername);
 
     void removeTrainer(String traineeUsername, String trainerUsername);
 
-    List<TrainerForTraineeDTO> findAvailableTrainers(String traineeUsername);
+    List<TrainerForTraineeDTO> findAvailableTrainers(String username);
 
-    List<TrainerForTraineeDTO> findAssignedTrainers(String traineeUsername);
+    List<TrainerForTraineeDTO> findAssignedTrainers(String username);
 
     List<TrainingDTO> findTrainings(FindTrainingDTO dto);
 
-    Training create(TrainingDTO trainingDTO);
+    Training create(TrainingDTO dto);
 }

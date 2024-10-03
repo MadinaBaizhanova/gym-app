@@ -28,7 +28,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import javax.sql.DataSource;
 import java.util.List;
@@ -116,8 +115,7 @@ public class AppConfig implements WebMvcConfigurer {
 
     @Bean
     public AuthenticationFilter authenticationFilter(UserService userService,
-                                                     SecurityService securityService,
-                                                     RequestMappingHandlerMapping handlerMapping) {
-        return new AuthenticationFilter(userService, securityService, handlerMapping);
+                                                     SecurityService securityService) {
+        return new AuthenticationFilter(userService, securityService);
     }
 }
