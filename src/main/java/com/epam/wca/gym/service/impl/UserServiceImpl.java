@@ -123,6 +123,8 @@ public class UserServiceImpl implements UserService {
                 throw new InvalidInputException("The current password is incorrect.");
             }
 
+            // TODO: consider using a new ChangePasswordDTO record and have the validation checks there.
+            // TODO: You will then remove the unnecessary code in the User Service changePassword() method.
             UserDTO dto = new UserDTO(user.getId(), user.getFirstName(), user.getLastName(),
                     user.getUsername(), newPassword, user.getIsActive());
 
@@ -149,6 +151,7 @@ public class UserServiceImpl implements UserService {
         User user = userDAO.findByUsername(dto.getUsername())
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
+        // TODO: think of reusing the isNullOrEmpty() method, think of replacing && by ||
         String firstName = (dto.getFirstName() != null && !dto.getFirstName().isBlank()) ?
                 dto.getFirstName() : user.getFirstName();
         String lastName = (dto.getLastName() != null && !dto.getLastName().isBlank()) ?

@@ -72,6 +72,7 @@ public class TrainerServiceImpl implements TrainerService {
         Trainer trainer = trainerDAO.findByUsername(dto.username())
                 .orElseThrow(() -> new EntityNotFoundException(TRAINER_NOT_FOUND));
 
+        // TODO: think of reusing the isNullOrEmpty() method, think of replacing && by ||
         if (dto.trainingType() != null && !dto.trainingType().isBlank()) {
             TrainingType trainingType = trainingTypeDAO.findByName(dto.trainingType().toUpperCase())
                     .orElseThrow(() -> new InvalidInputException("Training Type not found"));
