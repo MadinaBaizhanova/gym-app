@@ -208,4 +208,5 @@ public class TraineeServiceImpl implements TraineeService {
         return parameter == null || parameter.isEmpty();
     }
     // TODO: apache commons (3 version), add dependency, StringUtils, try to move to default/static methods in interface
+    // TODO: consider changing to isNullOrBlank (to check for isNull and isBlank) instead of checking for isEmpty.
 }
