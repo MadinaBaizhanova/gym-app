@@ -5,7 +5,9 @@ import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingDAO;
 import com.epam.wca.gym.dao.UserDAO;
+import com.epam.wca.gym.dto.user.ChangePasswordDTO;
 import com.epam.wca.gym.dto.user.UserDTO;
+import com.epam.wca.gym.dto.user.UserUpdateDTO;
 import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.exception.EntityNotFoundException;
@@ -13,8 +15,6 @@ import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.UserService;
 import com.epam.wca.gym.utils.PasswordGenerator;
 import com.epam.wca.gym.utils.UsernameGenerator;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,7 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
-import java.util.Set;
+
+import static com.epam.wca.gym.service.BaseService.isNullOrBlank;
 
 @Slf4j
 @Service
@@ -31,13 +32,14 @@ public class UserServiceImpl implements UserService {
 
     private final UserDAO userDAO;
     private final UsernameGenerator usernameGenerator;
-    private final Validator validator;
     private final BCryptPasswordEncoder passwordEncoder;
     private final TraineeDAO traineeDAO;
     private final TrainingDAO trainingDAO;
     private final TrainerDAO trainerDAO;
 
     private static final ThreadLocal<String> rawPasswordHolder = new ThreadLocal<>();
+
+    private static final String MISSING_USER_TEMPLATE = "User not found with username: %s";
 
     @Transactional
     @Override
@@ -116,29 +118,14 @@ public class UserServiceImpl implements UserService {
     @Secured
     @Transactional
     @Override
-    public void changePassword(String username, String currentPassword, String newPassword) {
+    public void changePassword(String username, ChangePasswordDTO dto) {
         userDAO.findByUsername(username).ifPresent(user -> {
 
-            if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            if (!passwordEncoder.matches(dto.currentPassword(), user.getPassword())) {
                 throw new InvalidInputException("The current password is incorrect.");
             }
 
-            // TODO: consider using a new ChangePasswordDTO record and have the validation checks there.
-            // TODO: You will then remove the unnecessary code in the User Service changePassword() method.
-            UserDTO dto = new UserDTO(user.getId(), user.getFirstName(), user.getLastName(),
-                    user.getUsername(), newPassword, user.getIsActive());
-
-            Set<ConstraintViolation<UserDTO>> violations = validator.validate(dto);
-
-            if (!violations.isEmpty()) {
-                StringBuilder message = new StringBuilder();
-                for (ConstraintViolation<UserDTO> violation : violations) {
-                    message.append(violation.getMessage());
-                }
-                throw new InvalidInputException("Invalid password: " + message);
-            }
-
-            user.setPassword(passwordEncoder.encode(newPassword));
+            user.setPassword(passwordEncoder.encode(dto.newPassword()));
             userDAO.update(user);
             log.info("Password changed successfully!");
         });
@@ -147,15 +134,12 @@ public class UserServiceImpl implements UserService {
     @Secured
     @Transactional
     @Override
-    public void update(UserDTO dto) {
-        User user = userDAO.findByUsername(dto.getUsername())
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+    public void update(UserUpdateDTO dto) {
+        User user = userDAO.findByUsername(dto.username())
+                .orElseThrow(() -> new EntityNotFoundException(MISSING_USER_TEMPLATE.formatted(dto.username())));
 
-        // TODO: think of reusing the isNullOrEmpty() method, think of replacing && by ||
-        String firstName = (dto.getFirstName() != null && !dto.getFirstName().isBlank()) ?
-                dto.getFirstName() : user.getFirstName();
-        String lastName = (dto.getLastName() != null && !dto.getLastName().isBlank()) ?
-                dto.getLastName() : user.getLastName();
+        String firstName = (isNullOrBlank(dto.firstName())) ? user.getFirstName() : dto.firstName();
+        String lastName = (isNullOrBlank(dto.lastname())) ? user.getLastName() : dto.lastname();
 
         user.setFirstName(firstName);
         user.setLastName(lastName);

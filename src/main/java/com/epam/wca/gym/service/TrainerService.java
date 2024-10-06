@@ -2,7 +2,7 @@ package com.epam.wca.gym.service;
 
 import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
 import com.epam.wca.gym.dto.trainer.TrainerUpdateDTO;
-import com.epam.wca.gym.dto.training.FindTrainingDTO;
+import com.epam.wca.gym.dto.training.FindTrainingQuery;
 import com.epam.wca.gym.dto.trainer.TrainerDTO;
 import com.epam.wca.gym.dto.training.TrainingDTO;
 import com.epam.wca.gym.entity.Trainer;
@@ -15,5 +15,5 @@ public interface TrainerService extends BaseService<Trainer, TrainerRegistration
 
     TrainerDTO update(TrainerUpdateDTO dto);
 
-    List<TrainingDTO> findTrainings(FindTrainingDTO dto);
+    List<TrainingDTO> findTrainings(FindTrainingQuery dto);
 }

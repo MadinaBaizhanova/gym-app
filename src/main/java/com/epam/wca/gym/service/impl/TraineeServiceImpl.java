@@ -7,12 +7,13 @@ import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.UserDAO;
 import com.epam.wca.gym.dto.trainee.TraineeUpdateDTO;
-import com.epam.wca.gym.dto.training.FindTrainingDTO;
+import com.epam.wca.gym.dto.training.FindTrainingQuery;
 import com.epam.wca.gym.dto.trainee.TraineeDTO;
 import com.epam.wca.gym.dto.trainer.TrainerForTraineeDTO;
 import com.epam.wca.gym.dto.training.TrainingDTO;
 import com.epam.wca.gym.dto.user.UserDTO;
 import com.epam.wca.gym.dto.trainee.TraineeRegistrationDTO;
+import com.epam.wca.gym.dto.user.UserUpdateDTO;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.exception.EntityNotFoundException;
@@ -31,14 +32,13 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static com.epam.wca.gym.utils.Constants.TRAINEE_NOT_FOUND;
+import static com.epam.wca.gym.service.BaseService.isNullOrBlank;
+import static com.epam.wca.gym.utils.Constants.MISSING_TRAINEE_TEMPLATE;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class TraineeServiceImpl implements TraineeService {
-
-    private static final String MISSED_TRAINING_TEMPLATE = "Trainee not found with username: %s";
 
     private final TraineeDAO traineeDAO;
     private final TrainerDAO trainerDAO;
@@ -53,7 +53,7 @@ public class TraineeServiceImpl implements TraineeService {
 
         var newTrainee = new Trainee();
         newTrainee.setUser(user);
-        newTrainee.setDateOfBirth(isNullOrEmpty(dto.dateOfBirth()) ? null : ZonedDateTime.parse(dto.dateOfBirth()));
+        newTrainee.setDateOfBirth(isNullOrBlank(dto.dateOfBirth()) ? null : ZonedDateTime.parse(dto.dateOfBirth()));
         newTrainee.setAddress(dto.address());
         var trainee = traineeDAO.save(newTrainee);
         log.info("Trainee Registered Successfully!");
@@ -67,8 +67,7 @@ public class TraineeServiceImpl implements TraineeService {
     public TraineeDTO findByUsername(String username) {
         return traineeDAO.findByUsername(username)
                 .map(TraineeMapper::toTraineeDTO)
-                .orElseThrow(() -> new EntityNotFoundException(MISSED_TRAINING_TEMPLATE.formatted(username)));
-        // TODO: String Template, (.formatted()), try to use it in all other methods and classes where possible
+                .orElseThrow(() -> new EntityNotFoundException(MISSING_TRAINEE_TEMPLATE.formatted(username)));
     }
 
     @Secured
@@ -77,7 +76,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public void deleteByUsername(String username) {
         Trainee trainee = traineeDAO.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException(TRAINEE_NOT_FOUND));
+                .orElseThrow(() -> new EntityNotFoundException(MISSING_TRAINEE_TEMPLATE.formatted(username)));
         userDAO.delete(trainee.getUser());
         log.info("Trainee profile deleted successfully.");
         securityService.logout();
@@ -89,17 +88,17 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public TraineeDTO update(TraineeUpdateDTO dto) {
         Trainee trainee = traineeDAO.findByUsername(dto.username())
-                .orElseThrow(() -> new EntityNotFoundException(TRAINEE_NOT_FOUND));
+                .orElseThrow(() -> new EntityNotFoundException(MISSING_TRAINEE_TEMPLATE.formatted(dto.username())));
 
-        trainee.setDateOfBirth(isNullOrEmpty(dto.dateOfBirth()) ? trainee.getDateOfBirth()
+        trainee.setDateOfBirth(isNullOrBlank(dto.dateOfBirth()) ? trainee.getDateOfBirth()
                 : ZonedDateTime.parse(dto.dateOfBirth()));
 
-        trainee.setAddress(isNullOrEmpty(dto.address()) ? trainee.getAddress() : dto.address());
+        trainee.setAddress(isNullOrBlank(dto.address()) ? trainee.getAddress() : dto.address());
 
-        // TODO: consider adding a new UserUpdateDTO use it here
-        // TODO: consider applying the @Builder annotation everywhere where possible
-        userService.update(new UserDTO(trainee.getUser().getId(), dto.firstName(), dto.lastName(),
-                dto.username(), null, null));
+        userService.update(UserUpdateDTO.builder()
+                .username(dto.username())
+                .firstName(dto.firstName())
+                .lastname(dto.lastName()).build());
 
         traineeDAO.update(trainee);
         log.info("Trainee updated.");
@@ -114,7 +113,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public void addTrainer(String traineeUsername, String trainerUsername) {
         Trainee trainee = traineeDAO.findByUsername(traineeUsername)
-                .orElseThrow(() -> new EntityNotFoundException(TRAINEE_NOT_FOUND));
+                .orElseThrow(() -> new EntityNotFoundException(MISSING_TRAINEE_TEMPLATE.formatted(traineeUsername)));
 
         Trainer trainer = trainerDAO.findByUsername(trainerUsername)
                 .orElseThrow(() -> new EntityNotFoundException("Trainer with this username was not found. " +
@@ -144,7 +143,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public void removeTrainer(String traineeUsername, String trainerUsername) {
         Trainee trainee = traineeDAO.findByUsername(traineeUsername)
-                .orElseThrow(() -> new EntityNotFoundException(TRAINEE_NOT_FOUND));
+                .orElseThrow(() -> new EntityNotFoundException(MISSING_TRAINEE_TEMPLATE.formatted(traineeUsername)));
 
         Optional<Trainer> trainerToRemove = trainee.getTrainers().stream()
                 .filter(trainer -> trainer.getUser().getUsername().equals(trainerUsername))
@@ -174,7 +173,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public List<TrainerForTraineeDTO> findAssignedTrainers(String username) {
         Trainee trainee = traineeDAO.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException(TRAINEE_NOT_FOUND));
+                .orElseThrow(() -> new EntityNotFoundException(MISSING_TRAINEE_TEMPLATE.formatted(username)));
 
         return trainee.getTrainers()
                 .stream()
@@ -185,9 +184,8 @@ public class TraineeServiceImpl implements TraineeService {
     @Secured
     @TraineeOnly
     @Override
-    public List<TrainingDTO> findTrainings(FindTrainingDTO dto) {
-        return traineeDAO.findTrainings(dto.username(), dto.name(), dto.trainingType(),
-                        dto.fromDate(), dto.toDate())
+    public List<TrainingDTO> findTrainings(FindTrainingQuery dto) {
+        return traineeDAO.findTrainings(dto)
                 .stream()
                 .map(TrainingMapper::toTrainingDTO)
                 .toList();
@@ -196,17 +194,11 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public void validateIsActive(String username) {
         Trainee trainee = traineeDAO.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("Trainee not found with username: " + username));
+                .orElseThrow(() -> new EntityNotFoundException(MISSING_TRAINEE_TEMPLATE.formatted(username)));
 
         if (!trainee.getUser().getIsActive()) {
             log.warn("Trainee with username '{}' is deactivated.", username);
             throw new IllegalStateException("Your account is deactivated. Please activate it to perform this action.");
         }
     }
-
-    private boolean isNullOrEmpty(String parameter) {
-        return parameter == null || parameter.isEmpty();
-    }
-    // TODO: apache commons (3 version), add dependency, StringUtils, try to move to default/static methods in interface
-    // TODO: consider changing to isNullOrBlank (to check for isNull and isBlank) instead of checking for isEmpty.
 }

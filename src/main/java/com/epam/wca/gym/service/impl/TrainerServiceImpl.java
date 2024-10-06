@@ -6,10 +6,11 @@ import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingTypeDAO;
 import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
 import com.epam.wca.gym.dto.trainer.TrainerUpdateDTO;
-import com.epam.wca.gym.dto.training.FindTrainingDTO;
+import com.epam.wca.gym.dto.training.FindTrainingQuery;
 import com.epam.wca.gym.dto.trainer.TrainerDTO;
 import com.epam.wca.gym.dto.training.TrainingDTO;
 import com.epam.wca.gym.dto.user.UserDTO;
+import com.epam.wca.gym.dto.user.UserUpdateDTO;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.entity.User;
@@ -26,7 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static com.epam.wca.gym.utils.Constants.TRAINER_NOT_FOUND;
+import static com.epam.wca.gym.service.BaseService.isNullOrBlank;
+import static com.epam.wca.gym.utils.Constants.MISSING_TRAINER_TEMPLATE;
+import static com.epam.wca.gym.utils.Constants.MISSING_TRAINING_TEMPLATE;
 
 @Slf4j
 @Service
@@ -41,7 +44,7 @@ public class TrainerServiceImpl implements TrainerService {
     @Override
     public Trainer create(TrainerRegistrationDTO dto) {
         TrainingType type = trainingTypeDAO.findByName(dto.trainingType().toUpperCase())
-                .orElseThrow(() -> new EntityNotFoundException("Training Type not found"));
+                .orElseThrow(() -> new EntityNotFoundException(MISSING_TRAINING_TEMPLATE.formatted(dto.trainingType())));
 
         User user = userService.create(new UserDTO(dto.firstName(), dto.lastName()));
 
@@ -61,7 +64,7 @@ public class TrainerServiceImpl implements TrainerService {
     public TrainerDTO findByUsername(String username) {
         return trainerDAO.findByUsername(username)
                 .map(TrainerMapper::toTrainerDTO)
-                .orElseThrow(() -> new EntityNotFoundException("Trainer not found with username: " + username));
+                .orElseThrow(() -> new EntityNotFoundException(MISSING_TRAINER_TEMPLATE.formatted(username)));
     }
 
     @Secured
@@ -70,18 +73,19 @@ public class TrainerServiceImpl implements TrainerService {
     @Override
     public TrainerDTO update(TrainerUpdateDTO dto) {
         Trainer trainer = trainerDAO.findByUsername(dto.username())
-                .orElseThrow(() -> new EntityNotFoundException(TRAINER_NOT_FOUND));
+                .orElseThrow(() -> new EntityNotFoundException(MISSING_TRAINER_TEMPLATE.formatted(dto.username())));
 
-        // TODO: think of reusing the isNullOrEmpty() method, think of replacing && by ||
-        if (dto.trainingType() != null && !dto.trainingType().isBlank()) {
+        if (!isNullOrBlank(dto.trainingType())) {
             TrainingType trainingType = trainingTypeDAO.findByName(dto.trainingType().toUpperCase())
-                    .orElseThrow(() -> new InvalidInputException("Training Type not found"));
+                    .orElseThrow(() -> new InvalidInputException(MISSING_TRAINING_TEMPLATE.formatted(dto.trainingType())));
             trainer.setTrainingType(trainingType);
         }
 
-        // TODO: consider adding a new UserUpdateDTO use it here
-        userService.update(new UserDTO(trainer.getUser().getId(), dto.firstName(), dto.lastName(),
-                dto.username(), null, null));
+        userService.update(UserUpdateDTO.builder()
+                .username(dto.username())
+                .firstName(dto.firstName())
+                .lastname(dto.lastName())
+                .build());
 
         trainerDAO.update(trainer);
         log.info("Trainer updated.");
@@ -92,8 +96,8 @@ public class TrainerServiceImpl implements TrainerService {
     @Secured
     @TrainerOnly
     @Override
-    public List<TrainingDTO> findTrainings(FindTrainingDTO dto) {
-        return trainerDAO.findTrainings(dto.username(), dto.name(), dto.fromDate(), dto.toDate())
+    public List<TrainingDTO> findTrainings(FindTrainingQuery dto) {
+        return trainerDAO.findTrainings(dto)
                 .stream()
                 .map(TrainingMapper::toTrainingDTO)
                 .toList();

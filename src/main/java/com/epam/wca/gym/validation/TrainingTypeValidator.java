@@ -4,9 +4,7 @@ import com.epam.wca.gym.dao.TrainingTypeDAO;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
-@Component
 @RequiredArgsConstructor
 public class TrainingTypeValidator implements ConstraintValidator<ValidTrainingType, String> {
 

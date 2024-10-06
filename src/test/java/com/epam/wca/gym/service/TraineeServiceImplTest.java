@@ -7,6 +7,7 @@ import com.epam.wca.gym.dto.trainee.TraineeDTO;
 import com.epam.wca.gym.dto.trainee.TraineeUpdateDTO;
 import com.epam.wca.gym.dto.user.UserDTO;
 import com.epam.wca.gym.dto.trainee.TraineeRegistrationDTO;
+import com.epam.wca.gym.dto.user.UserUpdateDTO;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.User;
@@ -27,8 +28,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static com.epam.wca.gym.utils.Constants.TRAINEE_NOT_FOUND;
-import static org.junit.jupiter.api.Assertions.*;
+import static com.epam.wca.gym.utils.Constants.MISSING_TRAINEE_TEMPLATE;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -188,7 +194,7 @@ class TraineeServiceImplTest {
 
         // Assert
         assertEquals(dto.address(), trainee.getAddress());
-        verify(userService).update(any(UserDTO.class));
+        verify(userService).update(any(UserUpdateDTO.class));
         verify(traineeDAO).update(trainee);
     }
 
@@ -207,8 +213,8 @@ class TraineeServiceImplTest {
 
         // Act & Assert
         Exception exception = assertThrows(EntityNotFoundException.class, () -> traineeService.update(dto));
-        assertEquals(TRAINEE_NOT_FOUND, exception.getMessage());
-        verify(userService, never()).update(any(UserDTO.class));
+        assertEquals(MISSING_TRAINEE_TEMPLATE.formatted(dto.username()), exception.getMessage());
+        verify(userService, never()).update(any(UserUpdateDTO.class));
         verify(traineeDAO, never()).update(any(Trainee.class));
     }
 
@@ -242,7 +248,7 @@ class TraineeServiceImplTest {
 
         // Act & Assert
         Exception exception = assertThrows(EntityNotFoundException.class, () -> traineeService.deleteByUsername(username));
-        assertEquals(TRAINEE_NOT_FOUND, exception.getMessage());
+        assertEquals(MISSING_TRAINEE_TEMPLATE.formatted(username), exception.getMessage());
         verify(userDAO, never()).delete(any(User.class));
     }
 

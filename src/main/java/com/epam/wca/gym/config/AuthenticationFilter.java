@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Set;
 
 import static com.epam.wca.gym.utils.Constants.BASE64_PASSWORD;
 import static com.epam.wca.gym.utils.Constants.BASE64_USERNAME;
@@ -34,6 +35,12 @@ public class AuthenticationFilter extends HttpFilter {
             "/api/v1/types", "GET"
     );
 
+    private static final Set<String> ALLOWED_PREFIXES = Set.of(
+            "/actuator",
+            "/swagger-ui",
+            "/v3/api-docs"
+    );
+
     @Override
     public void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
@@ -42,7 +49,7 @@ public class AuthenticationFilter extends HttpFilter {
         String requestMethod = request.getMethod();
         String allowedMethod = ALLOWED_ENDPOINTS.get(requestUri);
 
-        if (request.getRequestDispatcher(requestUri) == null) {
+        if (ALLOWED_PREFIXES.stream().anyMatch(requestUri::startsWith)) {
             chain.doFilter(request, response);
             return;
         }

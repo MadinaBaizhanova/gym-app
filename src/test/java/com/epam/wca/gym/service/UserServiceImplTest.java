@@ -4,7 +4,9 @@ import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingDAO;
 import com.epam.wca.gym.dao.UserDAO;
+import com.epam.wca.gym.dto.user.ChangePasswordDTO;
 import com.epam.wca.gym.dto.user.UserDTO;
+import com.epam.wca.gym.dto.user.UserUpdateDTO;
 import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
@@ -13,8 +15,6 @@ import com.epam.wca.gym.exception.EntityNotFoundException;
 import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.impl.UserServiceImpl;
 import com.epam.wca.gym.utils.UsernameGenerator;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,10 +29,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.math.BigInteger;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
@@ -49,9 +53,6 @@ class UserServiceImplTest {
 
     @Mock
     private UsernameGenerator usernameGenerator;
-
-    @Mock
-    private Validator validator;
 
     @Mock
     private BCryptPasswordEncoder passwordEncoder;
@@ -187,8 +188,7 @@ class UserServiceImplTest {
         when(userDAO.findByUsername("user"))
                 .thenReturn(Optional.of(existingUser));
 
-        UserDTO dto = new UserDTO(dtoFirstName, dtoLastName);
-        dto.setUsername("user");
+        UserUpdateDTO dto = new UserUpdateDTO("user", dtoFirstName, dtoLastName);
 
         // Act
         userService.update(dto);
@@ -217,8 +217,7 @@ class UserServiceImplTest {
         // Arrange
         when(userDAO.findByUsername("nonExistentUser"))
                 .thenReturn(Optional.empty());
-        UserDTO dto = new UserDTO("First", "Last");
-        dto.setUsername("nonExistentUser");
+        UserUpdateDTO dto = new UserUpdateDTO("nonExistentUser", "First", "Last");
 
         // Act & Assert
         assertThrows(EntityNotFoundException.class, () -> userService.update(dto));
@@ -314,22 +313,20 @@ class UserServiceImplTest {
         user.setUsername(username);
         user.setPassword(storedPasswordHash);
 
-        when(userDAO.findByUsername(username))
-                .thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(currentPassword, storedPasswordHash))
-                .thenReturn(true);
-        when(validator.validate(any(UserDTO.class)))
-                .thenReturn(Set.of());
-        when(passwordEncoder.encode(newPassword))
-                .thenReturn("hashedNewPassword");
+        ChangePasswordDTO dto = new ChangePasswordDTO(currentPassword, newPassword);
+
+        when(userDAO.findByUsername(username)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(dto.currentPassword(), storedPasswordHash)).thenReturn(true);
+        when(passwordEncoder.encode(dto.newPassword())).thenReturn("hashedNewPassword");
 
         // Act
-        userService.changePassword(username, currentPassword, newPassword);
+        userService.changePassword(username, dto);
 
         // Assert
         assertEquals("hashedNewPassword", user.getPassword());
         verify(userDAO).update(user);
     }
+
 
     @Test
     void testChangePassword_CurrentPasswordIncorrect() {
@@ -342,61 +339,30 @@ class UserServiceImplTest {
         user.setUsername(username);
         user.setPassword(storedPasswordHash);
 
-        when(userDAO.findByUsername(username))
-                .thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(currentPassword, storedPasswordHash))
-                .thenReturn(false);
+        ChangePasswordDTO dto = new ChangePasswordDTO(currentPassword, "newValidPassword");
 
-        // Act & Assert
-        assertThrows(InvalidInputException.class, () ->
-                userService.changePassword(username, currentPassword, "newPassword"));
-
-        verify(userDAO, never()).update(any(User.class));
-    }
-
-    @Test
-    void testChangePassword_NewPasswordInvalid() {
-        // Arrange
-        String username = "user";
-        String currentPassword = "currentPassword";
-        String storedPasswordHash = "hashedCurrentPassword";
-        String newPassword = "short";
-
-        User user = new User();
-        user.setUsername(username);
-        user.setPassword(storedPasswordHash);
-
-        when(userDAO.findByUsername(username))
-                .thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(currentPassword, storedPasswordHash))
-                .thenReturn(true);
-        ConstraintViolation<UserDTO> violation = mock(ConstraintViolation.class);
-        when(violation.getMessage())
-                .thenReturn("Password must be at least 10 characters long.");
-        Set<ConstraintViolation<UserDTO>> violations = Set.of(violation);
-
-        when(validator.validate(any(UserDTO.class)))
-                .thenReturn(violations);
+        when(userDAO.findByUsername(username)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(dto.currentPassword(), storedPasswordHash)).thenReturn(false);
 
         // Act & Assert
         InvalidInputException exception = assertThrows(InvalidInputException.class, () ->
-                userService.changePassword(username, currentPassword, newPassword));
+                userService.changePassword(username, dto));
 
-        assertTrue(exception.getMessage().contains("Invalid password"));
-
+        assertEquals("The current password is incorrect.", exception.getMessage());
         verify(userDAO, never()).update(any(User.class));
     }
 
     @Test
     void testChangePassword_UserNotFound() {
         // Arrange
-        when(userDAO.findByUsername("nonExistentUser"))
-                .thenReturn(Optional.empty());
+        String username = "nonExistingUser";
+        ChangePasswordDTO dto = new ChangePasswordDTO("currentPassword", "newValidPassword");
 
-        // Act
-        userService.changePassword("nonExistentUser", "currentPassword", "newPassword");
+        when(userDAO.findByUsername(username)).thenReturn(Optional.empty());
 
-        // Assert
+        // Act & Assert
+        userService.changePassword(username, dto);
+
         verify(userDAO, never()).update(any(User.class));
     }
 }

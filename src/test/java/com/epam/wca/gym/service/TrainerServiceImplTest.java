@@ -6,6 +6,7 @@ import com.epam.wca.gym.dto.trainer.TrainerDTO;
 import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
 import com.epam.wca.gym.dto.trainer.TrainerUpdateDTO;
 import com.epam.wca.gym.dto.user.UserDTO;
+import com.epam.wca.gym.dto.user.UserUpdateDTO;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.entity.User;
@@ -22,7 +23,11 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static com.epam.wca.gym.utils.Constants.MISSING_TRAINER_TEMPLATE;
+import static com.epam.wca.gym.utils.Constants.MISSING_TRAINING_TEMPLATE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -104,7 +109,7 @@ class TrainerServiceImplTest {
         // Act & Assert
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
                 trainerService.create(dto));
-        assertEquals("Training Type not found", exception.getMessage());
+        assertEquals(MISSING_TRAINING_TEMPLATE.formatted(dto.trainingType()), exception.getMessage());
 
         verify(trainingTypeDAO).findByName("UNKNOWN_TYPE");
         verify(userService, never()).create(any(UserDTO.class));
@@ -189,7 +194,7 @@ class TrainerServiceImplTest {
         trainerService.update(dto);
 
         // Assert
-        verify(userService).update(any(UserDTO.class));
+        verify(userService).update(any(UserUpdateDTO.class));
         verify(trainerDAO).update(trainer);
     }
 
@@ -208,9 +213,9 @@ class TrainerServiceImplTest {
         // Act & Assert
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
                 trainerService.update(dto));
-        assertEquals("Trainer not found", exception.getMessage());
+        assertEquals(MISSING_TRAINER_TEMPLATE.formatted(dto.username()), exception.getMessage());
 
-        verify(userService, never()).update(any(UserDTO.class));
+        verify(userService, never()).update(any(UserUpdateDTO.class));
         verify(trainerDAO, never()).update(any(Trainer.class));
     }
 }

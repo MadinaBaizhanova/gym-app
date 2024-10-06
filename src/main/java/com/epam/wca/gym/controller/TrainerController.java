@@ -1,9 +1,10 @@
 package com.epam.wca.gym.controller;
 
-import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
-import com.epam.wca.gym.dto.training.FindTrainingDTO;
+import com.epam.wca.gym.annotation.MonitorEndpoint;
 import com.epam.wca.gym.dto.trainer.TrainerDTO;
+import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
 import com.epam.wca.gym.dto.trainer.TrainerUpdateDTO;
+import com.epam.wca.gym.dto.training.FindTrainingQuery;
 import com.epam.wca.gym.dto.training.TrainingDTO;
 import com.epam.wca.gym.service.SecurityService;
 import com.epam.wca.gym.service.TrainerService;
@@ -33,6 +34,7 @@ public class TrainerController {
     private final UserService userService;
     private final SecurityService securityService;
 
+    @MonitorEndpoint("trainer.controller.register")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, String> register(@Valid @RequestBody TrainerRegistrationDTO dto) {
@@ -47,6 +49,7 @@ public class TrainerController {
         );
     }
 
+    @MonitorEndpoint("trainer.controller.get.by.username")
     @GetMapping
     public TrainerDTO getByUsername() {
         String username = securityService.getAuthenticatedUsername();
@@ -54,6 +57,7 @@ public class TrainerController {
         return trainerService.findByUsername(username);
     }
 
+    @MonitorEndpoint("trainer.controller.update")
     @PutMapping
     public TrainerDTO update(@Valid @RequestBody TrainerUpdateDTO dto) {
         String username = securityService.getAuthenticatedUsername();
@@ -68,6 +72,7 @@ public class TrainerController {
         return trainerService.update(trainer);
     }
 
+    @MonitorEndpoint("trainer.controller.get.trainer.trainings")
     @GetMapping("/trainings")
     public List<TrainingDTO> getTrainings(
             @RequestParam(value = "name", required = false) String name,
@@ -76,7 +81,7 @@ public class TrainerController {
 
         String username = securityService.getAuthenticatedUsername();
 
-        var training = FindTrainingDTO.builder()
+        var training = FindTrainingQuery.builder()
                 .username(username)
                 .name(name)
                 .trainingType(null)

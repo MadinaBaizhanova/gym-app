@@ -1,7 +1,7 @@
 package com.epam.wca.gym.service;
 
 import com.epam.wca.gym.dto.trainee.TraineeUpdateDTO;
-import com.epam.wca.gym.dto.training.FindTrainingDTO;
+import com.epam.wca.gym.dto.training.FindTrainingQuery;
 import com.epam.wca.gym.dto.trainee.TraineeDTO;
 import com.epam.wca.gym.dto.trainer.TrainerForTraineeDTO;
 import com.epam.wca.gym.dto.training.TrainingDTO;
@@ -26,7 +26,7 @@ public interface TraineeService extends BaseService<Trainee, TraineeRegistration
 
     List<TrainerForTraineeDTO> findAssignedTrainers(String username);
 
-    List<TrainingDTO> findTrainings(FindTrainingDTO dto);
+    List<TrainingDTO> findTrainings(FindTrainingQuery dto);
 
     void validateIsActive(String username);
 }

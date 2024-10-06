@@ -1,50 +1,30 @@
 package com.epam.wca.gym.controller;
 
-import com.epam.wca.gym.config.AppConfig;
 import com.epam.wca.gym.entity.Role;
-import com.epam.wca.gym.exception.GlobalExceptionHandler;
 import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.UserService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.test.context.web.WebAppConfiguration;
 
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {AppConfig.class})
-@WebAppConfiguration
+@SpringBootTest
+@AutoConfigureMockMvc
 class UserControllerTest {
 
+    @Autowired
     private MockMvc mockMvc;
 
-    @Mock
+    @MockBean
     private UserService userService;
-
-    @InjectMocks
-    private UserController userController;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        this.mockMvc = MockMvcBuilders.standaloneSetup(userController)
-                .setControllerAdvice(new GlobalExceptionHandler())
-                .build();
-    }
 
     @Test
     void login_ShouldReturnOkAndRoleTrainee_WhenCredentialsAreValid() throws Exception {
@@ -60,8 +40,6 @@ class UserControllerTest {
                         .param("password", password))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Login successful. User role: TRAINEE"));
-
-        verify(userService).authenticate(username, password);
     }
 
     @Test
@@ -81,19 +59,20 @@ class UserControllerTest {
     }
 
     @Test
-    void login_ShouldReturnTeapotStatus_WhenCredentialsAreInvalid() throws Exception {
+    void login_ShouldReturnBadRequest_WhenCredentialsAreInvalid() throws Exception {
         // Arrange
         String username = "john_doe";
         String password = "wrongPassword";
 
-        when(userService.authenticate(username, password)).thenThrow(new InvalidInputException("Invalid credentials provided!"));
+        when(userService.authenticate(username, password))
+                .thenThrow(new InvalidInputException("Invalid credentials provided!"));
 
         // Act & Assert
         mockMvc.perform(get("/api/v1/users/auth")
                         .param("username", username)
-                        .param("password", password)
-                        .contentType(APPLICATION_JSON))
+                        .param("password", password))
                 .andExpect(status().isBadRequest())
+                .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.error").value("Invalid credentials provided!"));
     }
 }

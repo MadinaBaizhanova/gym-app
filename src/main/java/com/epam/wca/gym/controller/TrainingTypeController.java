@@ -1,5 +1,6 @@
 package com.epam.wca.gym.controller;
 
+import com.epam.wca.gym.annotation.MonitorEndpoint;
 import com.epam.wca.gym.dto.type.TrainingTypeDTO;
 import com.epam.wca.gym.service.TrainingTypeService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ public class TrainingTypeController {
 
     private final TrainingTypeService trainingTypeService;
 
+    @MonitorEndpoint("training.type.controller.get")
     @GetMapping
     public List<TrainingTypeDTO> getTrainingTypes() {
         return trainingTypeService.getAllTrainingTypes();

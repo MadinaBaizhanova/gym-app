@@ -1,11 +1,12 @@
 package com.epam.wca.gym.controller;
 
-import com.epam.wca.gym.dto.training.FindTrainingDTO;
+import com.epam.wca.gym.annotation.MonitorEndpoint;
 import com.epam.wca.gym.dto.trainee.TraineeDTO;
+import com.epam.wca.gym.dto.trainee.TraineeRegistrationDTO;
 import com.epam.wca.gym.dto.trainee.TraineeUpdateDTO;
 import com.epam.wca.gym.dto.trainer.TrainerForTraineeDTO;
+import com.epam.wca.gym.dto.training.FindTrainingQuery;
 import com.epam.wca.gym.dto.training.TrainingDTO;
-import com.epam.wca.gym.dto.trainee.TraineeRegistrationDTO;
 import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.SecurityService;
 import com.epam.wca.gym.service.TraineeService;
@@ -38,6 +39,7 @@ public class TraineeController {
     private final SecurityService securityService;
     private final TrainingService trainingService;
 
+    @MonitorEndpoint("trainee.controller.register")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, String> register(@Valid @RequestBody TraineeRegistrationDTO dto) {
@@ -52,6 +54,7 @@ public class TraineeController {
         );
     }
 
+    @MonitorEndpoint("trainee.controller.get.by.username")
     @GetMapping
     public TraineeDTO getByUsername() {
         String username = securityService.getAuthenticatedUsername();
@@ -59,6 +62,7 @@ public class TraineeController {
         return traineeService.findByUsername(username);
     }
 
+    @MonitorEndpoint("trainee.controller.update")
     @PutMapping
     public TraineeDTO update(@Valid @RequestBody TraineeUpdateDTO dto) {
         String username = securityService.getAuthenticatedUsername();
@@ -74,6 +78,7 @@ public class TraineeController {
         return traineeService.update(trainee);
     }
 
+    @MonitorEndpoint("trainee.controller.delete")
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete() {
@@ -82,6 +87,7 @@ public class TraineeController {
         traineeService.deleteByUsername(username);
     }
 
+    @MonitorEndpoint("trainee.controller.get.available.trainers")
     @GetMapping("/trainers")
     public List<TrainerForTraineeDTO> getAvailableTrainers() {
         String username = securityService.getAuthenticatedUsername();
@@ -89,13 +95,13 @@ public class TraineeController {
         return traineeService.findAvailableTrainers(username);
     }
 
+    @MonitorEndpoint("trainee.controller.update.trainers")
     @PutMapping("/trainers")
     public List<TrainerForTraineeDTO> updateTrainers(@RequestBody Map<String, String> requestBody) {
         String username = securityService.getAuthenticatedUsername();
         String trainerUsername = requestBody.get("trainerUsername");
         String action = requestBody.get("action").toLowerCase();
 
-        // TODO: move this to the corresponding Service class + add Transaction Management
         switch (action) {
             case "add" -> traineeService.addTrainer(username, trainerUsername);
             case "remove" -> traineeService.removeTrainer(username, trainerUsername);
@@ -105,6 +111,7 @@ public class TraineeController {
         return traineeService.findAssignedTrainers(username);
     }
 
+    @MonitorEndpoint("trainee.controller.add.training")
     @PostMapping("/trainings")
     @ResponseStatus(HttpStatus.CREATED)
     public void schedule(@Valid @RequestBody TrainingDTO dto) {
@@ -122,6 +129,7 @@ public class TraineeController {
         trainingService.create(training);
     }
 
+    @MonitorEndpoint("trainee.controller.get.trainee.trainings")
     @GetMapping("/trainings")
     public List<TrainingDTO> getTrainings(
             @RequestParam(value = "name", required = false) String name,
@@ -131,7 +139,7 @@ public class TraineeController {
 
         String username = securityService.getAuthenticatedUsername();
 
-        var training = FindTrainingDTO.builder()
+        var training = FindTrainingQuery.builder()
                 .username(username)
                 .name(name)
                 .trainingType(trainingType)
@@ -142,4 +150,3 @@ public class TraineeController {
         return traineeService.findTrainings(training);
     }
 }
-// TODO: add the 403 Forbidden response status when a Trainer tries to access Trainee's endpoint and vice versa
