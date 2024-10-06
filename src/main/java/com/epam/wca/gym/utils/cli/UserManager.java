@@ -1,7 +1,7 @@
 package com.epam.wca.gym.utils.cli;
 
-import com.epam.wca.gym.dto.TraineeDTO;
-import com.epam.wca.gym.dto.TrainerDTO;
+import com.epam.wca.gym.dto.trainee.TraineeRegistrationDTO;
+import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
 import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.facade.GymFacade;
@@ -9,16 +9,23 @@ import com.epam.wca.gym.service.SecurityService;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 
 import static com.epam.wca.gym.utils.Constants.ENTER_YOUR_FIRST_NAME;
 import static com.epam.wca.gym.utils.Constants.ENTER_YOUR_LAST_NAME;
-import static com.epam.wca.gym.utils.Constants.TIME_ZONED;
+
+/**
+ * @deprecated
+ * <p>
+ * This class previously served as a helper class for the GymApplication class.
+ * </p>
+ * Due to the new, RESTful, version of the application, the responsibilities of this class have been moved
+ * to {@link com.epam.wca.gym.controller.UserController}
+ */
 
 @Slf4j
 @UtilityClass
+@Deprecated(since = "1.2")
 public class UserManager {
 
     public static void register(Scanner scanner, GymFacade gymFacade) {
@@ -97,23 +104,13 @@ public class UserManager {
         log.info(ENTER_YOUR_LAST_NAME);
         String lastName = scanner.nextLine();
 
-        ZonedDateTime dateOfBirth = null;
         log.info("Enter Date of Birth (format: yyyy-mm-dd) (optional): ");
-        String dob = scanner.nextLine();
-        if (!dob.isBlank()) {
-            try {
-                dateOfBirth = ZonedDateTime.parse(dob + TIME_ZONED);
-            } catch (DateTimeParseException e) {
-                log.error("Invalid Date of Birth. Please enter a valid date in yyyy-mm-dd format.");
-                return;
-            }
-        }
+        String dateOfBirth = scanner.nextLine();
 
         log.info("Enter Address (optional): ");
         String address = scanner.nextLine();
 
-        TraineeDTO traineeDTO = new TraineeDTO(null, firstName, lastName, null, dateOfBirth, address,
-                true);
+        TraineeRegistrationDTO traineeDTO = new TraineeRegistrationDTO(firstName, lastName, dateOfBirth, address);
 
         try {
             gymFacade.trainee().create(traineeDTO);
@@ -132,7 +129,7 @@ public class UserManager {
         log.info("Enter Training Type (available types: FITNESS, YOGA, ZUMBA, STRETCHING, CARDIO, CROSSFIT): ");
         String trainingType = scanner.nextLine();
 
-        TrainerDTO trainerDTO = new TrainerDTO(null, firstName, lastName, null, trainingType, true);
+        TrainerRegistrationDTO trainerDTO = new TrainerRegistrationDTO(firstName, lastName, trainingType);
 
         try {
             gymFacade.trainer().create(trainerDTO);
@@ -143,13 +140,13 @@ public class UserManager {
 
     private void activateUser(GymFacade gymFacade, SecurityService securityService) {
         String username = securityService.getAuthenticatedUsername();
-        gymFacade.user().activateUser(username);
+        gymFacade.user().activate(username);
         log.info("User {} activated successfully.", username);
     }
 
     private void deactivateUser(GymFacade gymFacade, SecurityService securityService) {
         String username = securityService.getAuthenticatedUsername();
-        gymFacade.user().deactivateUser(username);
+        gymFacade.user().deactivate(username);
         log.info("User {} deactivated successfully.", username);
     }
 

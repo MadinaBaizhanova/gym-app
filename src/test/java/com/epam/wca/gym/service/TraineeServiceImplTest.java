@@ -1,16 +1,17 @@
-package com.epam.wca.gym;
+package com.epam.wca.gym.service;
 
 import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.UserDAO;
-import com.epam.wca.gym.dto.TraineeDTO;
-import com.epam.wca.gym.dto.UserDTO;
+import com.epam.wca.gym.dto.trainee.TraineeDTO;
+import com.epam.wca.gym.dto.trainee.TraineeUpdateDTO;
+import com.epam.wca.gym.dto.user.UserDTO;
+import com.epam.wca.gym.dto.trainee.TraineeRegistrationDTO;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.exception.EntityNotFoundException;
-import com.epam.wca.gym.service.SecurityService;
-import com.epam.wca.gym.service.UserService;
+import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.impl.TraineeServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,11 +28,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.epam.wca.gym.utils.Constants.TRAINEE_NOT_FOUND;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -67,14 +64,11 @@ class TraineeServiceImplTest {
     @Test
     void testCreateTrainee_Success() {
         // Arrange
-        TraineeDTO dto = new TraineeDTO(
-                BigInteger.ONE,
+        TraineeRegistrationDTO dto = new TraineeRegistrationDTO(
                 "John",
                 "Doe",
-                "john.doe",
-                ZonedDateTime.now().minusYears(25),
-                "123 Main St",
-                true
+                ZonedDateTime.now().minusYears(25).toString(),
+                "123 Main St"
         );
 
         User user = new User();
@@ -86,24 +80,22 @@ class TraineeServiceImplTest {
         Trainee newTrainee = new Trainee();
         newTrainee.setId(BigInteger.ONE);
         newTrainee.setUser(user);
-        newTrainee.setDateOfBirth(dto.dateOfBirth());
+        newTrainee.setDateOfBirth(ZonedDateTime.parse(dto.dateOfBirth()));
         newTrainee.setAddress(dto.address());
 
-        when(userService.create(any(UserDTO.class))).thenReturn(Optional.of(user));
+        when(userService.create(any(UserDTO.class))).thenReturn(user);
         when(traineeDAO.save(any(Trainee.class))).thenReturn(newTrainee);
 
         // Act
-        Optional<Trainee> result = traineeService.create(dto);
+        Trainee result = traineeService.create(dto);
 
         // Assert
-        assertTrue(result.isPresent());
-        Trainee trainee = result.get();
+        assertNotNull(result);
         assertAll(
-                () -> assertEquals(dto.firstName(), trainee.getUser().getFirstName()),
-                () -> assertEquals(dto.lastName(), trainee.getUser().getLastName()),
-                () -> assertEquals(dto.username(), trainee.getUser().getUsername()),
-                () -> assertEquals(dto.dateOfBirth(), trainee.getDateOfBirth()),
-                () -> assertEquals(dto.address(), trainee.getAddress())
+                () -> assertEquals(dto.firstName(), result.getUser().getFirstName()),
+                () -> assertEquals(dto.lastName(), result.getUser().getLastName()),
+                () -> assertEquals(ZonedDateTime.parse(dto.dateOfBirth()), result.getDateOfBirth()),
+                () -> assertEquals(dto.address(), result.getAddress())
         );
         verify(userService).create(any(UserDTO.class));
         verify(traineeDAO).save(any(Trainee.class));
@@ -112,23 +104,20 @@ class TraineeServiceImplTest {
     @Test
     void testCreateTrainee_UserCreationFails() {
         // Arrange
-        TraineeDTO dto = new TraineeDTO(
-                BigInteger.ONE,
+        TraineeRegistrationDTO dto = new TraineeRegistrationDTO(
                 "John",
                 "Doe",
-                "john.doe",
-                ZonedDateTime.now().minusYears(25),
-                "123 Main St",
-                true
+                ZonedDateTime.now().minusYears(25).toString(),
+                "123 Main St"
         );
 
-        when(userService.create(any(UserDTO.class))).thenReturn(Optional.empty());
+        when(userService.create(any(UserDTO.class))).thenThrow(new InvalidInputException("User creation failed"));
 
-        // Act
-        Optional<Trainee> result = traineeService.create(dto);
+        // Act & Assert
+        InvalidInputException exception = assertThrows(InvalidInputException.class, () ->
+                traineeService.create(dto));
 
-        // Assert
-        assertFalse(result.isPresent());
+        assertEquals("User creation failed", exception.getMessage());
         verify(userService).create(any(UserDTO.class));
         verify(traineeDAO, never()).save(any(Trainee.class));
     }
@@ -142,16 +131,16 @@ class TraineeServiceImplTest {
         User user = new User();
         user.setUsername(username);
         trainee.setUser(user);
+        trainee.setTrainers(new ArrayList<>());
 
         when(traineeDAO.findByUsername(username)).thenReturn(Optional.of(trainee));
 
         // Act
-        Optional<TraineeDTO> result = traineeService.findByUsername(username);
+        TraineeDTO result = traineeService.findByUsername(username);
 
         // Assert
-        assertTrue(result.isPresent());
-        TraineeDTO dto = result.get();
-        assertEquals(username, dto.username());
+        assertNotNull(result);
+        assertEquals(username, result.username());
         verify(traineeDAO).findByUsername(username);
     }
 
@@ -162,25 +151,22 @@ class TraineeServiceImplTest {
 
         when(traineeDAO.findByUsername(username)).thenReturn(Optional.empty());
 
-        // Act
-        Optional<TraineeDTO> result = traineeService.findByUsername(username);
+        // Act & Assert
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> traineeService.findByUsername(username));
 
-        // Assert
-        assertFalse(result.isPresent());
+        assertEquals("Trainee not found with username: " + username, exception.getMessage());
         verify(traineeDAO).findByUsername(username);
     }
 
     @Test
     void testUpdateTrainee_Success() {
         // Arrange
-        TraineeDTO dto = new TraineeDTO(
-                BigInteger.ONE,
+        TraineeUpdateDTO dto = new TraineeUpdateDTO(
                 "John",
                 "Doe",
                 "john.doe",
-                ZonedDateTime.now().minusYears(25),
-                "456 Elm St",
-                true
+                ZonedDateTime.now().minusYears(25).toString(),
+                "456 Elm St"
         );
 
         User user = new User();
@@ -193,6 +179,7 @@ class TraineeServiceImplTest {
         trainee.setId(BigInteger.ONE);
         trainee.setUser(user);
         trainee.setAddress("123 Main St");
+        trainee.setTrainers(new ArrayList<>());
 
         when(traineeDAO.findByUsername(dto.username())).thenReturn(Optional.of(trainee));
 
@@ -208,14 +195,12 @@ class TraineeServiceImplTest {
     @Test
     void testUpdateTrainee_NotFound() {
         // Arrange
-        TraineeDTO dto = new TraineeDTO(
-                BigInteger.ONE,
+        TraineeUpdateDTO dto = new TraineeUpdateDTO(
                 "John",
                 "Doe",
                 "nonexistent.user",
-                ZonedDateTime.now().minusYears(25),
-                "456 Elm St",
-                true
+                ZonedDateTime.now().minusYears(25).toString(),
+                "456 Elm St"
         );
 
         when(traineeDAO.findByUsername(dto.username())).thenReturn(Optional.empty());
@@ -353,7 +338,7 @@ class TraineeServiceImplTest {
 
         // Act & Assert
         Exception exception = assertThrows(IllegalStateException.class, () -> traineeService.addTrainer(traineeUsername, trainerUsername));
-        assertEquals("Cannot add a deactivated trainer.", exception.getMessage());
+        assertEquals("Impossible to add a deactivated trainer.", exception.getMessage());
         verify(traineeDAO, never()).update(trainee);
     }
 

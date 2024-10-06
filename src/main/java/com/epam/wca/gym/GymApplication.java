@@ -13,7 +13,15 @@ import org.springframework.context.support.AbstractApplicationContext;
 
 import java.util.Scanner;
 
+/**
+ * @deprecated <p>
+ * This class previously served as a simple command line interface for interacting with the Gym CRM application.
+ * </p>
+ * Due to the new, RESTful, version of the application, this class is no longer needed.
+ */
+
 @Slf4j
+@Deprecated(since = "1.2")
 public class GymApplication {
 
     public static void main(String[] args) {

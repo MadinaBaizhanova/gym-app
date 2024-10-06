@@ -1,15 +1,15 @@
-package com.epam.wca.gym;
+package com.epam.wca.gym.service;
 
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingTypeDAO;
-import com.epam.wca.gym.dto.TrainerDTO;
-import com.epam.wca.gym.dto.UserDTO;
+import com.epam.wca.gym.dto.trainer.TrainerDTO;
+import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
+import com.epam.wca.gym.dto.trainer.TrainerUpdateDTO;
+import com.epam.wca.gym.dto.user.UserDTO;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.exception.EntityNotFoundException;
-import com.epam.wca.gym.exception.InvalidInputException;
-import com.epam.wca.gym.service.UserService;
 import com.epam.wca.gym.service.impl.TrainerServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,12 +19,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -53,13 +51,10 @@ class TrainerServiceImplTest {
     @Test
     void testCreateTrainer_Success() {
         // Arrange
-        TrainerDTO dto = new TrainerDTO(
-                BigInteger.ONE,
+        TrainerRegistrationDTO dto = new TrainerRegistrationDTO(
                 "John",
                 "Doe",
-                "john.doe",
-                "YOGA",
-                true
+                "YOGA"
         );
 
         User user = new User();
@@ -77,19 +72,18 @@ class TrainerServiceImplTest {
         newTrainer.setTrainingType(trainingType);
 
         when(trainingTypeDAO.findByName("YOGA")).thenReturn(Optional.of(trainingType));
-        when(userService.create(any(UserDTO.class))).thenReturn(Optional.of(user));
+        when(userService.create(any(UserDTO.class))).thenReturn(user);
         when(trainerDAO.save(any(Trainer.class))).thenReturn(newTrainer);
 
         // Act
-        Optional<Trainer> result = trainerService.create(dto);
+        Trainer result = trainerService.create(dto);
 
         // Assert
-        assertTrue(result.isPresent());
-        Trainer trainer = result.get();
-        assertEquals("John", trainer.getUser().getFirstName());
-        assertEquals("Doe", trainer.getUser().getLastName());
-        assertEquals("john.doe", trainer.getUser().getUsername());
-        assertEquals("YOGA", trainer.getTrainingType().getTrainingTypeName());
+        assertNotNull(result);
+        assertEquals("John", result.getUser().getFirstName());
+        assertEquals("Doe", result.getUser().getLastName());
+        assertEquals("john.doe", result.getUser().getUsername());
+        assertEquals("YOGA", result.getTrainingType().getTrainingTypeName());
 
         verify(trainingTypeDAO).findByName("YOGA");
         verify(userService).create(any(UserDTO.class));
@@ -99,19 +93,16 @@ class TrainerServiceImplTest {
     @Test
     void testCreateTrainer_TrainingTypeNotFound() {
         // Arrange
-        TrainerDTO dto = new TrainerDTO(
-                BigInteger.ONE,
+        TrainerRegistrationDTO dto = new TrainerRegistrationDTO(
                 "John",
                 "Doe",
-                "john.doe",
-                "UNKNOWN_TYPE",
-                true
+                "UNKNOWN_TYPE"
         );
 
         when(trainingTypeDAO.findByName("UNKNOWN_TYPE")).thenReturn(Optional.empty());
 
         // Act & Assert
-        InvalidInputException exception = assertThrows(InvalidInputException.class, () ->
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
                 trainerService.create(dto));
         assertEquals("Training Type not found", exception.getMessage());
 
@@ -136,17 +127,17 @@ class TrainerServiceImplTest {
         Trainer trainer = new Trainer();
         trainer.setUser(user);
         trainer.setTrainingType(trainingType);
+        trainer.setTrainees(new ArrayList<>());
 
         when(trainerDAO.findByUsername(trainerUsername)).thenReturn(Optional.of(trainer));
 
         // Act
-        Optional<TrainerDTO> result = trainerService.findByUsername(trainerUsername);
+        TrainerDTO result = trainerService.findByUsername(trainerUsername);
 
         // Assert
-        assertTrue(result.isPresent());
-        TrainerDTO dto = result.get();
-        assertEquals("john.doe", dto.username());
-        assertEquals("YOGA", dto.trainingType());
+        assertNotNull(result);
+        assertEquals("john.doe", result.username());
+        assertEquals("YOGA", result.trainingType());
 
         verify(trainerDAO).findByUsername(trainerUsername);
     }
@@ -158,24 +149,22 @@ class TrainerServiceImplTest {
 
         when(trainerDAO.findByUsername(trainerUsername)).thenReturn(Optional.empty());
 
-        // Act
-        Optional<TrainerDTO> result = trainerService.findByUsername(trainerUsername);
+        // Act & Assert
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
+                trainerService.findByUsername(trainerUsername));
 
-        // Assert
-        assertFalse(result.isPresent());
+        assertEquals("Trainer not found with username: " + trainerUsername, exception.getMessage());
         verify(trainerDAO).findByUsername(trainerUsername);
     }
 
     @Test
     void testUpdateTrainer_Success() {
         // Arrange
-        TrainerDTO dto = new TrainerDTO(
-                BigInteger.ONE,
+        TrainerUpdateDTO dto = new TrainerUpdateDTO(
                 "John",
                 "Doe",
                 "john.doe",
-                "YOGA",
-                true
+                "YOGA"
         );
 
         User user = new User();
@@ -191,6 +180,7 @@ class TrainerServiceImplTest {
         Trainer trainer = new Trainer();
         trainer.setUser(user);
         trainer.setTrainingType(trainingType);
+        trainer.setTrainees(new ArrayList<>());
 
         when(trainerDAO.findByUsername(dto.username())).thenReturn(Optional.of(trainer));
         when(trainingTypeDAO.findByName("YOGA")).thenReturn(Optional.of(trainingType));
@@ -206,13 +196,11 @@ class TrainerServiceImplTest {
     @Test
     void testUpdateTrainer_NotFound() {
         // Arrange
-        TrainerDTO dto = new TrainerDTO(
-                BigInteger.ONE,
+        TrainerUpdateDTO dto = new TrainerUpdateDTO(
                 "John",
                 "Doe",
                 "unknown",
-                "YOGA",
-                true
+                "YOGA"
         );
 
         when(trainerDAO.findByUsername(dto.username())).thenReturn(Optional.empty());

@@ -5,7 +5,7 @@ import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingDAO;
 import com.epam.wca.gym.dao.UserDAO;
-import com.epam.wca.gym.dto.UserDTO;
+import com.epam.wca.gym.dto.user.UserDTO;
 import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.exception.EntityNotFoundException;
@@ -37,28 +37,28 @@ public class UserServiceImpl implements UserService {
     private final TrainingDAO trainingDAO;
     private final TrainerDAO trainerDAO;
 
+    private static final ThreadLocal<String> rawPasswordHolder = new ThreadLocal<>();
+
     @Transactional
     @Override
-    public Optional<User> create(UserDTO dto) {
-        try {
-            String username = usernameGenerator.generateUsername(dto.getFirstName(), dto.getLastName());
-            String rawPassword = PasswordGenerator.generatePassword();
-            String hashedPassword = passwordEncoder.encode(rawPassword);
+    public User create(UserDTO dto) {
+        String username = usernameGenerator.generateUsername(dto.getFirstName(), dto.getLastName());
+        String rawPassword = PasswordGenerator.generatePassword();
+        String hashedPassword = passwordEncoder.encode(rawPassword);
 
-            User newUser = new User();
-            newUser.setFirstName(dto.getFirstName());
-            newUser.setLastName(dto.getLastName());
-            newUser.setUsername(username);
-            newUser.setPassword(hashedPassword);
-            newUser.setIsActive(true);
+        rawPasswordHolder.set(rawPassword);
 
-            User user = userDAO.save(newUser);
+        User newUser = new User();
+        newUser.setFirstName(dto.getFirstName());
+        newUser.setLastName(dto.getLastName());
+        newUser.setUsername(username);
+        newUser.setPassword(hashedPassword);
+        newUser.setIsActive(true);
 
-            log.info("User Registered Successfully with Username: {} and Default Password: {}", username, rawPassword);
-            return Optional.of(user);
-        } catch (InvalidInputException e) {
-            return Optional.empty();
-        }
+        User user = userDAO.save(newUser);
+
+        log.info("User Registered Successfully with Username: {} and Default Password: {}", username, rawPassword);
+        return user;
     }
 
     @Override
@@ -80,13 +80,13 @@ public class UserServiceImpl implements UserService {
             }
         }
         log.warn("Authentication failed for username: {}", username);
-        return Role.NONE;
+        throw new InvalidInputException("Invalid credentials provided!");
     }
 
     @Secured
     @Transactional
     @Override
-    public void activateUser(String username) {
+    public void activate(String username) {
         userDAO.findByUsername(username).ifPresent(user -> {
             user.setIsActive(true);
             userDAO.update(user);
@@ -97,7 +97,7 @@ public class UserServiceImpl implements UserService {
     @Secured
     @Transactional
     @Override
-    public void deactivateUser(String username) {
+    public void deactivate(String username) {
         userDAO.findByUsername(username).ifPresent(user -> {
             user.setIsActive(false);
             userDAO.update(user);
@@ -123,6 +123,8 @@ public class UserServiceImpl implements UserService {
                 throw new InvalidInputException("The current password is incorrect.");
             }
 
+            // TODO: consider using a new ChangePasswordDTO record and have the validation checks there.
+            // TODO: You will then remove the unnecessary code in the User Service changePassword() method.
             UserDTO dto = new UserDTO(user.getId(), user.getFirstName(), user.getLastName(),
                     user.getUsername(), newPassword, user.getIsActive());
 
@@ -131,14 +133,14 @@ public class UserServiceImpl implements UserService {
             if (!violations.isEmpty()) {
                 StringBuilder message = new StringBuilder();
                 for (ConstraintViolation<UserDTO> violation : violations) {
-                    message.append(violation.getMessage()).append("\n");
+                    message.append(violation.getMessage());
                 }
                 throw new InvalidInputException("Invalid password: " + message);
             }
 
             user.setPassword(passwordEncoder.encode(newPassword));
             userDAO.update(user);
-            log.info("Password changed successfully.");
+            log.info("Password changed successfully!");
         });
     }
 
@@ -149,6 +151,7 @@ public class UserServiceImpl implements UserService {
         User user = userDAO.findByUsername(dto.getUsername())
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
+        // TODO: think of reusing the isNullOrEmpty() method, think of replacing && by ||
         String firstName = (dto.getFirstName() != null && !dto.getFirstName().isBlank()) ?
                 dto.getFirstName() : user.getFirstName();
         String lastName = (dto.getLastName() != null && !dto.getLastName().isBlank()) ?
@@ -158,5 +161,15 @@ public class UserServiceImpl implements UserService {
         user.setLastName(lastName);
 
         userDAO.update(user);
+    }
+
+    @Override
+    public String getRawPassword() {
+        return rawPasswordHolder.get();
+    }
+
+    @Override
+    public void clearRawPassword() {
+        rawPasswordHolder.remove();
     }
 }

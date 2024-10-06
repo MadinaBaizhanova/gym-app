@@ -1,10 +1,10 @@
-package com.epam.wca.gym;
+package com.epam.wca.gym.service;
 
 import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingDAO;
 import com.epam.wca.gym.dao.UserDAO;
-import com.epam.wca.gym.dto.UserDTO;
+import com.epam.wca.gym.dto.user.UserDTO;
 import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
@@ -32,11 +32,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
@@ -99,17 +95,16 @@ class UserServiceImplTest {
                 .thenReturn(savedUser);
 
         // Act
-        Optional<User> result = userService.create(dto);
+        User result = userService.create(dto);
 
         // Assert
-        assertTrue(result.isPresent());
-        User user = result.get();
+        assertNotNull(result);
         assertAll(
-                () -> assertEquals(firstName, user.getFirstName()),
-                () -> assertEquals(lastName, user.getLastName()),
-                () -> assertEquals(generatedUsername, user.getUsername()),
-                () -> assertEquals(hashedPassword, user.getPassword()),
-                () -> assertTrue(user.getIsActive())
+                () -> assertEquals(firstName, result.getFirstName()),
+                () -> assertEquals(lastName, result.getLastName()),
+                () -> assertEquals(generatedUsername, result.getUsername()),
+                () -> assertEquals(hashedPassword, result.getPassword()),
+                () -> assertTrue(result.getIsActive())
         );
         verify(userDAO).save(any(User.class));
     }
@@ -127,18 +122,18 @@ class UserServiceImplTest {
         when(usernameGenerator.generateUsername(anyString(), anyString()))
                 .thenThrow(new InvalidInputException("Invalid input"));
 
-        // Act
-        Optional<User> result = userService.create(dto);
+        // Act & Assert
+        InvalidInputException exception = assertThrows(InvalidInputException.class, () ->
+                userService.create(dto));
 
-        // Assert
-        assertFalse(result.isPresent());
+        assertEquals("Invalid input", exception.getMessage());
         verify(userDAO, never()).save(any(User.class));
     }
 
     @ParameterizedTest
     @MethodSource("provideAuthenticationTestData")
     void testAuthenticate(String username, String password, String storedPassword, boolean userExists,
-                          boolean passwordMatches, boolean isTrainee, boolean isTrainer, Role expectedRole) {
+                          boolean passwordMatches, boolean isTrainee, boolean isTrainer, Role expectedRole, boolean expectException) {
         // Arrange
         if (userExists) {
             User user = new User();
@@ -161,19 +156,21 @@ class UserServiceImplTest {
                     .thenReturn(Optional.empty());
         }
 
-        // Act
-        Role result = userService.authenticate(username, password);
-
-        // Assert
-        assertEquals(expectedRole, result);
+        // Act & Assert
+        if (expectException) {
+            var exception = assertThrows(InvalidInputException.class, () -> userService.authenticate(username, password));
+            assertEquals("Invalid credentials provided!", exception.getMessage());
+        } else {
+            Role result = userService.authenticate(username, password);
+            assertEquals(expectedRole, result);
+        }
     }
 
     static Stream<Arguments> provideAuthenticationTestData() {
         return Stream.of(
-                Arguments.of("trainerUser", "password", "hashedPassword", true, true, false, true, Role.TRAINER),
-                Arguments.of("user", "password", "hashedPassword", true, true, false, false, Role.NONE),
-                Arguments.of("user", "wrongPassword", "hashedPassword", true, false, false, false, Role.NONE),
-                Arguments.of("nonExistentUser", "password", null, false, false, false, false, Role.NONE)
+                Arguments.of("trainerUser", "password", "hashedPassword", true, true, false, true, Role.TRAINER, false),
+                Arguments.of("user", "wrongPassword", "hashedPassword", true, false, false, false, Role.NONE, true),
+                Arguments.of("nonExistentUser", "password", null, false, false, false, false, Role.NONE, true)
         );
     }
 
@@ -239,7 +236,7 @@ class UserServiceImplTest {
                 .thenReturn(Optional.of(user));
 
         // Act
-        userService.activateUser("user");
+        userService.activate("user");
 
         // Assert
         assertTrue(user.getIsActive());
@@ -253,7 +250,7 @@ class UserServiceImplTest {
                 .thenReturn(Optional.empty());
 
         // Act
-        userService.activateUser("nonExistentUser");
+        userService.activate("nonExistentUser");
 
         // Assert
         verify(userDAO, never()).update(any(User.class));
@@ -280,7 +277,7 @@ class UserServiceImplTest {
         when(mockTrainer.getId()).thenReturn(BigInteger.ONE);
 
         // Act
-        userService.deactivateUser("user");
+        userService.deactivate("user");
 
         // Assert
         assertFalse(user.getIsActive());
@@ -297,7 +294,7 @@ class UserServiceImplTest {
                 .thenReturn(Optional.empty());
 
         // Act
-        userService.deactivateUser("nonExistentUser");
+        userService.deactivate("nonExistentUser");
 
         // Assert
         verify(userDAO, never()).update(any(User.class));

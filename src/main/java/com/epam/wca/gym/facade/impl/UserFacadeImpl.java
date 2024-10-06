@@ -6,8 +6,18 @@ import com.epam.wca.gym.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * @deprecated
+ * <p>
+ * This class previously served as a facade for user-related operations.
+ * It provided a layer between the service layer and command line interface represented by GymApplication class.
+ * </p>
+ * The responsibilities of this class have been moved to {@link com.epam.wca.gym.controller.UserController}
+ */
+
 @Component
 @RequiredArgsConstructor
+@Deprecated(since = "1.2")
 public class UserFacadeImpl implements UserFacade {
 
     private final UserService userService;
@@ -18,13 +28,13 @@ public class UserFacadeImpl implements UserFacade {
     }
 
     @Override
-    public void activateUser(String username) {
-        userService.activateUser(username);
+    public void activate(String username) {
+        userService.activate(username);
     }
 
     @Override
-    public void deactivateUser(String username) {
-        userService.deactivateUser(username);
+    public void deactivate(String username) {
+        userService.deactivate(username);
     }
 
     @Override

@@ -19,4 +19,12 @@ public class Constants {
     public static final String USERNAME = "username";
     public static final int TRAINING_DURATION_INITIALIZATION = 0;
     public static final int ALLOCATION_SIZE = 1;
+    public static final int FIRST_NAME_MIN_SIZE = 3;
+    public static final int LAST_NAME_MIN_SIZE = 3;
+    public static final int DURATION_MIN_SIZE = 30;
+    public static final int PASSWORD_MIN_SIZE = 10;
+    public static final int LIMIT = 2;
+    public static final int BASE64_USERNAME = 0;
+    public static final int BASE64_PASSWORD = 1;
+    public static final String TRANSACTION_ID_HEADER = "transactionId";
 }

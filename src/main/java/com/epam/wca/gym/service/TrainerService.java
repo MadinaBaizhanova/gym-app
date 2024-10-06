@@ -1,20 +1,19 @@
 package com.epam.wca.gym.service;
-import com.epam.wca.gym.dto.TrainerDTO;
-import com.epam.wca.gym.dto.TrainingDTO;
+
+import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
+import com.epam.wca.gym.dto.trainer.TrainerUpdateDTO;
+import com.epam.wca.gym.dto.training.FindTrainingDTO;
+import com.epam.wca.gym.dto.trainer.TrainerDTO;
+import com.epam.wca.gym.dto.training.TrainingDTO;
 import com.epam.wca.gym.entity.Trainer;
 
-import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 
-public interface TrainerService extends BaseService<Trainer, TrainerDTO> {
-    Optional<TrainerDTO> findByUsername(String trainerUsername);
+public interface TrainerService extends BaseService<Trainer, TrainerRegistrationDTO> {
 
-    void update(TrainerDTO dto);
+    TrainerDTO findByUsername(String username);
 
-    List<TrainingDTO> findTrainings(
-            String trainerUsername,
-            String traineeName,
-            ZonedDateTime fromDate,
-            ZonedDateTime toDate);
+    TrainerDTO update(TrainerUpdateDTO dto);
+
+    List<TrainingDTO> findTrainings(FindTrainingDTO dto);
 }

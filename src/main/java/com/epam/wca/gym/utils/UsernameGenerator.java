@@ -2,7 +2,6 @@ package com.epam.wca.gym.utils;
 
 import com.epam.wca.gym.dao.UserDAO;
 import com.epam.wca.gym.entity.User;
-import com.epam.wca.gym.exception.InvalidInputException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,9 +20,6 @@ public final class UsernameGenerator {
     private final UserDAO userDAO;
 
     public String generateUsername(String firstName, String lastName) {
-        validateName(firstName, "First Name");
-        validateName(lastName, "Last Name");
-
         String baseUsername = firstName.toLowerCase() + "." + lastName.toLowerCase();
         String uniqueUsername = baseUsername;
 
@@ -42,12 +38,5 @@ public final class UsernameGenerator {
         }
 
         return uniqueUsername;
-    }
-
-    private void validateName(String name, String fieldName) {
-        if (name == null || name.trim().isEmpty()) {
-            log.error("{} is not provided. Impossible to generate the username.", fieldName);
-            throw new InvalidInputException(fieldName + " cannot be null or empty.");
-        }
     }
 }

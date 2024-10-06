@@ -1,14 +1,22 @@
 <configuration>
-    <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
-    </root>
-
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%logger{15} - %msg%n</pattern>
+            <pattern>%date{yyyy-MM-dd HH:mm:ss} %-5level %logger{1} - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <logger name="org.hibernate" level="ERROR" additivity="false"/>
-    <logger name="org.hibernate.validator" level="ERROR" additivity="false"/>
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>C:/Users/mabai/Downloads/EpamLab/gym-app/src/main/resources/logs/access.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%date{yyyy-MM-dd HH:mm:ss} %-5level %logger{1}:%line - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+    <logger name="org.springdoc" level="DEBUG" />
 </configuration>

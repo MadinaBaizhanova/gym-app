@@ -1,6 +1,6 @@
 package com.epam.wca.gym.aop;
 
-import com.epam.wca.gym.dto.TrainingDTO;
+import com.epam.wca.gym.dto.training.TrainingDTO;
 import com.epam.wca.gym.service.TraineeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

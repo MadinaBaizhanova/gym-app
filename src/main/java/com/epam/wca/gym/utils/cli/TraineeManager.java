@@ -1,8 +1,10 @@
 package com.epam.wca.gym.utils.cli;
 
-import com.epam.wca.gym.dto.TraineeDTO;
-import com.epam.wca.gym.dto.TrainerDTO;
-import com.epam.wca.gym.dto.TrainingDTO;
+import com.epam.wca.gym.dto.trainee.TraineeUpdateDTO;
+import com.epam.wca.gym.dto.training.FindTrainingDTO;
+import com.epam.wca.gym.dto.trainee.TraineeDTO;
+import com.epam.wca.gym.dto.trainer.TrainerForTraineeDTO;
+import com.epam.wca.gym.dto.training.TrainingDTO;
 import com.epam.wca.gym.entity.Training;
 import com.epam.wca.gym.facade.GymFacade;
 import com.epam.wca.gym.service.SecurityService;
@@ -20,8 +22,18 @@ import static com.epam.wca.gym.utils.Constants.BACK_TO_MAIN_MENU;
 import static com.epam.wca.gym.utils.Constants.TIME_ZONED;
 import static com.epam.wca.gym.utils.Constants.TRAINING_DURATION_INITIALIZATION;
 
+/**
+ * @deprecated
+ * <p>
+ * This class previously served as a helper class for the GymApplication class.
+ * </p>
+ * Due to the new, RESTful, version of the application, the responsibilities of this class have been moved
+ * to {@link com.epam.wca.gym.controller.TraineeController}
+ */
+
 @Slf4j
 @UtilityClass
+@Deprecated(since = "1.2")
 public class TraineeManager {
 
     public static void showTraineeManagement(Scanner scanner, GymFacade gymFacade, SecurityService securityService) {
@@ -71,7 +83,7 @@ public class TraineeManager {
     private static void viewProfile(GymFacade gymFacade, SecurityService securityService) {
         String username = securityService.getAuthenticatedUsername();
         try {
-            Optional<TraineeDTO> trainee = gymFacade.trainee().findByUsername(username);
+            TraineeDTO trainee = gymFacade.trainee().findByUsername(username);
             log.info("Trainee Profile: {}", trainee);
         } catch (Exception e) {
             log.error("Error viewing profile: {}", e.getMessage());
@@ -90,20 +102,10 @@ public class TraineeManager {
         log.info("\nNEW ADDRESS (leave blank to keep unchanged): ");
         String address = scanner.nextLine();
 
-        ZonedDateTime dateOfBirth = null;
         log.info("\nNEW DATE OF BIRTH (format: yyyy-mm-dd, leave blank to keep unchanged): ");
         String dob = scanner.nextLine();
-        if (!dob.isBlank()) {
-            try {
-                dateOfBirth = ZonedDateTime.parse(dob + TIME_ZONED);
-            } catch (DateTimeParseException e) {
-                log.error("Invalid Date of Birth format. Aborting update.");
-                return;
-            }
-        }
 
-        TraineeDTO updatedDTO = new TraineeDTO(null, firstName, lastName, username,
-                dateOfBirth, address, true);
+        TraineeUpdateDTO updatedDTO = new TraineeUpdateDTO(firstName, lastName, username, dob, address);
         try {
             gymFacade.trainee().update(updatedDTO);
         } catch (Exception e) {
@@ -138,7 +140,7 @@ public class TraineeManager {
     private static void viewAvailableTrainers(GymFacade gymFacade, SecurityService securityService) {
         String traineeUsername = securityService.getAuthenticatedUsername();
         try {
-            List<TrainerDTO> availableTrainers = gymFacade.trainee().findAvailableTrainers(traineeUsername);
+            List<TrainerForTraineeDTO> availableTrainers = gymFacade.trainee().findAvailableTrainers(traineeUsername);
             if (availableTrainers.isEmpty()) {
                 log.info("No available trainers.");
             } else {
@@ -152,7 +154,7 @@ public class TraineeManager {
     private static void viewAssignedTrainers(GymFacade gymFacade, SecurityService securityService) {
         String traineeUsername = securityService.getAuthenticatedUsername();
         try {
-            List<TrainerDTO> assignedTrainers = gymFacade.trainee().findAssignedTrainers(traineeUsername);
+            List<TrainerForTraineeDTO> assignedTrainers = gymFacade.trainee().findAssignedTrainers(traineeUsername);
             if (assignedTrainers.isEmpty()) {
                 log.info("No trainers assigned.");
             } else {
@@ -196,8 +198,8 @@ public class TraineeManager {
             }
         }
 
-        List<TrainingDTO> trainings = gymFacade.trainee().findTrainings(traineeUsername, trainerName,
-                trainingType, fromDate, toDate);
+        List<TrainingDTO> trainings = gymFacade.trainee().findTrainings(new FindTrainingDTO(traineeUsername, trainerName,
+                trainingType, fromDate, toDate));
         if (trainings.isEmpty()) {
             log.info("No trainings found.");
         } else {
@@ -235,12 +237,12 @@ public class TraineeManager {
             log.error("Invalid Training Duration. Please enter a valid numeric value.");
         }
 
-        TrainingDTO trainingDTO = new TrainingDTO(null, trainingName, null, trainingDate,
+        TrainingDTO trainingDTO = new TrainingDTO(trainingName, null, trainingDate,
                 trainingDuration, traineeUsername, trainerUsername);
 
         try {
-            Optional<Training> createdTraining = gymFacade.trainee().create(trainingDTO);
-            createdTraining.ifPresent(training -> log.info("Training added successfully with ID: {}", training.getId()));
+            Training training = gymFacade.trainee().create(trainingDTO);
+            log.info("Training added successfully with ID: {}", training.getId());
         } catch (Exception e) {
             log.error("Error adding training: {}", e.getMessage());
         }
