@@ -7,6 +7,7 @@ import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.UserDAO;
 import com.epam.wca.gym.dto.trainee.TraineeUpdateDTO;
+import com.epam.wca.gym.dto.trainee.UpdateTrainersDTO;
 import com.epam.wca.gym.dto.training.FindTrainingQuery;
 import com.epam.wca.gym.dto.trainee.TraineeDTO;
 import com.epam.wca.gym.dto.trainer.TrainerForTraineeDTO;
@@ -17,6 +18,7 @@ import com.epam.wca.gym.dto.user.UserUpdateDTO;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.exception.EntityNotFoundException;
+import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.mapper.TraineeMapper;
 import com.epam.wca.gym.mapper.TrainerMapper;
 import com.epam.wca.gym.mapper.TrainingMapper;
@@ -111,50 +113,11 @@ public class TraineeServiceImpl implements TraineeService {
     @CheckActiveTrainee
     @Transactional
     @Override
-    public void addTrainer(String traineeUsername, String trainerUsername) {
-        Trainee trainee = traineeDAO.findByUsername(traineeUsername)
-                .orElseThrow(() -> new EntityNotFoundException(MISSING_TRAINEE_TEMPLATE.formatted(traineeUsername)));
-
-        Trainer trainer = trainerDAO.findByUsername(trainerUsername)
-                .orElseThrow(() -> new EntityNotFoundException("Trainer with this username was not found. " +
-                                                               "Please specify the existing active trainer"));
-
-        if (Boolean.FALSE.equals(trainer.getUser().getIsActive())) {
-            log.warn("Trainer {} is deactivated and cannot be added.", trainerUsername);
-            throw new IllegalStateException("Impossible to add a deactivated trainer.");
-        }
-
-        boolean alreadyAssigned = trainee.getTrainers().stream()
-                .anyMatch(existingTrainer -> existingTrainer.getUser().getUsername().equals(trainerUsername));
-
-        if (alreadyAssigned) {
-            log.warn("Trainer {} is already assigned to Trainee {}", trainerUsername, traineeUsername);
-        } else {
-            trainee.getTrainers().add(trainer);
-            traineeDAO.update(trainee);
-            log.info("Trainer {} successfully added to Trainee {}", trainerUsername, traineeUsername);
-        }
-    }
-
-    @Secured
-    @TraineeOnly
-    @CheckActiveTrainee
-    @Transactional
-    @Override
-    public void removeTrainer(String traineeUsername, String trainerUsername) {
-        Trainee trainee = traineeDAO.findByUsername(traineeUsername)
-                .orElseThrow(() -> new EntityNotFoundException(MISSING_TRAINEE_TEMPLATE.formatted(traineeUsername)));
-
-        Optional<Trainer> trainerToRemove = trainee.getTrainers().stream()
-                .filter(trainer -> trainer.getUser().getUsername().equals(trainerUsername))
-                .findFirst();
-
-        if (trainerToRemove.isPresent()) {
-            trainee.getTrainers().remove(trainerToRemove.get());
-            traineeDAO.update(trainee);
-            log.info("Trainer {} successfully removed from Trainee {}", trainerUsername, traineeUsername);
-        } else {
-            throw new EntityNotFoundException("Trainer not found in the trainee's list");
+    public void updateTrainers(String username, UpdateTrainersDTO dto) {
+        switch (dto.action().toLowerCase()) {
+            case "add" -> addTrainer(username, dto.trainerUsername());
+            case "remove" -> removeTrainer(username, dto.trainerUsername());
+            default -> throw new InvalidInputException("Invalid action values. Allowed values are 'add' and 'remove'!");
         }
     }
 
@@ -199,6 +162,48 @@ public class TraineeServiceImpl implements TraineeService {
         if (!trainee.getUser().getIsActive()) {
             log.warn("Trainee with username '{}' is deactivated.", username);
             throw new IllegalStateException("Your account is deactivated. Please activate it to perform this action.");
+        }
+    }
+
+    private void addTrainer(String username, String trainerUsername) {
+        Trainee trainee = traineeDAO.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException(MISSING_TRAINEE_TEMPLATE.formatted(username)));
+
+        Trainer trainer = trainerDAO.findByUsername(trainerUsername)
+                .orElseThrow(() -> new EntityNotFoundException("Trainer with this username was not found. " +
+                                                               "Please specify the existing active trainer"));
+
+        if (Boolean.FALSE.equals(trainer.getUser().getIsActive())) {
+            log.warn("Trainer {} is deactivated and cannot be added.", trainerUsername);
+            throw new IllegalStateException("Impossible to add a deactivated trainer.");
+        }
+
+        boolean alreadyAssigned = trainee.getTrainers().stream()
+                .anyMatch(existingTrainer -> existingTrainer.getUser().getUsername().equals(trainerUsername));
+
+        if (alreadyAssigned) {
+            log.warn("Trainer {} is already assigned to Trainee {}", trainerUsername, username);
+        } else {
+            trainee.getTrainers().add(trainer);
+            traineeDAO.update(trainee);
+            log.info("Trainer {} successfully added to Trainee {}", trainerUsername, username);
+        }
+    }
+
+    private void removeTrainer(String username, String trainerUsername) {
+        Trainee trainee = traineeDAO.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException(MISSING_TRAINEE_TEMPLATE.formatted(username)));
+
+        Optional<Trainer> trainerToRemove = trainee.getTrainers().stream()
+                .filter(trainer -> trainer.getUser().getUsername().equals(trainerUsername))
+                .findFirst();
+
+        if (trainerToRemove.isPresent()) {
+            trainee.getTrainers().remove(trainerToRemove.get());
+            traineeDAO.update(trainee);
+            log.info("Trainer {} successfully removed from Trainee {}", trainerUsername, username);
+        } else {
+            throw new EntityNotFoundException("Trainer not found in the trainee's list");
         }
     }
 }

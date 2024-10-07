@@ -265,7 +265,6 @@ class UserServiceImplTest {
         when(userDAO.findByUsername("user"))
                 .thenReturn(Optional.of(user));
 
-        // Mock the Trainee and Trainer
         Trainee mockTrainee = mock(Trainee.class);
         when(traineeDAO.findByUsername("user"))
                 .thenReturn(Optional.of(mockTrainee));

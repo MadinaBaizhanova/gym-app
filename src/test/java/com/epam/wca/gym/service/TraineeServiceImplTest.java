@@ -5,6 +5,7 @@ import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.UserDAO;
 import com.epam.wca.gym.dto.trainee.TraineeDTO;
 import com.epam.wca.gym.dto.trainee.TraineeUpdateDTO;
+import com.epam.wca.gym.dto.trainee.UpdateTrainersDTO;
 import com.epam.wca.gym.dto.user.UserDTO;
 import com.epam.wca.gym.dto.trainee.TraineeRegistrationDTO;
 import com.epam.wca.gym.dto.user.UserUpdateDTO;
@@ -253,10 +254,11 @@ class TraineeServiceImplTest {
     }
 
     @Test
-    void testAddTrainer_Success() {
+    void testUpdateTrainers_AddTrainer_Success() {
         // Arrange
         String traineeUsername = "john.doe";
         String trainerUsername = "trainer.one";
+        UpdateTrainersDTO updateDTO = new UpdateTrainersDTO(trainerUsername, "add");
 
         User traineeUser = new User();
         traineeUser.setUsername(traineeUsername);
@@ -277,7 +279,7 @@ class TraineeServiceImplTest {
         when(trainerDAO.findByUsername(trainerUsername)).thenReturn(Optional.of(trainer));
 
         // Act
-        traineeService.addTrainer(traineeUsername, trainerUsername);
+        traineeService.updateTrainers(traineeUsername, updateDTO);
 
         // Assert
         assertTrue(trainee.getTrainers().contains(trainer));
@@ -285,10 +287,11 @@ class TraineeServiceImplTest {
     }
 
     @Test
-    void testAddTrainer_AlreadyAssigned() {
+    void testUpdateTrainers_AddTrainer_AlreadyAssigned() {
         // Arrange
         String traineeUsername = "john.doe";
         String trainerUsername = "trainer.one";
+        UpdateTrainersDTO updateDTO = new UpdateTrainersDTO(trainerUsername, "add");
 
         User traineeUser = new User();
         traineeUser.setUsername(traineeUsername);
@@ -312,17 +315,18 @@ class TraineeServiceImplTest {
         when(trainerDAO.findByUsername(trainerUsername)).thenReturn(Optional.of(trainer));
 
         // Act
-        traineeService.addTrainer(traineeUsername, trainerUsername);
+        traineeService.updateTrainers(traineeUsername, updateDTO);
 
         // Assert
         verify(traineeDAO, never()).update(trainee);
     }
 
     @Test
-    void testAddTrainer_TrainerDeactivated() {
+    void testUpdateTrainers_AddTrainer_TrainerDeactivated() {
         // Arrange
         String traineeUsername = "john.doe";
         String trainerUsername = "trainer.one";
+        UpdateTrainersDTO updateDTO = new UpdateTrainersDTO(trainerUsername, "add");
 
         User traineeUser = new User();
         traineeUser.setUsername(traineeUsername);
@@ -343,16 +347,18 @@ class TraineeServiceImplTest {
         when(trainerDAO.findByUsername(trainerUsername)).thenReturn(Optional.of(trainer));
 
         // Act & Assert
-        Exception exception = assertThrows(IllegalStateException.class, () -> traineeService.addTrainer(traineeUsername, trainerUsername));
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
+                traineeService.updateTrainers(traineeUsername, updateDTO));
         assertEquals("Impossible to add a deactivated trainer.", exception.getMessage());
         verify(traineeDAO, never()).update(trainee);
     }
 
     @Test
-    void testRemoveTrainer_Success() {
+    void testUpdateTrainers_RemoveTrainer_Success() {
         // Arrange
         String traineeUsername = "john.doe";
         String trainerUsername = "trainer.one";
+        UpdateTrainersDTO updateDTO = new UpdateTrainersDTO(trainerUsername, "remove");
 
         User traineeUser = new User();
         traineeUser.setUsername(traineeUsername);
@@ -373,7 +379,7 @@ class TraineeServiceImplTest {
         when(traineeDAO.findByUsername(traineeUsername)).thenReturn(Optional.of(trainee));
 
         // Act
-        traineeService.removeTrainer(traineeUsername, trainerUsername);
+        traineeService.updateTrainers(traineeUsername, updateDTO);
 
         // Assert
         assertFalse(trainee.getTrainers().contains(trainer));
@@ -381,10 +387,11 @@ class TraineeServiceImplTest {
     }
 
     @Test
-    void testRemoveTrainer_TrainerNotFoundInList() {
+    void testUpdateTrainers_RemoveTrainer_TrainerNotFoundInList() {
         // Arrange
         String traineeUsername = "john.doe";
         String trainerUsername = "trainer.one";
+        UpdateTrainersDTO updateDTO = new UpdateTrainersDTO(trainerUsername, "remove");
 
         User traineeUser = new User();
         traineeUser.setUsername(traineeUsername);
@@ -396,8 +403,21 @@ class TraineeServiceImplTest {
         when(traineeDAO.findByUsername(traineeUsername)).thenReturn(Optional.of(trainee));
 
         // Act & Assert
-        Exception exception = assertThrows(EntityNotFoundException.class, () -> traineeService.removeTrainer(traineeUsername, trainerUsername));
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
+                traineeService.updateTrainers(traineeUsername, updateDTO));
         assertEquals("Trainer not found in the trainee's list", exception.getMessage());
         verify(traineeDAO, never()).update(trainee);
+    }
+
+    @Test
+    void testUpdateTrainers_InvalidAction() {
+        // Arrange
+        String traineeUsername = "john.doe";
+        UpdateTrainersDTO updateDTO = new UpdateTrainersDTO("trainer.one", "invalidAction");
+
+        // Act & Assert
+        InvalidInputException exception = assertThrows(InvalidInputException.class, () ->
+                traineeService.updateTrainers(traineeUsername, updateDTO));
+        assertEquals("Invalid action values. Allowed values are 'add' and 'remove'!", exception.getMessage());
     }
 }

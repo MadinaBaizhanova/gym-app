@@ -9,12 +9,12 @@ import org.springframework.context.annotation.Configuration;
 @RequiredArgsConstructor
 public class FilterConfig {
 
-    private final AuthenticationFilter authenticationFilter;
+    private final AuthFilter authFilter;
 
     @Bean
-    public FilterRegistrationBean<AuthenticationFilter> authenticationFilterRegistration() {
-        FilterRegistrationBean<AuthenticationFilter> registrationBean = new FilterRegistrationBean<>();
-        registrationBean.setFilter(authenticationFilter);
+    public FilterRegistrationBean<AuthFilter> authenticationFilterRegistration() {
+        FilterRegistrationBean<AuthFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(authFilter);
         registrationBean.addUrlPatterns("/*");
         return registrationBean;
     }

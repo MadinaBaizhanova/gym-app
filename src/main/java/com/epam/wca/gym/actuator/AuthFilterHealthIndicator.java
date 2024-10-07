@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class AuthenticationFilterHealthIndicator extends AbstractHealthIndicator {
+public class AuthFilterHealthIndicator extends AbstractHealthIndicator {
 
     private static final String AUTH_FILTER_SERVICE = "Authentication Filter Service (custom Health Indicator)";
 
@@ -17,7 +17,7 @@ public class AuthenticationFilterHealthIndicator extends AbstractHealthIndicator
     @Override
     protected void doHealthCheck(Health.Builder builder) {
         try {
-            if (applicationContext.containsBean("authenticationFilter")) {
+            if (applicationContext.containsBean("authFilter")) {
                 builder.up().withDetail(AUTH_FILTER_SERVICE, "AUTHENTICATION FILTER AVAILABLE");
             } else {
                 builder.down().withDetail(AUTH_FILTER_SERVICE, "AUTHENTICATION FILTER NOT FOUND");

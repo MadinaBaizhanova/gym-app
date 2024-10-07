@@ -4,10 +4,10 @@ import com.epam.wca.gym.annotation.MonitorEndpoint;
 import com.epam.wca.gym.dto.trainee.TraineeDTO;
 import com.epam.wca.gym.dto.trainee.TraineeRegistrationDTO;
 import com.epam.wca.gym.dto.trainee.TraineeUpdateDTO;
+import com.epam.wca.gym.dto.trainee.UpdateTrainersDTO;
 import com.epam.wca.gym.dto.trainer.TrainerForTraineeDTO;
 import com.epam.wca.gym.dto.training.FindTrainingQuery;
 import com.epam.wca.gym.dto.training.TrainingDTO;
-import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.SecurityService;
 import com.epam.wca.gym.service.TraineeService;
 import com.epam.wca.gym.service.TrainingService;
@@ -97,16 +97,10 @@ public class TraineeController {
 
     @MonitorEndpoint("trainee.controller.update.trainers")
     @PutMapping("/trainers")
-    public List<TrainerForTraineeDTO> updateTrainers(@RequestBody Map<String, String> requestBody) {
+    public List<TrainerForTraineeDTO> updateTrainers(@RequestBody UpdateTrainersDTO dto) {
         String username = securityService.getAuthenticatedUsername();
-        String trainerUsername = requestBody.get("trainerUsername");
-        String action = requestBody.get("action").toLowerCase();
 
-        switch (action) {
-            case "add" -> traineeService.addTrainer(username, trainerUsername);
-            case "remove" -> traineeService.removeTrainer(username, trainerUsername);
-            default -> throw new InvalidInputException("Invalid action values. Allowed values are 'add' and 'remove'!");
-        }
+        traineeService.updateTrainers(username, dto);
 
         return traineeService.findAssignedTrainers(username);
     }

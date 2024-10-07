@@ -50,7 +50,7 @@ class TrainerServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        // Initialization before each test
+        //
     }
 
     @Test

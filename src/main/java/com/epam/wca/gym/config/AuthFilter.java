@@ -23,7 +23,7 @@ import static com.epam.wca.gym.utils.Constants.LIMIT;
 
 @Component
 @RequiredArgsConstructor
-public class AuthenticationFilter extends HttpFilter {
+public class AuthFilter extends HttpFilter {
 
     private final transient UserService userService;
     private final transient SecurityService securityService;

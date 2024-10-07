@@ -29,8 +29,8 @@ class UserControllerTest {
     @Test
     void login_ShouldReturnOkAndRoleTrainee_WhenCredentialsAreValid() throws Exception {
         // Arrange
-        String username = "john_doe";
-        String password = "password123";
+        String username = "sakura.haruno";
+        String password = "trainee2024";
 
         when(userService.authenticate(username, password)).thenReturn(Role.TRAINEE);
 
@@ -45,8 +45,8 @@ class UserControllerTest {
     @Test
     void login_ShouldReturnOkAndRoleTrainer_WhenCredentialsAreValid() throws Exception {
         // Arrange
-        String username = "jane_doe";
-        String password = "password123";
+        String username = "sakura.haruno";
+        String password = "trainee2024";
 
         when(userService.authenticate(username, password)).thenReturn(Role.TRAINER);
 
@@ -61,8 +61,8 @@ class UserControllerTest {
     @Test
     void login_ShouldReturnBadRequest_WhenCredentialsAreInvalid() throws Exception {
         // Arrange
-        String username = "john_doe";
-        String password = "wrongPassword";
+        String username = "sakura.haruno";
+        String password = "trainee2024";
 
         when(userService.authenticate(username, password))
                 .thenThrow(new InvalidInputException("Invalid credentials provided!"));
