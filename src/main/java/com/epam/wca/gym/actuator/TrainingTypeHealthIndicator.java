@@ -25,8 +25,8 @@ public class TrainingTypeHealthIndicator extends AbstractHealthIndicator {
             } else {
                 builder.down().withDetail(TRAINING_TYPE_SERVICE, "NO DATA AVAILABLE");
             }
-        } catch (Exception e) {
-            builder.down(e).withDetail(TRAINING_TYPE_SERVICE, "UNAVAILABLE");
+        } catch (Exception exception) {
+            builder.down(exception).withDetail(TRAINING_TYPE_SERVICE, "UNAVAILABLE");
         }
     }
 }

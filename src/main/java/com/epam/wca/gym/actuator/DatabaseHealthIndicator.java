@@ -27,8 +27,8 @@ public class DatabaseHealthIndicator extends AbstractHealthIndicator {
             } else {
                 builder.down().withDetail(DATABASE, POSTGRE_SQL).withDetail("status", "NOT CONNECTED");
             }
-        } catch (SQLException ex) {
-            builder.down().withDetail(DATABASE, POSTGRE_SQL).withDetail("error", ex.getMessage());
+        } catch (SQLException exception) {
+            builder.down().withDetail(DATABASE, POSTGRE_SQL).withDetail("error", exception.getMessage());
         }
     }
 }

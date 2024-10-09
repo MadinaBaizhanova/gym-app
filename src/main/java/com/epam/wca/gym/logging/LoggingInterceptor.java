@@ -30,15 +30,15 @@ public class LoggingInterceptor implements HandlerInterceptor {
 
     @Override
     public void afterCompletion(@NonNull HttpServletRequest request, HttpServletResponse response,
-                                @NonNull Object handler, Exception ex) {
+                                @NonNull Object handler, Exception exception) {
         String transactionId = (String) request.getAttribute(TRANSACTION_ID_HEADER);
         TransactionContext.clear();
 
         int status = response.getStatus();
         log.info("Completed request: transactionId: {}, Response Status: {}", transactionId, status);
 
-        if (ex != null) {
-            log.error("Exception occurred: {}, transactionId: {}", ex.getMessage(), transactionId);
+        if (exception != null) {
+            log.error("Exception occurred: {}, transactionId: {}", exception.getMessage(), transactionId);
         }
     }
 }
