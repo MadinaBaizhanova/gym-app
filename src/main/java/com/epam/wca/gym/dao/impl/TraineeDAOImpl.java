@@ -18,11 +18,12 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
-import static com.epam.wca.gym.utils.Constants.USERNAME;
 
 @Slf4j
 @Repository
 public class TraineeDAOImpl extends AbstractDAO<Trainee> implements TraineeDAO {
+
+    private static final String USERNAME = "username";
 
     @Override
     public Optional<Trainee> findByUsername(String traineeUsername) {
@@ -34,7 +35,7 @@ public class TraineeDAOImpl extends AbstractDAO<Trainee> implements TraineeDAO {
                             .setParameter(USERNAME, traineeUsername.toLowerCase())
                             .getSingleResult()
             );
-        } catch (NoResultException e) {
+        } catch (NoResultException exception) {
             return Optional.empty();
         }
     }
@@ -48,41 +49,41 @@ public class TraineeDAOImpl extends AbstractDAO<Trainee> implements TraineeDAO {
                             "AND tr.user.isActive = true", Trainer.class)
                     .setParameter(USERNAME, traineeUsername)
                     .getResultList();
-        } catch (PersistenceException e) {
-            log.error("Error occurred while finding available trainers.", e);
-            throw e;
+        } catch (PersistenceException exception) {
+            log.error("Error occurred while finding available trainers.", exception);
+            throw exception;
         }
     }
 
     @Override
     public List<Training> findTrainings(FindTrainingQuery query) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Training> cq = cb.createQuery(Training.class);
-        Root<Training> trainingRoot = cq.from(Training.class);
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Training> findCriteriaQuery = criteriaBuilder.createQuery(Training.class);
+        Root<Training> trainingRoot = findCriteriaQuery.from(Training.class);
 
-        Predicate criteria = cb.equal(trainingRoot.get("trainee").get("user").get(USERNAME), query.username());
+        Predicate criteria = criteriaBuilder.equal(trainingRoot.get("trainee").get("user").get(USERNAME), query.username());
 
         if (query.name() != null && !query.name().isEmpty()) {
             String trainerNamePattern = "%" + query.name().toUpperCase() + "%";
-            Predicate trainerNamePredicate = cb.or(
-                    cb.like(cb.upper(trainingRoot.get("trainer").get("user").get("firstName")), trainerNamePattern),
-                    cb.like(cb.upper(trainingRoot.get("trainer").get("user").get("lastName")), trainerNamePattern)
+            Predicate trainerNamePredicate = criteriaBuilder.or(
+                    criteriaBuilder.like(criteriaBuilder.upper(trainingRoot.get("trainer").get("user").get("firstName")), trainerNamePattern),
+                    criteriaBuilder.like(criteriaBuilder.upper(trainingRoot.get("trainer").get("user").get("lastName")), trainerNamePattern)
             );
-            criteria = cb.and(criteria, trainerNamePredicate);
+            criteria = criteriaBuilder.and(criteria, trainerNamePredicate);
         }
         if (query.trainingType() != null && !query.trainingType().isEmpty()) {
-            criteria = cb.and(criteria, cb.equal(cb.upper(trainingRoot.get("trainingType")
+            criteria = criteriaBuilder.and(criteria, criteriaBuilder.equal(criteriaBuilder.upper(trainingRoot.get("trainingType")
                     .get("trainingTypeName")), query.trainingType().toUpperCase()));
         }
         if (query.fromDate() != null) {
-            criteria = cb.and(criteria, cb.greaterThanOrEqualTo(trainingRoot.get("trainingDate"), query.fromDate()));
+            criteria = criteriaBuilder.and(criteria, criteriaBuilder.greaterThanOrEqualTo(trainingRoot.get("trainingDate"), query.fromDate()));
         }
         if (query.toDate() != null) {
-            criteria = cb.and(criteria, cb.lessThanOrEqualTo(trainingRoot.get("trainingDate"), query.toDate()));
+            criteria = criteriaBuilder.and(criteria, criteriaBuilder.lessThanOrEqualTo(trainingRoot.get("trainingDate"), query.toDate()));
         }
 
-        cq.where(criteria);
-        return entityManager.createQuery(cq).getResultList();
+        findCriteriaQuery.where(criteria);
+        return entityManager.createQuery(findCriteriaQuery).getResultList();
     }
 
     @Override
@@ -91,9 +92,9 @@ public class TraineeDAOImpl extends AbstractDAO<Trainee> implements TraineeDAO {
             entityManager.createNativeQuery("DELETE FROM trainee_trainer WHERE trainer_id = :trainerId")
                     .setParameter("trainerId", trainerId)
                     .executeUpdate();
-        } catch (PersistenceException e) {
-            log.error("Error occurred while removing deactivated Trainer from Trainee(s).", e);
-            throw e;
+        } catch (PersistenceException exception) {
+            log.error("Error occurred while removing deactivated Trainer from Trainee(s).", exception);
+            throw exception;
         }
     }
 }

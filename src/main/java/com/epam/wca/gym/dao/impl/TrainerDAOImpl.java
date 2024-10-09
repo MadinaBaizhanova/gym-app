@@ -26,35 +26,35 @@ public class TrainerDAOImpl extends AbstractDAO<Trainer> implements TrainerDAO {
                             .setParameter("username", trainerUsername.toLowerCase())
                             .getSingleResult()
             );
-        } catch (NoResultException e) {
+        } catch (NoResultException exception) {
             return Optional.empty();
         }
     }
 
     @Override
     public List<Training> findTrainings(FindTrainingQuery query) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Training> cq = cb.createQuery(Training.class);
-        Root<Training> trainingRoot = cq.from(Training.class);
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Training> findCriteriaQuery = criteriaBuilder.createQuery(Training.class);
+        Root<Training> trainingRoot = findCriteriaQuery.from(Training.class);
 
-        Predicate criteria = cb.equal(trainingRoot.get("trainer").get("user").get("username"), query.username());
+        Predicate criteria = criteriaBuilder.equal(trainingRoot.get("trainer").get("user").get("username"), query.username());
 
         if (query.name() != null && !query.name().isEmpty()) {
             String traineeNamePattern = "%" + query.name().toUpperCase() + "%";
-            Predicate traineeNamePredicate = cb.or(
-                    cb.like(cb.upper(trainingRoot.get("trainee").get("user").get("firstName")), traineeNamePattern),
-                    cb.like(cb.upper(trainingRoot.get("trainee").get("user").get("lastName")), traineeNamePattern)
+            Predicate traineeNamePredicate = criteriaBuilder.or(
+                    criteriaBuilder.like(criteriaBuilder.upper(trainingRoot.get("trainee").get("user").get("firstName")), traineeNamePattern),
+                    criteriaBuilder.like(criteriaBuilder.upper(trainingRoot.get("trainee").get("user").get("lastName")), traineeNamePattern)
             );
-            criteria = cb.and(criteria, traineeNamePredicate);
+            criteria = criteriaBuilder.and(criteria, traineeNamePredicate);
         }
         if (query.fromDate() != null) {
-            criteria = cb.and(criteria, cb.greaterThanOrEqualTo(trainingRoot.get("trainingDate"), query.fromDate()));
+            criteria = criteriaBuilder.and(criteria, criteriaBuilder.greaterThanOrEqualTo(trainingRoot.get("trainingDate"), query.fromDate()));
         }
         if (query.toDate() != null) {
-            criteria = cb.and(criteria, cb.lessThanOrEqualTo(trainingRoot.get("trainingDate"), query.toDate()));
+            criteria = criteriaBuilder.and(criteria, criteriaBuilder.lessThanOrEqualTo(trainingRoot.get("trainingDate"), query.toDate()));
         }
 
-        cq.where(criteria);
-        return entityManager.createQuery(cq).getResultList();
+        findCriteriaQuery.where(criteria);
+        return entityManager.createQuery(findCriteriaQuery).getResultList();
     }
 }

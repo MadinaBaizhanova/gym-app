@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.epam.wca.gym.service.BaseService.isNullOrBlank;
-import static com.epam.wca.gym.utils.Constants.MISSING_TRAINEE_TEMPLATE;
+import static com.epam.wca.gym.utils.ServiceConstants.MISSING_TRAINEE_TEMPLATE;
 
 @Slf4j
 @Service
@@ -57,7 +57,9 @@ public class TraineeServiceImpl implements TraineeService {
         newTrainee.setUser(user);
         newTrainee.setDateOfBirth(isNullOrBlank(dto.dateOfBirth()) ? null : ZonedDateTime.parse(dto.dateOfBirth()));
         newTrainee.setAddress(dto.address());
+
         var trainee = traineeDAO.save(newTrainee);
+
         log.info("Trainee Registered Successfully!");
 
         return trainee;
@@ -79,8 +81,11 @@ public class TraineeServiceImpl implements TraineeService {
     public void deleteByUsername(String username) {
         Trainee trainee = traineeDAO.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException(MISSING_TRAINEE_TEMPLATE.formatted(username)));
+
         userDAO.delete(trainee.getUser());
+
         log.info("Trainee profile deleted successfully.");
+
         securityService.logout();
     }
 
@@ -103,6 +108,7 @@ public class TraineeServiceImpl implements TraineeService {
                 .lastname(dto.lastName()).build());
 
         traineeDAO.update(trainee);
+
         log.info("Trainee updated.");
 
         return TraineeMapper.toTraineeDTO(trainee);

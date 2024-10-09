@@ -1,4 +1,4 @@
-package com.epam.wca.gym.config;
+package com.epam.wca.gym.logging;
 
 public class TransactionContext {
 

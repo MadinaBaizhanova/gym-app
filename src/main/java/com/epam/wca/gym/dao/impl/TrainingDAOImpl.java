@@ -26,20 +26,20 @@ public class TrainingDAOImpl extends AbstractDAO<Training> implements TrainingDA
 
     private void deleteByRole(Role role, String username) {
         try {
-            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-            CriteriaDelete<Training> delete = cb.createCriteriaDelete(Training.class);
+            CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+            CriteriaDelete<Training> delete = criteriaBuilder.createCriteriaDelete(Training.class);
             Root<Training> root = delete.from(Training.class);
 
             if (role == Role.TRAINEE) {
-                delete.where(cb.equal(root.get("trainee").get("user").get("username"), username));
+                delete.where(criteriaBuilder.equal(root.get("trainee").get("user").get("username"), username));
             } else if (role == Role.TRAINER) {
-                delete.where(cb.equal(root.get("trainer").get("user").get("username"), username));
+                delete.where(criteriaBuilder.equal(root.get("trainer").get("user").get("username"), username));
             }
 
             entityManager.createQuery(delete).executeUpdate();
-        } catch (PersistenceException e) {
-            log.error("Error occurred while deleting Training entities.", e);
-            throw e;
+        } catch (PersistenceException exception) {
+            log.error("Error occurred while deleting Training entities.", exception);
+            throw exception;
         }
     }
 }

@@ -24,7 +24,7 @@ public class TrainingTypeDAOImpl implements TrainingTypeDAO {
                             .setParameter("name", trainingTypeName)
                             .getSingleResult()
             );
-        } catch (PersistenceException e) {
+        } catch (PersistenceException exception) {
             return Optional.empty();
         }
     }

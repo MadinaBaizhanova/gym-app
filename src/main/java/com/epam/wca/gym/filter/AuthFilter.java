@@ -1,4 +1,4 @@
-package com.epam.wca.gym.config;
+package com.epam.wca.gym.filter;
 
 import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.exception.InvalidInputException;
@@ -17,13 +17,13 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.Set;
 
-import static com.epam.wca.gym.utils.Constants.BASE64_PASSWORD;
-import static com.epam.wca.gym.utils.Constants.BASE64_USERNAME;
-import static com.epam.wca.gym.utils.Constants.LIMIT;
-
 @Component
 @RequiredArgsConstructor
 public class AuthFilter extends HttpFilter {
+
+    private static final int LIMIT = 2;
+    private static final int BASE64_USERNAME = 0;
+    private static final int BASE64_PASSWORD = 1;
 
     private final transient UserService userService;
     private final transient SecurityService securityService;

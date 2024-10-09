@@ -71,7 +71,7 @@ class UserControllerTest {
         mockMvc.perform(get("/api/v1/users/auth")
                         .param("username", username)
                         .param("password", password))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isUnauthorized())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.error").value("Invalid credentials provided!"));
     }

@@ -28,8 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 import static com.epam.wca.gym.service.BaseService.isNullOrBlank;
-import static com.epam.wca.gym.utils.Constants.MISSING_TRAINER_TEMPLATE;
-import static com.epam.wca.gym.utils.Constants.MISSING_TRAINING_TEMPLATE;
+import static com.epam.wca.gym.utils.ServiceConstants.MISSING_TRAINER_TEMPLATE;
+import static com.epam.wca.gym.utils.ServiceConstants.MISSING_TRAINING_TEMPLATE;
 
 @Slf4j
 @Service
@@ -55,6 +55,7 @@ public class TrainerServiceImpl implements TrainerService {
         Trainer trainer = trainerDAO.save(newTrainer);
 
         log.info("Trainer Registered Successfully!");
+
         return trainer;
     }
 
@@ -88,6 +89,7 @@ public class TrainerServiceImpl implements TrainerService {
                 .build());
 
         trainerDAO.update(trainer);
+
         log.info("Trainer updated.");
 
         return TrainerMapper.toTrainerDTO(trainer);

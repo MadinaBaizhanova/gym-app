@@ -23,8 +23,8 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Optional;
 
-import static com.epam.wca.gym.utils.Constants.MISSING_TRAINER_TEMPLATE;
-import static com.epam.wca.gym.utils.Constants.MISSING_TRAINING_TEMPLATE;
+import static com.epam.wca.gym.utils.ServiceConstants.MISSING_TRAINER_TEMPLATE;
+import static com.epam.wca.gym.utils.ServiceConstants.MISSING_TRAINING_TEMPLATE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;

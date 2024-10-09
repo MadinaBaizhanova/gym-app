@@ -95,7 +95,7 @@ public class GlobalExceptionHandler {
         log.error(EXCEPTION_CAUGHT, e.getMessage(), request.getDescription(false));
         Map<String, String> errors = new HashMap<>();
         errors.put(ERROR, e.getMessage());
-        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errors, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(Exception.class)

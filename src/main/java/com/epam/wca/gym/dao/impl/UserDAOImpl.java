@@ -19,7 +19,7 @@ public class UserDAOImpl extends AbstractDAO<User> implements UserDAO {
                             .setParameter("username", username.toLowerCase())
                             .getSingleResult()
             );
-        } catch (NoResultException e) {
+        } catch (NoResultException exception) {
             return Optional.empty();
         }
     }

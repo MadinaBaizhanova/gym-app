@@ -8,7 +8,7 @@ import lombok.Builder;
 
 import java.time.ZonedDateTime;
 
-import static com.epam.wca.gym.utils.Constants.DURATION_MIN_SIZE;
+import static com.epam.wca.gym.utils.ValidationConstants.DURATION_MIN_SIZE;
 
 @Builder
 public record TrainingDTO(
