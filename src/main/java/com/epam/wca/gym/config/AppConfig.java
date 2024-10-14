@@ -1,9 +1,6 @@
 package com.epam.wca.gym.config;
 
 import com.epam.wca.gym.logging.LoggingInterceptor;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -39,14 +36,6 @@ public class AppConfig implements WebMvcConfigurer {
     @Bean
     public LocalValidatorFactoryBean localValidator() {
         return new LocalValidatorFactoryBean();
-    }
-
-    @Bean
-    public ObjectMapper objectMapper() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        return objectMapper;
     }
 
     @Bean
