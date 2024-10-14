@@ -1,7 +1,7 @@
 package com.epam.wca.gym.filter;
 
 import com.epam.wca.gym.entity.Role;
-import com.epam.wca.gym.exception.InvalidInputException;
+import com.epam.wca.gym.exception.AuthorizationFailedException;
 import com.epam.wca.gym.service.SecurityService;
 import com.epam.wca.gym.service.UserService;
 import jakarta.servlet.FilterChain;
@@ -38,7 +38,8 @@ public class AuthFilter extends HttpFilter {
     private static final Set<String> ALLOWED_PREFIXES = Set.of(
             "/actuator",
             "/swagger-ui",
-            "/v3/api-docs"
+            "/v3/api-docs",
+            "/h2-console"
     );
 
     @Override
@@ -74,7 +75,7 @@ public class AuthFilter extends HttpFilter {
                 securityService.login(username, role);
 
                 chain.doFilter(request, response);
-            } catch (InvalidInputException e) {
+            } catch (AuthorizationFailedException exception) {
                 sendErrorResponse(response, "Invalid credentials provided!");
             }
         } else {
@@ -84,6 +85,7 @@ public class AuthFilter extends HttpFilter {
 
     private void sendErrorResponse(HttpServletResponse response, String message) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("text/plain");
         response.getWriter().write(message);
     }
 }

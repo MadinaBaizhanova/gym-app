@@ -1,25 +1,30 @@
 package com.epam.wca.gym.actuator;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.AbstractHealthIndicator;
 import org.springframework.boot.actuate.health.Health;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
 @Component
+@Profile("prod")
 @RequiredArgsConstructor
-public class TrainingTypeHealthIndicator extends AbstractHealthIndicator {
+public class TrainingTypeHealthCheck extends AbstractHealthIndicator {
     private static final String TRAINING_TYPE_SERVICE = "Training Type Service (custom Health Indicator)";
 
     private final RestTemplate restTemplate;
 
+    @Value("${training.type.service.url}")
+    private String trainingTypeServiceUrl;
+
     @Override
     protected void doHealthCheck(Health.Builder builder) {
-        String url = "http://localhost:8080/gym-app/api/v1/types";
         try {
-            List<?> response = restTemplate.getForObject(url, List.class);
+            List<?> response = restTemplate.getForObject(trainingTypeServiceUrl, List.class);
             if (response != null && !response.isEmpty()) {
                 builder.up().withDetail(TRAINING_TYPE_SERVICE, "AVAILABLE");
             } else {

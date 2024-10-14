@@ -3,10 +3,10 @@ package com.epam.wca.gym.controller;
 import com.epam.wca.gym.dto.type.TrainingTypeDTO;
 import com.epam.wca.gym.service.TrainingTypeService;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigInteger;
@@ -26,7 +26,7 @@ class TrainingTypeControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Mock
+    @MockBean
     private TrainingTypeService trainingTypeService;
 
     private final List<TrainingTypeDTO> trainingTypes = Arrays.asList(

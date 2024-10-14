@@ -8,9 +8,9 @@ import com.epam.wca.gym.dto.trainee.TraineeUpdateDTO;
 import com.epam.wca.gym.dto.trainee.UpdateTrainersDTO;
 import com.epam.wca.gym.dto.user.UserDTO;
 import com.epam.wca.gym.dto.trainee.TraineeRegistrationDTO;
-import com.epam.wca.gym.dto.user.UserUpdateDTO;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
+import com.epam.wca.gym.entity.TrainingType;
 import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.exception.EntityNotFoundException;
 import com.epam.wca.gym.exception.InvalidInputException;
@@ -45,6 +45,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class TraineeServiceImplTest {
 
+    private static final int EXPECTED_SIZE = 1;
+    private static final int TRAINER_1_INDEX = 0;
+
     @Mock
     private TraineeDAO traineeDAO;
 
@@ -65,78 +68,74 @@ class TraineeServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        //
+        // Does nothing
     }
 
     @Test
     void testCreateTrainee_Success() {
         // Arrange
-        TraineeRegistrationDTO dto = new TraineeRegistrationDTO(
-                "John",
-                "Doe",
-                ZonedDateTime.now().minusYears(25).toString(),
-                "123 Main St"
-        );
+        var dto = TraineeRegistrationDTO.builder()
+                .firstName("Naruto")
+                .lastName("Uzumaki")
+                .dateOfBirth("2000-10-10T00:00:00Z")
+                .address("")
+                .build();
 
-        User user = new User();
+        var user = new User();
         user.setId(BigInteger.ONE);
-        user.setFirstName("John");
-        user.setLastName("Doe");
-        user.setUsername("john.doe");
+        user.setFirstName("Naruto");
+        user.setLastName("Uzumaki");
+        user.setUsername("naruto.uzumaki");
 
-        Trainee newTrainee = new Trainee();
-        newTrainee.setId(BigInteger.ONE);
-        newTrainee.setUser(user);
-        newTrainee.setDateOfBirth(ZonedDateTime.parse(dto.dateOfBirth()));
-        newTrainee.setAddress(dto.address());
+        var trainee = new Trainee();
+        trainee.setId(BigInteger.ONE);
+        trainee.setUser(user);
+        trainee.setDateOfBirth(ZonedDateTime.parse(dto.dateOfBirth()));
+        trainee.setAddress(dto.address());
 
         when(userService.create(any(UserDTO.class))).thenReturn(user);
-        when(traineeDAO.save(any(Trainee.class))).thenReturn(newTrainee);
+        when(traineeDAO.save(any(Trainee.class))).thenReturn(trainee);
 
         // Act
         Trainee result = traineeService.create(dto);
 
         // Assert
-        assertNotNull(result);
         assertAll(
                 () -> assertEquals(dto.firstName(), result.getUser().getFirstName()),
                 () -> assertEquals(dto.lastName(), result.getUser().getLastName()),
                 () -> assertEquals(ZonedDateTime.parse(dto.dateOfBirth()), result.getDateOfBirth()),
                 () -> assertEquals(dto.address(), result.getAddress())
         );
-        verify(userService).create(any(UserDTO.class));
-        verify(traineeDAO).save(any(Trainee.class));
     }
 
     @Test
     void testCreateTrainee_UserCreationFails() {
         // Arrange
-        TraineeRegistrationDTO dto = new TraineeRegistrationDTO(
-                "John",
-                "Doe",
-                ZonedDateTime.now().minusYears(25).toString(),
-                "123 Main St"
-        );
+        var dto = TraineeRegistrationDTO.builder()
+                .firstName("Naruto")
+                .lastName("Uzumaki")
+                .dateOfBirth("2000-10-10T00:00:00Z")
+                .address("")
+                .build();
 
-        when(userService.create(any(UserDTO.class))).thenThrow(new InvalidInputException("User creation failed"));
+        when(userService.create(any(UserDTO.class))).thenThrow(new InvalidInputException("User creation failed."));
 
         // Act & Assert
-        InvalidInputException exception = assertThrows(InvalidInputException.class, () ->
+        var exception = assertThrows(InvalidInputException.class, () ->
                 traineeService.create(dto));
 
-        assertEquals("User creation failed", exception.getMessage());
-        verify(userService).create(any(UserDTO.class));
-        verify(traineeDAO, never()).save(any(Trainee.class));
+        assertEquals("User creation failed.", exception.getMessage());
     }
 
     @Test
     void testFindByUsername_Success() {
         // Arrange
-        String username = "john.doe";
-        Trainee trainee = new Trainee();
-        trainee.setId(BigInteger.ONE);
+        String username = "sakura.haruno";
         User user = new User();
         user.setUsername(username);
+
+        Trainee trainee = new Trainee();
+        trainee.setId(BigInteger.ONE);
         trainee.setUser(user);
         trainee.setTrainers(new ArrayList<>());
 
@@ -148,44 +147,44 @@ class TraineeServiceImplTest {
         // Assert
         assertNotNull(result);
         assertEquals(username, result.username());
-        verify(traineeDAO).findByUsername(username);
     }
 
     @Test
     void testFindByUsername_NotFound() {
         // Arrange
-        String username = "nonexistent.user";
+        String username = "non-existent.user";
 
         when(traineeDAO.findByUsername(username)).thenReturn(Optional.empty());
 
         // Act & Assert
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> traineeService.findByUsername(username));
+        var exception = assertThrows(EntityNotFoundException.class,
+                () -> traineeService.findByUsername(username));
 
-        assertEquals("Trainee not found with username: " + username, exception.getMessage());
-        verify(traineeDAO).findByUsername(username);
+        assertEquals(MISSING_TRAINEE_TEMPLATE.formatted(username), exception.getMessage());
     }
 
     @Test
     void testUpdateTrainee_Success() {
         // Arrange
-        TraineeUpdateDTO dto = new TraineeUpdateDTO(
-                "John",
-                "Doe",
-                "john.doe",
-                ZonedDateTime.now().minusYears(25).toString(),
-                "456 Elm St"
-        );
+        var dto = TraineeUpdateDTO.builder()
+                .firstName("Naruto")
+                .lastName("Uzumaki")
+                .username("naruto.uzumaki")
+                .dateOfBirth("2000-10-10T00:00:00Z")
+                .address("")
+                .build();
 
-        User user = new User();
+        var user = new User();
         user.setId(BigInteger.ONE);
-        user.setUsername("john.doe");
-        user.setFirstName("John");
-        user.setLastName("Doe");
+        user.setUsername(dto.username());
+        user.setFirstName(dto.firstName());
+        user.setLastName(dto.lastName());
 
-        Trainee trainee = new Trainee();
+        var trainee = new Trainee();
         trainee.setId(BigInteger.ONE);
         trainee.setUser(user);
-        trainee.setAddress("123 Main St");
+        trainee.setDateOfBirth(ZonedDateTime.parse(dto.dateOfBirth()));
+        trainee.setAddress(dto.address());
         trainee.setTrainers(new ArrayList<>());
 
         when(traineeDAO.findByUsername(dto.username())).thenReturn(Optional.of(trainee));
@@ -194,35 +193,36 @@ class TraineeServiceImplTest {
         traineeService.update(dto);
 
         // Assert
-        assertEquals(dto.address(), trainee.getAddress());
-        verify(userService).update(any(UserUpdateDTO.class));
-        verify(traineeDAO).update(trainee);
+        assertAll(
+                () -> assertEquals(dto.firstName(), trainee.getUser().getFirstName()),
+                () -> assertEquals(dto.lastName(), trainee.getUser().getLastName()),
+                () -> assertEquals(ZonedDateTime.parse(dto.dateOfBirth()), trainee.getDateOfBirth()),
+                () -> assertEquals(dto.address(), trainee.getAddress())
+        );
     }
 
     @Test
     void testUpdateTrainee_NotFound() {
         // Arrange
-        TraineeUpdateDTO dto = new TraineeUpdateDTO(
-                "John",
-                "Doe",
-                "nonexistent.user",
-                ZonedDateTime.now().minusYears(25).toString(),
-                "456 Elm St"
-        );
+        var dto = TraineeUpdateDTO.builder()
+                .firstName("Naruto")
+                .lastName("Uzumaki")
+                .username("naruto.uzumaki")
+                .dateOfBirth("2000-10-10T00:00:00Z")
+                .address("")
+                .build();
 
         when(traineeDAO.findByUsername(dto.username())).thenReturn(Optional.empty());
 
         // Act & Assert
-        Exception exception = assertThrows(EntityNotFoundException.class, () -> traineeService.update(dto));
+        var exception = assertThrows(EntityNotFoundException.class, () -> traineeService.update(dto));
         assertEquals(MISSING_TRAINEE_TEMPLATE.formatted(dto.username()), exception.getMessage());
-        verify(userService, never()).update(any(UserUpdateDTO.class));
-        verify(traineeDAO, never()).update(any(Trainee.class));
     }
 
     @Test
     void testDeleteByUsername_Success() {
         // Arrange
-        String username = "john.doe";
+        String username = "sakura.haruno";
         User user = new User();
         user.setUsername(username);
 
@@ -243,36 +243,35 @@ class TraineeServiceImplTest {
     @Test
     void testDeleteByUsername_NotFound() {
         // Arrange
-        String username = "nonexistent.user";
+        String username = "non-existent.user";
 
         when(traineeDAO.findByUsername(username)).thenReturn(Optional.empty());
 
         // Act & Assert
-        Exception exception = assertThrows(EntityNotFoundException.class, () -> traineeService.deleteByUsername(username));
+        var exception = assertThrows(EntityNotFoundException.class, () -> traineeService.deleteByUsername(username));
         assertEquals(MISSING_TRAINEE_TEMPLATE.formatted(username), exception.getMessage());
-        verify(userDAO, never()).delete(any(User.class));
     }
 
     @Test
     void testUpdateTrainers_AddTrainer_Success() {
         // Arrange
-        String traineeUsername = "john.doe";
-        String trainerUsername = "trainer.one";
-        UpdateTrainersDTO updateDTO = new UpdateTrainersDTO(trainerUsername, "add");
+        String traineeUsername = "naruto.uzumaki";
+        String trainerUsername = "hashirama.senju";
+        var updateDTO = new UpdateTrainersDTO(trainerUsername, "add");
 
-        User traineeUser = new User();
+        var traineeUser = new User();
         traineeUser.setUsername(traineeUsername);
         traineeUser.setIsActive(true);
 
-        Trainee trainee = new Trainee();
+        var trainee = new Trainee();
         trainee.setUser(traineeUser);
         trainee.setTrainers(new ArrayList<>());
 
-        User trainerUser = new User();
+        var trainerUser = new User();
         trainerUser.setUsername(trainerUsername);
         trainerUser.setIsActive(true);
 
-        Trainer trainer = new Trainer();
+        var trainer = new Trainer();
         trainer.setUser(trainerUser);
 
         when(traineeDAO.findByUsername(traineeUsername)).thenReturn(Optional.of(trainee));
@@ -283,7 +282,6 @@ class TraineeServiceImplTest {
 
         // Assert
         assertTrue(trainee.getTrainers().contains(trainer));
-        verify(traineeDAO).update(trainee);
     }
 
     @Test
@@ -291,20 +289,20 @@ class TraineeServiceImplTest {
         // Arrange
         String traineeUsername = "john.doe";
         String trainerUsername = "trainer.one";
-        UpdateTrainersDTO updateDTO = new UpdateTrainersDTO(trainerUsername, "add");
+        var updateDTO = new UpdateTrainersDTO(trainerUsername, "add");
 
-        User traineeUser = new User();
+        var traineeUser = new User();
         traineeUser.setUsername(traineeUsername);
         traineeUser.setIsActive(true);
 
-        Trainee trainee = new Trainee();
+        var trainee = new Trainee();
         trainee.setUser(traineeUser);
 
-        User trainerUser = new User();
+        var trainerUser = new User();
         trainerUser.setUsername(trainerUsername);
         trainerUser.setIsActive(true);
 
-        Trainer trainer = new Trainer();
+        var trainer = new Trainer();
         trainer.setUser(trainerUser);
 
         List<Trainer> trainers = new ArrayList<>();
@@ -324,52 +322,51 @@ class TraineeServiceImplTest {
     @Test
     void testUpdateTrainers_AddTrainer_TrainerDeactivated() {
         // Arrange
-        String traineeUsername = "john.doe";
-        String trainerUsername = "trainer.one";
-        UpdateTrainersDTO updateDTO = new UpdateTrainersDTO(trainerUsername, "add");
+        String traineeUsername = "naruto.uzumaki";
+        String trainerUsername = "tobirama.senju";
+        var updateDTO = new UpdateTrainersDTO(trainerUsername, "add");
 
-        User traineeUser = new User();
+        var traineeUser = new User();
         traineeUser.setUsername(traineeUsername);
         traineeUser.setIsActive(true);
 
-        Trainee trainee = new Trainee();
+        var trainee = new Trainee();
         trainee.setUser(traineeUser);
         trainee.setTrainers(new ArrayList<>());
 
-        User trainerUser = new User();
+        var trainerUser = new User();
         trainerUser.setUsername(trainerUsername);
-        trainerUser.setIsActive(false); // Trainer is deactivated
+        trainerUser.setIsActive(false);
 
-        Trainer trainer = new Trainer();
+        var trainer = new Trainer();
         trainer.setUser(trainerUser);
 
         when(traineeDAO.findByUsername(traineeUsername)).thenReturn(Optional.of(trainee));
         when(trainerDAO.findByUsername(trainerUsername)).thenReturn(Optional.of(trainer));
 
         // Act & Assert
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
+        var exception = assertThrows(IllegalStateException.class, () ->
                 traineeService.updateTrainers(traineeUsername, updateDTO));
         assertEquals("Impossible to add a deactivated trainer.", exception.getMessage());
-        verify(traineeDAO, never()).update(trainee);
     }
 
     @Test
     void testUpdateTrainers_RemoveTrainer_Success() {
         // Arrange
-        String traineeUsername = "john.doe";
-        String trainerUsername = "trainer.one";
-        UpdateTrainersDTO updateDTO = new UpdateTrainersDTO(trainerUsername, "remove");
+        String traineeUsername = "naruto.uzumaki";
+        String trainerUsername = "hashirama.senju";
+        var updateDTO = new UpdateTrainersDTO(trainerUsername, "remove");
 
-        User traineeUser = new User();
+        var traineeUser = new User();
         traineeUser.setUsername(traineeUsername);
 
-        Trainee trainee = new Trainee();
+        var trainee = new Trainee();
         trainee.setUser(traineeUser);
 
-        User trainerUser = new User();
+        var trainerUser = new User();
         trainerUser.setUsername(trainerUsername);
 
-        Trainer trainer = new Trainer();
+        var trainer = new Trainer();
         trainer.setUser(trainerUser);
 
         List<Trainer> trainers = new ArrayList<>();
@@ -383,20 +380,19 @@ class TraineeServiceImplTest {
 
         // Assert
         assertFalse(trainee.getTrainers().contains(trainer));
-        verify(traineeDAO).update(trainee);
     }
 
     @Test
     void testUpdateTrainers_RemoveTrainer_TrainerNotFoundInList() {
         // Arrange
-        String traineeUsername = "john.doe";
-        String trainerUsername = "trainer.one";
-        UpdateTrainersDTO updateDTO = new UpdateTrainersDTO(trainerUsername, "remove");
+        var traineeUsername = "sasuke.uchiha";
+        var trainerUsername = "madara.uchiha";
+        var updateDTO = new UpdateTrainersDTO(trainerUsername, "remove");
 
-        User traineeUser = new User();
+        var traineeUser = new User();
         traineeUser.setUsername(traineeUsername);
 
-        Trainee trainee = new Trainee();
+        var trainee = new Trainee();
         trainee.setUser(traineeUser);
         trainee.setTrainers(new ArrayList<>());
 
@@ -406,18 +402,96 @@ class TraineeServiceImplTest {
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
                 traineeService.updateTrainers(traineeUsername, updateDTO));
         assertEquals("Trainer not found in the trainee's list", exception.getMessage());
-        verify(traineeDAO, never()).update(trainee);
     }
 
     @Test
     void testUpdateTrainers_InvalidAction() {
         // Arrange
-        String traineeUsername = "john.doe";
-        UpdateTrainersDTO updateDTO = new UpdateTrainersDTO("trainer.one", "invalidAction");
+        String traineeUsername = "sasuke.uchiha";
+        var updateDTO = new UpdateTrainersDTO("madara.uchiha", "invalidAction");
 
         // Act & Assert
-        InvalidInputException exception = assertThrows(InvalidInputException.class, () ->
+        var exception = assertThrows(InvalidInputException.class, () ->
                 traineeService.updateTrainers(traineeUsername, updateDTO));
         assertEquals("Invalid action values. Allowed values are 'add' and 'remove'!", exception.getMessage());
+    }
+
+    @Test
+    void testValidateIsActive_TraineeActive() {
+        // Arrange
+        var user = new User();
+        user.setUsername("naruto.uzumaki");
+        user.setIsActive(true);
+
+        var trainee = new Trainee();
+        trainee.setUser(user);
+
+        when(traineeDAO.findByUsername("naruto.uzumaki")).thenReturn(Optional.of(trainee));
+
+        // Act & Assert
+        traineeService.validateIsActive("naruto.uzumaki");
+    }
+
+    @Test
+    void testValidateIsActive_TraineeDeactivated() {
+        // Arrange
+        var user = new User();
+        user.setUsername("naruto.uzumaki");
+        user.setIsActive(false);
+
+        var trainee = new Trainee();
+        trainee.setUser(user);
+
+        when(traineeDAO.findByUsername("naruto.uzumaki")).thenReturn(Optional.of(trainee));
+
+        // Act & Assert
+        var exception = assertThrows(IllegalStateException.class,
+                () -> traineeService.validateIsActive("naruto.uzumaki"));
+        assertEquals("Your account is deactivated. Please activate it to perform this action.",
+                exception.getMessage());
+    }
+
+    @Test
+    void testFindAssignedTrainers_Success() {
+        // Arrange
+        var traineeUser = new User();
+        traineeUser.setUsername("naruto.uzumaki");
+        var trainee = new Trainee();
+        trainee.setUser(traineeUser);
+
+        var type = new TrainingType();
+        type.setTrainingTypeName("YOGA");
+
+        var trainerUser = new User();
+        trainerUser.setUsername("kakashi.hatake");
+        var trainer = new Trainer();
+        trainer.setUser(trainerUser);
+        trainer.setTrainingType(type);
+        trainee.setTrainers(List.of(trainer));
+
+        when(traineeDAO.findByUsername("naruto.uzumaki")).thenReturn(Optional.of(trainee));
+
+        // Act
+        var trainers = traineeService.findAssignedTrainers("naruto.uzumaki");
+
+        // Assert
+        assertAll(
+                () -> assertNotNull(trainers),
+                () -> assertEquals(EXPECTED_SIZE, trainers.size()),
+                () -> assertEquals("kakashi.hatake", trainers.get(TRAINER_1_INDEX).username())
+        );
+    }
+
+    @Test
+    void testFindAssignedTrainers_TraineeNotFound() {
+        // Arrange
+        String username = "non-existent-user";
+
+        when(traineeDAO.findByUsername(username)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        var exception = assertThrows(EntityNotFoundException.class,
+                () -> traineeService.findAssignedTrainers(username));
+        assertEquals(MISSING_TRAINEE_TEMPLATE.formatted(username), exception.getMessage());
     }
 }

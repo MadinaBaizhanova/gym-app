@@ -15,13 +15,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SecurityAspect {
 
-    private final SecurityService securityService;
+    private final SecurityService service;
 
     @Before("@annotation(com.epam.wca.gym.annotation.Secured)")
     public void checkAuthentication() {
-        if (!securityService.isAuthenticated()) {
-            log.warn("Unauthorized access attempt.");
-            throw new SecurityException("User is not authenticated. Please log in to perform this action.");
-        }
+        service.tryToAuthenticate();
     }
 }

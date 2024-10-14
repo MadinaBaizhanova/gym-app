@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS users
     first_name VARCHAR(128) NOT NULL,
     last_name  VARCHAR(128) NOT NULL,
     username   VARCHAR(256) NOT NULL UNIQUE,
-    password   VARCHAR(10)  NOT NULL,
+    password   VARCHAR(128)  NOT NULL,
     is_active  BOOLEAN      NOT NULL
 );
 

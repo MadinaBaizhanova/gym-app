@@ -10,6 +10,7 @@ import com.epam.wca.gym.dto.user.UserDTO;
 import com.epam.wca.gym.dto.user.UserUpdateDTO;
 import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.entity.User;
+import com.epam.wca.gym.exception.AuthorizationFailedException;
 import com.epam.wca.gym.exception.EntityNotFoundException;
 import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.UserService;
@@ -82,7 +83,7 @@ public class UserServiceImpl implements UserService {
             }
         }
         log.warn("Authentication failed for username: {}", username);
-        throw new InvalidInputException("Invalid credentials provided!");
+        throw new AuthorizationFailedException("Invalid credentials provided!");
     }
 
     @Secured

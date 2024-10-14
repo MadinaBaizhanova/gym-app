@@ -15,18 +15,20 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class MetricsAspect {
 
+    private static final String DESCRIPTION_TEMPLATE = "Number of times the endpoint - %s - was called";
+    private static final String NAME_TEMPLATE = "%s.count";
+    private static final String TIME_TEMPLATE = "%s.time";
+    private static final String TIME_TAKEN_TEMPLATE = "Time taken by endpoint - %s";
+
     private final MeterRegistry meterRegistry;
 
     @Around("@annotation(monitorEndpoint)")
     public Object measureEndpoint(ProceedingJoinPoint joinPoint, MonitorEndpoint monitorEndpoint) throws Throwable {
-        String metricName = monitorEndpoint.value();
-        if (metricName.isEmpty()) {
-            metricName = joinPoint.getSignature().getName();
-        }
+        var metricName = defineMetricName(joinPoint, monitorEndpoint);
 
-        Timer.Sample timerSample = Timer.start(meterRegistry);
-        Counter counter = Counter.builder(metricName + ".count")
-                .description("Number of times the endpoint - " + metricName + " - was called")
+        var timer = Timer.start(meterRegistry);
+        var counter = Counter.builder(NAME_TEMPLATE.formatted(metricName))
+                .description(DESCRIPTION_TEMPLATE.formatted(metricName))
                 .register(meterRegistry);
 
         try {
@@ -34,9 +36,15 @@ public class MetricsAspect {
             counter.increment();
             return result;
         } finally {
-            timerSample.stop(Timer.builder(metricName + ".time")
-                    .description("Time taken by endpoint - " + metricName)
-                    .register(meterRegistry));
+            timer.stop(
+                    Timer.builder(TIME_TEMPLATE.formatted(metricName))
+                            .description(TIME_TAKEN_TEMPLATE.formatted(metricName))
+                            .register(meterRegistry));
         }
+    }
+
+    private String defineMetricName(ProceedingJoinPoint joinPoint, MonitorEndpoint monitorEndpoint) {
+        var metric = monitorEndpoint.value();
+        return metric.isEmpty() ? joinPoint.getSignature().getName() : metric;
     }
 }
