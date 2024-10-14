@@ -4,17 +4,18 @@ import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingDAO;
 import com.epam.wca.gym.dao.UserDAO;
+import com.epam.wca.gym.dto.user.ChangePasswordDTO;
 import com.epam.wca.gym.dto.user.UserDTO;
+import com.epam.wca.gym.dto.user.UserUpdateDTO;
 import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.User;
+import com.epam.wca.gym.exception.AuthorizationFailedException;
 import com.epam.wca.gym.exception.EntityNotFoundException;
 import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.service.impl.UserServiceImpl;
 import com.epam.wca.gym.utils.UsernameGenerator;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,10 +30,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.math.BigInteger;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
@@ -51,9 +55,6 @@ class UserServiceImplTest {
     private UsernameGenerator usernameGenerator;
 
     @Mock
-    private Validator validator;
-
-    @Mock
     private BCryptPasswordEncoder passwordEncoder;
 
     @Mock
@@ -69,96 +70,79 @@ class UserServiceImplTest {
     private UserServiceImpl userService;
 
     @ParameterizedTest
-    @CsvSource({
-            "John,Doe",
-            "Jane,Smith",
-            "Alice,Brown"
-    })
+    @CsvSource({"Naruto,Uzumaki", "Sasuke,Uchiha", "Sakura,Haruno"})
     void testCreateUser_Success(String firstName, String lastName) {
         // Arrange
-        UserDTO dto = new UserDTO(firstName, lastName);
-        String generatedUsername = firstName.toLowerCase() + "." + lastName.toLowerCase();
-        String hashedPassword = "hashedPassword";
-        User savedUser = new User();
-        savedUser.setId(BigInteger.ONE);
-        savedUser.setFirstName(firstName);
-        savedUser.setLastName(lastName);
-        savedUser.setUsername(generatedUsername);
-        savedUser.setPassword(hashedPassword);
-        savedUser.setIsActive(true);
+        var dto = new UserDTO(firstName, lastName);
+        var username = firstName.toLowerCase() + "." + lastName.toLowerCase();
+        var hashedPassword = "hashedPassword";
+        var user = new User();
+        user.setId(BigInteger.ONE);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setUsername(username);
+        user.setPassword(hashedPassword);
+        user.setIsActive(true);
 
-        when(usernameGenerator.generateUsername(dto.getFirstName(), dto.getLastName()))
-                .thenReturn(generatedUsername);
-        when(passwordEncoder.encode(anyString()))
-                .thenReturn(hashedPassword);
-        when(userDAO.save(any(User.class)))
-                .thenReturn(savedUser);
+        when(usernameGenerator.generateUsername(dto.getFirstName(), dto.getLastName())).thenReturn(username);
+        when(passwordEncoder.encode(anyString())).thenReturn(hashedPassword);
+        when(userDAO.save(any(User.class))).thenReturn(user);
 
         // Act
-        User result = userService.create(dto);
+        var result = userService.create(dto);
 
         // Assert
-        assertNotNull(result);
         assertAll(
                 () -> assertEquals(firstName, result.getFirstName()),
                 () -> assertEquals(lastName, result.getLastName()),
-                () -> assertEquals(generatedUsername, result.getUsername()),
+                () -> assertEquals(username, result.getUsername()),
                 () -> assertEquals(hashedPassword, result.getPassword()),
                 () -> assertTrue(result.getIsActive())
         );
-        verify(userDAO).save(any(User.class));
     }
 
     @ParameterizedTest
-    @CsvSource({
-            "'',Doe",
-            "John,''",
-            "'',''"
-    })
+    @CsvSource({"'',Uzumaki", "Sasuke,''", "'',''"})
     void testCreateUser_InvalidInputException(String firstName, String lastName) {
         // Arrange
-        UserDTO dto = new UserDTO(firstName, lastName);
+        var dto = new UserDTO(firstName, lastName);
 
-        when(usernameGenerator.generateUsername(anyString(), anyString()))
-                .thenThrow(new InvalidInputException("Invalid input"));
+        when(usernameGenerator.generateUsername(anyString(), anyString())).thenThrow(new InvalidInputException("Invalid input."));
 
         // Act & Assert
-        InvalidInputException exception = assertThrows(InvalidInputException.class, () ->
-                userService.create(dto));
+        var exception = assertThrows(InvalidInputException.class, () -> userService.create(dto));
 
-        assertEquals("Invalid input", exception.getMessage());
-        verify(userDAO, never()).save(any(User.class));
+        assertEquals("Invalid input.", exception.getMessage());
     }
 
     @ParameterizedTest
     @MethodSource("provideAuthenticationTestData")
     void testAuthenticate(String username, String password, String storedPassword, boolean userExists,
-                          boolean passwordMatches, boolean isTrainee, boolean isTrainer, Role expectedRole, boolean expectException) {
+                          boolean passwordMatches, boolean isTrainee, boolean isTrainer,
+                          Role expectedRole, boolean expectException) {
         // Arrange
         if (userExists) {
-            User user = new User();
+            var user = new User();
             user.setUsername(username);
             user.setPassword(storedPassword);
 
-            when(userDAO.findByUsername(username))
-                    .thenReturn(Optional.of(user));
-            when(passwordEncoder.matches(password, storedPassword))
-                    .thenReturn(passwordMatches);
+            when(userDAO.findByUsername(username)).thenReturn(Optional.of(user));
+            when(passwordEncoder.matches(password, storedPassword)).thenReturn(passwordMatches);
 
             if (passwordMatches) {
-                when(traineeDAO.findByUsername(username))
-                        .thenReturn(isTrainee ? Optional.of(mock(Trainee.class)) : Optional.empty());
-                when(trainerDAO.findByUsername(username))
-                        .thenReturn(isTrainer ? Optional.of(mock(Trainer.class)) : Optional.empty());
+                when(traineeDAO.findByUsername(username)).thenReturn(isTrainee ?
+                        Optional.of(mock(Trainee.class)) : Optional.empty());
+                when(trainerDAO.findByUsername(username)).thenReturn(isTrainer ?
+                        Optional.of(mock(Trainer.class)) : Optional.empty());
             }
         } else {
-            when(userDAO.findByUsername(username))
-                    .thenReturn(Optional.empty());
+            when(userDAO.findByUsername(username)).thenReturn(Optional.empty());
         }
 
         // Act & Assert
         if (expectException) {
-            var exception = assertThrows(InvalidInputException.class, () -> userService.authenticate(username, password));
+            var exception = assertThrows(AuthorizationFailedException.class,
+                    () -> userService.authenticate(username, password));
             assertEquals("Invalid credentials provided!", exception.getMessage());
         } else {
             Role result = userService.authenticate(username, password);
@@ -168,7 +152,7 @@ class UserServiceImplTest {
 
     static Stream<Arguments> provideAuthenticationTestData() {
         return Stream.of(
-                Arguments.of("trainerUser", "password", "hashedPassword", true, true, false, true, Role.TRAINER, false),
+                Arguments.of("trainer.user", "password", "hashedPassword", true, true, false, true, Role.TRAINER, false),
                 Arguments.of("user", "wrongPassword", "hashedPassword", true, false, false, false, Role.NONE, true),
                 Arguments.of("nonExistentUser", "password", null, false, false, false, false, Role.NONE, true)
         );
@@ -176,81 +160,71 @@ class UserServiceImplTest {
 
     @ParameterizedTest
     @MethodSource("provideUpdateUserData")
-    void testUpdateUser(String existingFirstName, String existingLastName, String dtoFirstName, String dtoLastName,
+    void testUpdateUser(String existingFirstName, String existingLastName,
+                        String dtoFirstName, String dtoLastName,
                         String expectedFirstName, String expectedLastName) {
         // Arrange
-        User existingUser = new User();
-        existingUser.setUsername("user");
+        var existingUser = new User();
+        existingUser.setUsername("naruto.uzumaki");
         existingUser.setFirstName(existingFirstName);
         existingUser.setLastName(existingLastName);
 
-        when(userDAO.findByUsername("user"))
-                .thenReturn(Optional.of(existingUser));
-
-        UserDTO dto = new UserDTO(dtoFirstName, dtoLastName);
-        dto.setUsername("user");
+        when(userDAO.findByUsername("naruto.uzumaki")).thenReturn(Optional.of(existingUser));
 
         // Act
-        userService.update(dto);
+        userService.update(new UserUpdateDTO("naruto.uzumaki", dtoFirstName, dtoLastName));
 
         // Assert
         assertAll(
                 () -> assertEquals(expectedFirstName, existingUser.getFirstName()),
                 () -> assertEquals(expectedLastName, existingUser.getLastName())
         );
-        verify(userDAO).update(existingUser);
     }
 
     static Stream<Arguments> provideUpdateUserData() {
         return Stream.of(
-                Arguments.of("John", "Doe", "Johnny", "D", "Johnny", "D"),
-                Arguments.of("John", "Doe", null, "D", "John", "D"),
-                Arguments.of("John", "Doe", "Johnny", null, "Johnny", "Doe"),
-                Arguments.of("John", "Doe", "", "D", "John", "D"),
-                Arguments.of("John", "Doe", "Johnny", "", "Johnny", "Doe"),
-                Arguments.of("John", "Doe", null, null, "John", "Doe")
+                Arguments.of("Naruto", "Uzumaki", "Naruto-kun", "Namikaze", "Naruto-kun", "Namikaze"),
+                Arguments.of("Naruto", "Uzumaki", null, "Namikaze", "Naruto", "Namikaze"),
+                Arguments.of("Naruto", "Uzumaki", "Naruto-kun", null, "Naruto-kun", "Uzumaki"),
+                Arguments.of("Naruto", "Uzumaki", "", "Namikaze", "Naruto", "Namikaze"),
+                Arguments.of("Naruto", "Uzumaki", "Naruto-kun", "", "Naruto-kun", "Uzumaki"),
+                Arguments.of("Naruto", "Uzumaki", null, null, "Naruto", "Uzumaki")
         );
     }
 
     @Test
     void testUpdateUser_UserNotFound() {
         // Arrange
-        when(userDAO.findByUsername("nonExistentUser"))
-                .thenReturn(Optional.empty());
-        UserDTO dto = new UserDTO("First", "Last");
-        dto.setUsername("nonExistentUser");
+        when(userDAO.findByUsername("non-existent-user")).thenReturn(Optional.empty());
+        var dto = new UserUpdateDTO("non-existent-user", "Sakura", "Haruno");
 
         // Act & Assert
         assertThrows(EntityNotFoundException.class, () -> userService.update(dto));
-        verify(userDAO, never()).update(any(User.class));
     }
 
     @Test
     void testActivateUser_Success() {
         // Arrange
-        User user = new User();
-        user.setUsername("user");
+        var user = new User();
+        user.setUsername("naruto.uzumaki");
         user.setIsActive(false);
 
-        when(userDAO.findByUsername("user"))
-                .thenReturn(Optional.of(user));
+        when(userDAO.findByUsername("naruto.uzumaki")).thenReturn(Optional.of(user));
 
         // Act
-        userService.activate("user");
+        userService.activate("naruto.uzumaki");
 
         // Assert
         assertTrue(user.getIsActive());
-        verify(userDAO).update(user);
     }
 
     @Test
     void testActivateUser_UserNotFound() {
         // Arrange
-        when(userDAO.findByUsername("nonExistentUser"))
-                .thenReturn(Optional.empty());
+        when(userDAO.findByUsername("non-existent-user")).thenReturn(Optional.empty());
 
         // Act
-        userService.activate("nonExistentUser");
+        userService.activate("non-existent-user");
 
         // Assert
         verify(userDAO, never()).update(any(User.class));
@@ -259,42 +233,37 @@ class UserServiceImplTest {
     @Test
     void testDeactivateUser_Success() {
         // Arrange
-        User user = new User();
-        user.setUsername("user");
+        var user = new User();
+        user.setUsername("naruto.uzumaki");
         user.setIsActive(true);
 
-        when(userDAO.findByUsername("user"))
-                .thenReturn(Optional.of(user));
+        when(userDAO.findByUsername("naruto.uzumaki")).thenReturn(Optional.of(user));
 
-        // Mock the Trainee and Trainer
-        Trainee mockTrainee = mock(Trainee.class);
-        when(traineeDAO.findByUsername("user"))
-                .thenReturn(Optional.of(mockTrainee));
+        var mockTrainee = mock(Trainee.class);
+        when(traineeDAO.findByUsername("naruto.uzumaki")).thenReturn(Optional.of(mockTrainee));
 
-        Trainer mockTrainer = mock(Trainer.class);
-        when(trainerDAO.findByUsername("user"))
-                .thenReturn(Optional.of(mockTrainer));
+        var mockTrainer = mock(Trainer.class);
+        when(trainerDAO.findByUsername("naruto.uzumaki")).thenReturn(Optional.of(mockTrainer));
         when(mockTrainer.getId()).thenReturn(BigInteger.ONE);
 
         // Act
-        userService.deactivate("user");
+        userService.deactivate("naruto.uzumaki");
 
         // Assert
         assertFalse(user.getIsActive());
         verify(userDAO).update(user);
-        verify(trainingDAO).deleteByTrainee("user");
+        verify(trainingDAO).deleteByTrainee("naruto.uzumaki");
         verify(traineeDAO).removeDeactivatedTrainer(any(BigInteger.class));
-        verify(trainingDAO).deleteByTrainer("user");
+        verify(trainingDAO).deleteByTrainer("naruto.uzumaki");
     }
 
     @Test
     void testDeactivateUser_UserNotFound() {
         // Arrange
-        when(userDAO.findByUsername("nonExistentUser"))
-                .thenReturn(Optional.empty());
+        when(userDAO.findByUsername("non-existent-user")).thenReturn(Optional.empty());
 
         // Act
-        userService.deactivate("nonExistentUser");
+        userService.deactivate("non-existent-user");
 
         // Assert
         verify(userDAO, never()).update(any(User.class));
@@ -305,98 +274,62 @@ class UserServiceImplTest {
     @Test
     void testChangePassword_Success() {
         // Arrange
-        String username = "user";
-        String currentPassword = "currentPassword";
-        String storedPasswordHash = "hashedCurrentPassword";
-        String newPassword = "newValidPassword";
+        var username = "naruto.uzumaki";
+        var currentPassword = "currentPassword";
+        var storedHashedPassword = "hashedCurrentPassword";
+        var newPassword = "newValidPassword";
 
-        User user = new User();
+        var user = new User();
         user.setUsername(username);
-        user.setPassword(storedPasswordHash);
+        user.setPassword(storedHashedPassword);
 
-        when(userDAO.findByUsername(username))
-                .thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(currentPassword, storedPasswordHash))
-                .thenReturn(true);
-        when(validator.validate(any(UserDTO.class)))
-                .thenReturn(Set.of());
-        when(passwordEncoder.encode(newPassword))
-                .thenReturn("hashedNewPassword");
+        var dto = new ChangePasswordDTO(currentPassword, newPassword);
+
+        when(userDAO.findByUsername(username)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(dto.currentPassword(), storedHashedPassword)).thenReturn(true);
+        when(passwordEncoder.encode(dto.newPassword())).thenReturn("hashedNewPassword");
 
         // Act
-        userService.changePassword(username, currentPassword, newPassword);
+        userService.changePassword(username, dto);
 
         // Assert
         assertEquals("hashedNewPassword", user.getPassword());
-        verify(userDAO).update(user);
     }
 
     @Test
     void testChangePassword_CurrentPasswordIncorrect() {
         // Arrange
-        String username = "user";
-        String currentPassword = "wrongPassword";
-        String storedPasswordHash = "hashedCurrentPassword";
+        var username = "naruto.uzumaki";
+        var currentPassword = "wrongPassword";
+        var storedHashedPassword = "hashedCurrentPassword";
 
-        User user = new User();
+        var user = new User();
         user.setUsername(username);
-        user.setPassword(storedPasswordHash);
+        user.setPassword(storedHashedPassword);
 
-        when(userDAO.findByUsername(username))
-                .thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(currentPassword, storedPasswordHash))
-                .thenReturn(false);
+        var dto = new ChangePasswordDTO(currentPassword, "newValidPassword");
+
+        when(userDAO.findByUsername(username)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(dto.currentPassword(), storedHashedPassword)).thenReturn(false);
 
         // Act & Assert
-        assertThrows(InvalidInputException.class, () ->
-                userService.changePassword(username, currentPassword, "newPassword"));
+        var exception = assertThrows(InvalidInputException.class, () -> userService.changePassword(username, dto));
 
-        verify(userDAO, never()).update(any(User.class));
-    }
-
-    @Test
-    void testChangePassword_NewPasswordInvalid() {
-        // Arrange
-        String username = "user";
-        String currentPassword = "currentPassword";
-        String storedPasswordHash = "hashedCurrentPassword";
-        String newPassword = "short";
-
-        User user = new User();
-        user.setUsername(username);
-        user.setPassword(storedPasswordHash);
-
-        when(userDAO.findByUsername(username))
-                .thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(currentPassword, storedPasswordHash))
-                .thenReturn(true);
-        ConstraintViolation<UserDTO> violation = mock(ConstraintViolation.class);
-        when(violation.getMessage())
-                .thenReturn("Password must be at least 10 characters long.");
-        Set<ConstraintViolation<UserDTO>> violations = Set.of(violation);
-
-        when(validator.validate(any(UserDTO.class)))
-                .thenReturn(violations);
-
-        // Act & Assert
-        InvalidInputException exception = assertThrows(InvalidInputException.class, () ->
-                userService.changePassword(username, currentPassword, newPassword));
-
-        assertTrue(exception.getMessage().contains("Invalid password"));
-
+        assertEquals("The current password is incorrect.", exception.getMessage());
         verify(userDAO, never()).update(any(User.class));
     }
 
     @Test
     void testChangePassword_UserNotFound() {
         // Arrange
-        when(userDAO.findByUsername("nonExistentUser"))
-                .thenReturn(Optional.empty());
+        var username = "non-existing-user";
+        var dto = new ChangePasswordDTO("currentPassword", "newValidPassword");
 
-        // Act
-        userService.changePassword("nonExistentUser", "currentPassword", "newPassword");
+        when(userDAO.findByUsername(username)).thenReturn(Optional.empty());
 
-        // Assert
+        // Act & Assert
+        userService.changePassword(username, dto);
+
         verify(userDAO, never()).update(any(User.class));
     }
 }

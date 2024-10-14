@@ -1,20 +1,13 @@
 package com.epam.wca.gym.controller;
 
-import com.epam.wca.gym.config.AppConfig;
 import com.epam.wca.gym.dto.type.TrainingTypeDTO;
 import com.epam.wca.gym.service.TrainingTypeService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
-import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -22,42 +15,28 @@ import java.util.List;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {AppConfig.class})
-@WebAppConfiguration
+@SpringBootTest
+@AutoConfigureMockMvc
 class TrainingTypeControllerTest {
 
     @Autowired
-    private WebApplicationContext webApplicationContext;
-
     private MockMvc mockMvc;
 
-    @Mock
+    @MockBean
     private TrainingTypeService trainingTypeService;
 
-    private List<TrainingTypeDTO> trainingTypes;
-
-    @BeforeEach
-    void setUp() {
-        // Initialize mocks
-        MockitoAnnotations.openMocks(this);
-
-        // Manually set up MockMvc
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-
-        // Mock some training types data
-        trainingTypes = Arrays.asList(
-                new TrainingTypeDTO(BigInteger.valueOf(1), "FITNESS"),
-                new TrainingTypeDTO(BigInteger.valueOf(2), "YOGA"),
-                new TrainingTypeDTO(BigInteger.valueOf(3), "ZUMBA"),
-                new TrainingTypeDTO(BigInteger.valueOf(4), "STRETCHING"),
-                new TrainingTypeDTO(BigInteger.valueOf(5), "CARDIO"),
-                new TrainingTypeDTO(BigInteger.valueOf(6), "CROSSFIT")
-        );
-    }
+    private final List<TrainingTypeDTO> trainingTypes = Arrays.asList(
+            new TrainingTypeDTO(BigInteger.valueOf(1), "FITNESS"),
+            new TrainingTypeDTO(BigInteger.valueOf(2), "YOGA"),
+            new TrainingTypeDTO(BigInteger.valueOf(3), "ZUMBA"),
+            new TrainingTypeDTO(BigInteger.valueOf(4), "STRETCHING"),
+            new TrainingTypeDTO(BigInteger.valueOf(5), "CARDIO"),
+            new TrainingTypeDTO(BigInteger.valueOf(6), "CROSSFIT")
+    );
 
     @Test
     void getTrainingTypes_ShouldReturnOkAndListOfTrainingTypes() throws Exception {

@@ -15,4 +15,10 @@ public interface SecurityService {
     boolean isTrainee();
 
     boolean isTrainer();
+
+    default void tryToAuthenticate() {
+        if (!this.isAuthenticated()) {
+            throw new SecurityException("User is not authenticated. Please log in to perform this action.");
+        }
+    }
 }

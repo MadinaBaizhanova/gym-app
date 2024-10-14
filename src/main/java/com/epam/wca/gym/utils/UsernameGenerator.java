@@ -9,13 +9,13 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 
-import static com.epam.wca.gym.utils.Constants.INITIAL_SERIAL_NUMBER;
-import static com.epam.wca.gym.utils.Constants.SERIAL_NUMBER_INCREMENT;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public final class UsernameGenerator {
+
+    private static final int SERIAL_NUMBER_INCREMENT = 1;
+    private static final int INITIAL_SERIAL_NUMBER = 2;
 
     private final UserDAO userDAO;
 

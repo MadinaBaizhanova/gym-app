@@ -17,23 +17,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.quality.Strictness;
-import org.mockito.junit.jupiter.MockitoSettings;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 class TrainingServiceImplTest {
 
     @Mock
@@ -49,95 +46,89 @@ class TrainingServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        trainingDTO = new TrainingDTO(
-                "Morning Yoga",
-                "trainer.one",
-                ZonedDateTime.now(),
-                60,
-                "john.doe",
-                "YOGA"
-        );
+        trainingDTO = TrainingDTO.builder()
+                .trainingName("Ninjutsu Master Class")
+                .trainerUsername("tobirama.senju")
+                .trainingDate(ZonedDateTime.parse("2025-01-31T00:00:00Z"))
+                .trainingDuration(120)
+                .traineeUsername("naruto.uzumaki")
+                .trainingType("YOGA")
+                .build();
     }
 
     @Test
     void testCreateTraining_TraineeNotFound() {
         // Arrange
-        when(traineeDAO.findByUsername("john.doe")).thenReturn(Optional.empty());
+        when(traineeDAO.findByUsername("naruto.uzumaki")).thenReturn(Optional.empty());
 
         // Act & Assert
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
+        var exception = assertThrows(EntityNotFoundException.class, () ->
                 trainingService.create(trainingDTO));
         assertEquals("Trainee not found", exception.getMessage());
-
-        verify(traineeDAO).findByUsername("john.doe");
-        verify(trainingDAO, never()).save(any(Training.class));
     }
 
     @Test
     void testCreateTraining_TrainerNotFoundInTraineeList() {
         // Arrange
-        User traineeUser = new User();
-        traineeUser.setUsername("john.doe");
-        Trainee trainee = new Trainee();
+        var traineeUser = new User();
+        traineeUser.setUsername("naruto.uzumaki");
+        var trainee = new Trainee();
         trainee.setUser(traineeUser);
         trainee.setTrainers(new ArrayList<>());
 
-        when(traineeDAO.findByUsername("john.doe")).thenReturn(Optional.of(trainee));
+        when(traineeDAO.findByUsername("naruto.uzumaki")).thenReturn(Optional.of(trainee));
 
         // Act & Assert
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> trainingService.create(trainingDTO));
+        var exception = assertThrows(EntityNotFoundException.class, () -> trainingService.create(trainingDTO));
         assertEquals("Trainer not found in the trainee's list of favorite trainers.", exception.getMessage());
-
-        verify(traineeDAO).findByUsername("john.doe");
-        verify(trainingDAO, never()).save(any(Training.class));
     }
 
     @Test
     void testCreateTraining_Success() {
         //Arrange
-        User traineeUser = new User();
-        traineeUser.setUsername("john.doe");
-
-        Trainee trainee = new Trainee();
-        trainee.setUser(traineeUser);
-
-        User trainerUser = new User();
-        trainerUser.setUsername("trainer.one");
-
-        Trainer trainer = new Trainer();
-        trainer.setUser(trainerUser);
-
-        TrainingType trainingType = new TrainingType();
+        var trainingType = new TrainingType();
         trainingType.setTrainingTypeName("YOGA");
+
+        var trainerUser = new User();
+        trainerUser.setUsername("kakashi.hatake");
+
+        var trainer = new Trainer();
+        trainer.setUser(trainerUser);
         trainer.setTrainingType(trainingType);
 
-        trainee.setTrainers(Collections.singletonList(trainer));
+        var traineeUser = new User();
+        traineeUser.setUsername("naruto.uzumaki");
 
-        when(traineeDAO.findByUsername("john.doe")).thenReturn(Optional.of(trainee));
+        var trainee = new Trainee();
+        trainee.setUser(traineeUser);
+        trainee.setTrainers(List.of(trainer));
 
-        Training newTraining = new Training();
-        newTraining.setTrainingName("Morning Yoga");
-        newTraining.setTrainingType(trainingType);
+        when(traineeDAO.findByUsername(trainee.getUser().getUsername())).thenReturn(Optional.of(trainee));
 
-        when(trainingDAO.save(any(Training.class))).thenReturn(newTraining);
+        var training = new Training();
+        training.setTrainee(trainee);
+        training.setTrainer(trainer);
+        training.setTrainingName("Rasengan Master Class");
+        training.setTrainingType(trainer.getTrainingType());
+
+        when(trainingDAO.save(any(Training.class))).thenReturn(training);
 
         // Act
-        Training result = trainingService.create(new TrainingDTO(
-                "Morning Yoga",
-                "YOGA",
-                ZonedDateTime.now(),
-                60,
-                "john.doe",
-                "trainer.one"
-        ));
+        var result = trainingService.create(TrainingDTO.builder()
+                .trainingName("Rasengan Master Class")
+                .trainingType("YOGA")
+                .trainingDate(ZonedDateTime.parse("2025-01-31T00:00:00Z"))
+                .trainingDuration(120)
+                .traineeUsername("naruto.uzumaki")
+                .trainerUsername("kakashi.hatake")
+                .build());
 
         // Assert
         assertAll(
-                () -> assertNotNull(result),
-                () -> assertEquals("Morning Yoga", result.getTrainingName()),
-                () -> assertEquals("YOGA", result.getTrainingType().getTrainingTypeName())
+                () -> assertEquals(training.getTrainingName(), result.getTrainingName()),
+                () -> assertEquals(training.getTrainingType().getTrainingTypeName(), result.getTrainingType().getTrainingTypeName()),
+                () -> assertEquals(training.getTrainee().getUser().getUsername(), result.getTrainee().getUser().getUsername()),
+                () -> assertEquals(training.getTrainer().getUser().getUsername(), result.getTrainer().getUser().getUsername())
         );
-
-        verify(trainingDAO).save(any(Training.class));
     }
 }

@@ -1,7 +1,7 @@
 <configuration>
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%date{yyyy-MM-dd HH:mm:ss} %-5level %logger{1} - %msg%n</pattern>
+            <pattern>%date{yyyy-MM-dd HH:mm:ss} %-5level %logger - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -9,7 +9,7 @@
         <file>C:/Users/mabai/Downloads/EpamLab/gym-app/src/main/resources/logs/access.log</file>
         <append>true</append>
         <encoder>
-            <pattern>%date{yyyy-MM-dd HH:mm:ss} %-5level %logger{1}:%line - %msg%n</pattern>
+            <pattern>%date{yyyy-MM-dd HH:mm:ss} %-5level %logger:%line - %msg%n</pattern>
         </encoder>
     </appender>
 

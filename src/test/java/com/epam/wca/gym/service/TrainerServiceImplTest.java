@@ -2,7 +2,6 @@ package com.epam.wca.gym.service;
 
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingTypeDAO;
-import com.epam.wca.gym.dto.trainer.TrainerDTO;
 import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
 import com.epam.wca.gym.dto.trainer.TrainerUpdateDTO;
 import com.epam.wca.gym.dto.user.UserDTO;
@@ -22,10 +21,12 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static com.epam.wca.gym.utils.ServiceConstants.MISSING_TRAINER_TEMPLATE;
+import static com.epam.wca.gym.utils.ServiceConstants.MISSING_TRAINING_TEMPLATE;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,29 +46,29 @@ class TrainerServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        // Initialization before each test
+        // Does nothing
     }
 
     @Test
     void testCreateTrainer_Success() {
         // Arrange
-        TrainerRegistrationDTO dto = new TrainerRegistrationDTO(
-                "John",
-                "Doe",
-                "YOGA"
-        );
+        var dto = TrainerRegistrationDTO.builder()
+                .firstName("Hashirama")
+                .lastName("Senju")
+                .trainingType("YOGA")
+                .build();
 
-        User user = new User();
+        var user = new User();
         user.setId(BigInteger.ONE);
-        user.setFirstName("John");
-        user.setLastName("Doe");
-        user.setUsername("john.doe");
+        user.setFirstName(dto.firstName());
+        user.setLastName(dto.lastName());
+        user.setUsername("hashirama.senju");
 
-        TrainingType trainingType = new TrainingType();
+        var trainingType = new TrainingType();
         trainingType.setId(BigInteger.ONE);
         trainingType.setTrainingTypeName("YOGA");
 
-        Trainer newTrainer = new Trainer();
+        var newTrainer = new Trainer();
         newTrainer.setUser(user);
         newTrainer.setTrainingType(trainingType);
 
@@ -76,55 +77,48 @@ class TrainerServiceImplTest {
         when(trainerDAO.save(any(Trainer.class))).thenReturn(newTrainer);
 
         // Act
-        Trainer result = trainerService.create(dto);
+        var result = trainerService.create(dto);
 
         // Assert
-        assertNotNull(result);
-        assertEquals("John", result.getUser().getFirstName());
-        assertEquals("Doe", result.getUser().getLastName());
-        assertEquals("john.doe", result.getUser().getUsername());
-        assertEquals("YOGA", result.getTrainingType().getTrainingTypeName());
-
-        verify(trainingTypeDAO).findByName("YOGA");
-        verify(userService).create(any(UserDTO.class));
-        verify(trainerDAO).save(any(Trainer.class));
+        assertAll(
+                () -> assertEquals(dto.firstName(), result.getUser().getFirstName()),
+                () -> assertEquals(dto.lastName(), result.getUser().getLastName()),
+                () -> assertEquals("hashirama.senju", result.getUser().getUsername()),
+                () -> assertEquals("YOGA", result.getTrainingType().getTrainingTypeName())
+        );
     }
 
     @Test
     void testCreateTrainer_TrainingTypeNotFound() {
         // Arrange
         TrainerRegistrationDTO dto = new TrainerRegistrationDTO(
-                "John",
-                "Doe",
-                "UNKNOWN_TYPE"
+                "Tobirama",
+                "Senju",
+                "TENNIS"
         );
 
-        when(trainingTypeDAO.findByName("UNKNOWN_TYPE")).thenReturn(Optional.empty());
+        when(trainingTypeDAO.findByName("TENNIS")).thenReturn(Optional.empty());
 
         // Act & Assert
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
+        var exception = assertThrows(EntityNotFoundException.class, () ->
                 trainerService.create(dto));
-        assertEquals("Training Type not found", exception.getMessage());
-
-        verify(trainingTypeDAO).findByName("UNKNOWN_TYPE");
-        verify(userService, never()).create(any(UserDTO.class));
-        verify(trainerDAO, never()).save(any(Trainer.class));
+        assertEquals(MISSING_TRAINING_TEMPLATE.formatted(dto.trainingType()), exception.getMessage());
     }
 
     @Test
     void testFindByUsername_Success() {
         // Arrange
-        String trainerUsername = "john.doe";
+        String trainerUsername = "mito.uzumaki";
 
-        User user = new User();
+        var user = new User();
         user.setUsername(trainerUsername);
-        user.setFirstName("John");
-        user.setLastName("Doe");
+        user.setFirstName("Mito");
+        user.setLastName("Uzumaki");
 
-        TrainingType trainingType = new TrainingType();
+        var trainingType = new TrainingType();
         trainingType.setTrainingTypeName("YOGA");
 
-        Trainer trainer = new Trainer();
+        var trainer = new Trainer();
         trainer.setUser(user);
         trainer.setTrainingType(trainingType);
         trainer.setTrainees(new ArrayList<>());
@@ -132,85 +126,83 @@ class TrainerServiceImplTest {
         when(trainerDAO.findByUsername(trainerUsername)).thenReturn(Optional.of(trainer));
 
         // Act
-        TrainerDTO result = trainerService.findByUsername(trainerUsername);
+        var result = trainerService.findByUsername(trainerUsername);
 
         // Assert
-        assertNotNull(result);
-        assertEquals("john.doe", result.username());
-        assertEquals("YOGA", result.trainingType());
-
-        verify(trainerDAO).findByUsername(trainerUsername);
+        assertAll(
+                () -> assertEquals(trainerUsername, result.username()),
+                () -> assertEquals(trainingType.getTrainingTypeName(), result.trainingType())
+        );
     }
 
     @Test
     void testFindByUsername_NotFound() {
         // Arrange
-        String trainerUsername = "unknown";
+        var trainerUsername = "kakashi.hatake";
 
         when(trainerDAO.findByUsername(trainerUsername)).thenReturn(Optional.empty());
 
         // Act & Assert
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
+        var exception = assertThrows(EntityNotFoundException.class, () ->
                 trainerService.findByUsername(trainerUsername));
 
-        assertEquals("Trainer not found with username: " + trainerUsername, exception.getMessage());
-        verify(trainerDAO).findByUsername(trainerUsername);
+        assertEquals(MISSING_TRAINER_TEMPLATE.formatted(trainerUsername), exception.getMessage());
     }
 
     @Test
     void testUpdateTrainer_Success() {
         // Arrange
-        TrainerUpdateDTO dto = new TrainerUpdateDTO(
-                "John",
-                "Doe",
-                "john.doe",
-                "YOGA"
-        );
+        var dto = TrainerUpdateDTO.builder()
+                .firstName("Hashirama")
+                .lastName("Senju")
+                .username("hashirama.senju")
+                .trainingType("YOGA")
+                .build();
 
-        User user = new User();
+        var user = new User();
         user.setId(BigInteger.ONE);
-        user.setFirstName("John");
-        user.setLastName("Doe");
-        user.setUsername("john.doe");
+        user.setFirstName(dto.firstName());
+        user.setLastName(dto.lastName());
+        user.setUsername(dto.username());
 
-        TrainingType trainingType = new TrainingType();
+        var trainingType = new TrainingType();
         trainingType.setId(BigInteger.ONE);
         trainingType.setTrainingTypeName("YOGA");
 
-        Trainer trainer = new Trainer();
+        var trainer = new Trainer();
         trainer.setUser(user);
         trainer.setTrainingType(trainingType);
         trainer.setTrainees(new ArrayList<>());
 
         when(trainerDAO.findByUsername(dto.username())).thenReturn(Optional.of(trainer));
-        when(trainingTypeDAO.findByName("YOGA")).thenReturn(Optional.of(trainingType));
+        when(trainingTypeDAO.findByName(dto.trainingType())).thenReturn(Optional.of(trainingType));
 
         // Act
         trainerService.update(dto);
 
         // Assert
-        verify(userService).update(any(UserDTO.class));
-        verify(trainerDAO).update(trainer);
+        assertAll(
+                () -> assertEquals(dto.firstName(), trainer.getUser().getFirstName()),
+                () -> assertEquals(dto.lastName(), trainer.getUser().getLastName()),
+                () -> assertEquals(dto.trainingType(), trainer.getTrainingType().getTrainingTypeName())
+        );
     }
 
     @Test
     void testUpdateTrainer_NotFound() {
         // Arrange
-        TrainerUpdateDTO dto = new TrainerUpdateDTO(
-                "John",
-                "Doe",
-                "unknown",
-                "YOGA"
-        );
+        var dto = TrainerUpdateDTO.builder()
+                .firstName("Tobirama")
+                .lastName("Senju")
+                .username("tobirama.senju")
+                .trainingType("YOGA")
+                .build();
 
         when(trainerDAO.findByUsername(dto.username())).thenReturn(Optional.empty());
 
         // Act & Assert
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
                 trainerService.update(dto));
-        assertEquals("Trainer not found", exception.getMessage());
-
-        verify(userService, never()).update(any(UserDTO.class));
-        verify(trainerDAO, never()).update(any(Trainer.class));
+        assertEquals(MISSING_TRAINER_TEMPLATE.formatted(dto.username()), exception.getMessage());
     }
 }

@@ -23,9 +23,8 @@ import lombok.RequiredArgsConstructor;
 
 import java.math.BigInteger;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
-
-import static com.epam.wca.gym.utils.Constants.ALLOCATION_SIZE;
 
 @Entity
 @Data
@@ -34,6 +33,8 @@ import static com.epam.wca.gym.utils.Constants.ALLOCATION_SIZE;
 @RequiredArgsConstructor
 @Table(name = "trainee")
 public class Trainee {
+
+    private static final int ALLOCATION_SIZE = 1;
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "trainee_seq")
@@ -58,9 +59,9 @@ public class Trainee {
             inverseJoinColumns = @JoinColumn(name = "trainer_id")
     )
     @EqualsAndHashCode.Exclude
-    private List<Trainer> trainers;
+    private List<Trainer> trainers = new ArrayList<>();
 
     @OneToMany(mappedBy = "trainee", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @EqualsAndHashCode.Exclude
-    private List<Training> trainings;
+    private List<Training> trainings = new ArrayList<>();
 }

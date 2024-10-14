@@ -1,102 +1,98 @@
 package com.epam.wca.gym.dao.impl;
 
 import com.epam.wca.gym.dao.TraineeDAO;
+import com.epam.wca.gym.dto.training.FindTrainingQuery;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.Training;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.HibernateException;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigInteger;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static com.epam.wca.gym.utils.Constants.USERNAME;
 
 @Slf4j
 @Repository
 public class TraineeDAOImpl extends AbstractDAO<Trainee> implements TraineeDAO {
 
-    public TraineeDAOImpl(SessionFactory sessionFactory) {
-        super(sessionFactory);
-    }
+    private static final String USERNAME = "username";
 
     @Override
     public Optional<Trainee> findByUsername(String traineeUsername) {
-        try (Session session = sessionFactory.openSession()) {
+        try {
             return Optional.ofNullable(
-                    session.createQuery(
+                    entityManager.createQuery(
                                     "SELECT t FROM Trainee t JOIN FETCH t.user u " +
                                     "WHERE LOWER(u.username) = :username", Trainee.class)
                             .setParameter(USERNAME, traineeUsername.toLowerCase())
-                            .uniqueResult()
+                            .getSingleResult()
             );
+        } catch (NoResultException exception) {
+            return Optional.empty();
         }
     }
 
     @Override
     public List<Trainer> findAvailableTrainers(String traineeUsername) {
-        try (Session session = sessionFactory.openSession()) {
-            return session.createQuery(
+        try {
+            return entityManager.createQuery(
                             "SELECT tr FROM Trainer tr WHERE tr NOT IN " +
                             "(SELECT t FROM Trainee tn JOIN tn.trainers t WHERE tn.user.username = :username) " +
                             "AND tr.user.isActive = true", Trainer.class)
                     .setParameter(USERNAME, traineeUsername)
-                    .list();
+                    .getResultList();
+        } catch (PersistenceException exception) {
+            log.error("Error occurred while finding available trainers.", exception);
+            throw exception;
         }
     }
 
     @Override
-    public List<Training> findTrainings(String traineeUsername, String trainerName, String trainingType,
-                                        ZonedDateTime fromDate, ZonedDateTime toDate) {
-        // TODO: try to replace multiple parameters by FindTrainingQuery (FindTrainingDTO)
-        try (Session session = sessionFactory.openSession()) {
-            CriteriaBuilder cb = session.getCriteriaBuilder();
-            CriteriaQuery<Training> cq = cb.createQuery(Training.class);
-            Root<Training> trainingRoot = cq.from(Training.class);
+    public List<Training> findTrainings(FindTrainingQuery query) {
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Training> findCriteriaQuery = criteriaBuilder.createQuery(Training.class);
+        Root<Training> trainingRoot = findCriteriaQuery.from(Training.class);
 
-            Predicate criteria = cb.equal(trainingRoot.get("trainee").get("user").get(USERNAME), traineeUsername);
+        Predicate criteria = criteriaBuilder.equal(trainingRoot.get("trainee").get("user").get(USERNAME), query.username());
 
-            if (trainerName != null && !trainerName.isEmpty()) {
-                String trainerNamePattern = "%" + trainerName.toUpperCase() + "%";
-                Predicate trainerNamePredicate = cb.or(
-                        cb.like(cb.upper(trainingRoot.get("trainer").get("user").get("firstName")), trainerNamePattern),
-                        cb.like(cb.upper(trainingRoot.get("trainer").get("user").get("lastName")), trainerNamePattern)
-                );
-                criteria = cb.and(criteria, trainerNamePredicate);
-            }
-            if (trainingType != null && !trainingType.isEmpty()) {
-                criteria = cb.and(criteria, cb.equal(cb.upper(trainingRoot.get("trainingType")
-                        .get("trainingTypeName")), trainingType.toUpperCase()));
-            }
-            if (fromDate != null) {
-                criteria = cb.and(criteria, cb.greaterThanOrEqualTo(trainingRoot.get("trainingDate"), fromDate));
-            }
-            if (toDate != null) {
-                criteria = cb.and(criteria, cb.lessThanOrEqualTo(trainingRoot.get("trainingDate"), toDate));
-            }
-
-            cq.where(criteria);
-            return session.createQuery(cq).getResultList();
+        if (query.name() != null && !query.name().isEmpty()) {
+            String trainerNamePattern = "%" + query.name().toUpperCase() + "%";
+            Predicate trainerNamePredicate = criteriaBuilder.or(
+                    criteriaBuilder.like(criteriaBuilder.upper(trainingRoot.get("trainer").get("user").get("firstName")), trainerNamePattern),
+                    criteriaBuilder.like(criteriaBuilder.upper(trainingRoot.get("trainer").get("user").get("lastName")), trainerNamePattern)
+            );
+            criteria = criteriaBuilder.and(criteria, trainerNamePredicate);
         }
+        if (query.trainingType() != null && !query.trainingType().isEmpty()) {
+            criteria = criteriaBuilder.and(criteria, criteriaBuilder.equal(criteriaBuilder.upper(trainingRoot.get("trainingType")
+                    .get("trainingTypeName")), query.trainingType().toUpperCase()));
+        }
+        if (query.fromDate() != null) {
+            criteria = criteriaBuilder.and(criteria, criteriaBuilder.greaterThanOrEqualTo(trainingRoot.get("trainingDate"), query.fromDate()));
+        }
+        if (query.toDate() != null) {
+            criteria = criteriaBuilder.and(criteria, criteriaBuilder.lessThanOrEqualTo(trainingRoot.get("trainingDate"), query.toDate()));
+        }
+
+        findCriteriaQuery.where(criteria);
+        return entityManager.createQuery(findCriteriaQuery).getResultList();
     }
 
     @Override
     public void removeDeactivatedTrainer(BigInteger trainerId) {
         try {
-            Session session = sessionFactory.getCurrentSession();
-            session.createNativeMutationQuery("DELETE FROM trainee_trainer WHERE trainer_id = :trainerId")
+            entityManager.createNativeQuery("DELETE FROM trainee_trainer WHERE trainer_id = :trainerId")
                     .setParameter("trainerId", trainerId)
                     .executeUpdate();
-        } catch (HibernateException exception) {
+        } catch (PersistenceException exception) {
             log.error("Error occurred while removing deactivated Trainer from Trainee(s).", exception);
             throw exception;
         }

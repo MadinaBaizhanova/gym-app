@@ -23,8 +23,6 @@ import lombok.RequiredArgsConstructor;
 import java.math.BigInteger;
 import java.util.List;
 
-import static com.epam.wca.gym.utils.Constants.ALLOCATION_SIZE;
-
 @Entity
 @Data
 @NoArgsConstructor
@@ -32,6 +30,8 @@ import static com.epam.wca.gym.utils.Constants.ALLOCATION_SIZE;
 @RequiredArgsConstructor
 @Table(name = "trainer")
 public class Trainer {
+
+    private static final int ALLOCATION_SIZE = 1;
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "trainer_seq")

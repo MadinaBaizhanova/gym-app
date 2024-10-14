@@ -8,7 +8,11 @@ import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
 class SecurityServiceImplTest {
@@ -24,71 +28,71 @@ class SecurityServiceImplTest {
     @Test
     void testLogin() {
         // Act
-        securityService.login("john.doe", Role.TRAINEE);
+        securityService.login("naruto.uzumaki", Role.TRAINEE);
 
         // Assert
-        assertAll("User should be logged in as a trainee",
-                () -> assertTrue(securityService.isAuthenticated(), "User should be authenticated"),
-                () -> assertEquals("john.doe", securityService.getAuthenticatedUsername(), "Username should be 'john.doe'"),
-                () -> assertTrue(securityService.isTrainee(), "User should be a trainee"),
-                () -> assertFalse(securityService.isTrainer(), "User should not be a trainer")
+        assertAll(
+                () -> assertTrue(securityService.isAuthenticated()),
+                () -> assertEquals("naruto.uzumaki", securityService.getAuthenticatedUsername()),
+                () -> assertTrue(securityService.isTrainee()),
+                () -> assertFalse(securityService.isTrainer())
         );
     }
 
     @Test
     void testLogout() {
         // Arrange
-        securityService.login("john.doe", Role.TRAINEE);
+        securityService.login("naruto.uzumaki", Role.TRAINEE);
 
         // Act
         securityService.logout();
 
         // Assert
-        assertAll("User should be logged out",
-                () -> assertFalse(securityService.isAuthenticated(), "User should not be authenticated after logout"),
-                () -> assertNull(securityService.getAuthenticatedUsername(), "Username should be null after logout")
+        assertAll(
+                () -> assertFalse(securityService.isAuthenticated()),
+                () -> assertNull(securityService.getAuthenticatedUsername())
         );
     }
 
     @Test
     void testIsAuthenticated_NotLoggedIn() {
         // Assert
-        assertFalse(securityService.isAuthenticated(), "User should not be authenticated by default");
+        assertFalse(securityService.isAuthenticated());
     }
 
     @Test
     void testIsTrainee_LoggedInAsTrainee() {
         // Arrange
-        securityService.login("john.doe", Role.TRAINEE);
+        securityService.login("naruto.uzumaki", Role.TRAINEE);
 
         // Assert
-        assertTrue(securityService.isTrainee(), "User should be a trainee");
+        assertTrue(securityService.isTrainee());
     }
 
     @Test
     void testIsTrainer_LoggedInAsTrainer() {
         // Arrange
-        securityService.login("jane.doe", Role.TRAINER);
+        securityService.login("kakashi.hatake", Role.TRAINER);
 
         // Assert
-        assertTrue(securityService.isTrainer(), "User should be a trainer");
+        assertTrue(securityService.isTrainer());
     }
 
     @Test
     void testIsTrainee_NotTrainee() {
         // Arrange
-        securityService.login("jane.doe", Role.TRAINER);
+        securityService.login("kakashi.hatake", Role.TRAINER);
 
         // Assert
-        assertFalse(securityService.isTrainee(), "User should not be a trainee when logged in as a trainer");
+        assertFalse(securityService.isTrainee());
     }
 
     @Test
     void testIsTrainer_NotTrainer() {
         // Arrange
-        securityService.login("john.doe", Role.TRAINEE);
+        securityService.login("naruto.uzumaki", Role.TRAINEE);
 
         // Assert
-        assertFalse(securityService.isTrainer(), "User should not be a trainer when logged in as a trainee");
+        assertFalse(securityService.isTrainer());
     }
 }
