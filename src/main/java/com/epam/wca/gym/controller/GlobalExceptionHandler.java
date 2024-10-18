@@ -30,13 +30,10 @@ public class GlobalExceptionHandler {
 
     private static final String ERROR = "error";
     private static final String EXCEPTION_CAUGHT_TEMPLATE = "Exception caught: %s. Request: %s";
-    private static final String LOG_ERROR = "ERROR";
-    private static final String LOG_WARN = "WARN";
-    private static final String LOG_DEBUG = "DEBUG";
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException exception, WebRequest request) {
-        logException(LOG_ERROR, exception, request);
+        logError(exception, request);
         Map<String, String> errors = new HashMap<>();
         exception.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
@@ -49,19 +46,19 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorDTO> handleIllegalStateException(IllegalStateException exception, WebRequest request) {
-        logException(LOG_ERROR, exception, request);
+        logError(exception, request);
         return new ResponseEntity<>(new ErrorDTO(ERROR, exception.getMessage()), BAD_REQUEST);
     }
 
     @ExceptionHandler(InvalidInputException.class)
     public ResponseEntity<ErrorDTO> handleInvalidInputException(InvalidInputException exception, WebRequest request) {
-        logException(LOG_ERROR, exception, request);
+        logError(exception, request);
         return new ResponseEntity<>(new ErrorDTO(ERROR, exception.getMessage()), BAD_REQUEST);
     }
 
     @ExceptionHandler(NoHandlerFoundException.class)
     public ResponseEntity<ErrorDTO> handleNoHandlerFoundException(NoHandlerFoundException exception, WebRequest request) {
-        logException(LOG_WARN, exception, request);
+        logWarn(exception, request);
         return new ResponseEntity<>(
                 new ErrorDTO("Resource Not Found", "You are trying to use a non-existing endpoint"),
                 NOT_FOUND);
@@ -69,25 +66,25 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorDTO> handleEntityNotFoundException(EntityNotFoundException exception, WebRequest request) {
-        logException(LOG_ERROR, exception, request);
+        logError(exception, request);
         return new ResponseEntity<>(new ErrorDTO(ERROR, exception.getMessage()), NOT_FOUND);
     }
 
     @ExceptionHandler(AuthorizationFailedException.class)
     public ResponseEntity<ErrorDTO> handleAuthorizationFailedException(AuthorizationFailedException exception, WebRequest request) {
-        logException(LOG_WARN, exception, request);
+        logWarn(exception, request);
         return new ResponseEntity<>(new ErrorDTO(ERROR, exception.getMessage()), UNAUTHORIZED);
     }
 
     @ExceptionHandler(SecurityException.class)
     public ResponseEntity<ErrorDTO> handleSecurityException(SecurityException exception, WebRequest request) {
-        logException(LOG_ERROR, exception, request);
+        logError(exception, request);
         return new ResponseEntity<>(new ErrorDTO(ERROR, exception.getMessage()), FORBIDDEN);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorDTO> handleInvalidRequestBody(HttpMessageNotReadableException exception, WebRequest request) {
-        logException(LOG_DEBUG, exception, request);
+        logDebug(exception, request);
         return new ResponseEntity<>(
                 new ErrorDTO("Invalid Request Body", "Wrong request body used for this endpoint"),
                 I_AM_A_TEAPOT);
@@ -95,7 +92,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ErrorDTO> handleMethodNotSupported(HttpRequestMethodNotSupportedException exception, WebRequest request) {
-        logException(LOG_ERROR, exception, request);
+        logError(exception, request);
         return new ResponseEntity<>(
                 new ErrorDTO("Invalid Request Method", "Wrong request method for this endpoint"),
                 I_AM_A_TEAPOT);
@@ -103,19 +100,24 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDTO> handleAllOtherExceptions(Exception exception, WebRequest request) {
-        logException(LOG_ERROR, exception, request);
+        logError(exception, request);
         return new ResponseEntity<>(
                 new ErrorDTO("Houston, we have a problem!", "Something went wrong with your request. Please check and try again."),
                 I_AM_A_TEAPOT);
     }
 
-    private void logException(String level, Exception exception, WebRequest request) {
+    private void logError(Exception exception, WebRequest request) {
         String logMessage = EXCEPTION_CAUGHT_TEMPLATE.formatted(exception.getMessage(), request.getDescription(false));
-        switch (level.toUpperCase()) {
-            case LOG_ERROR -> log.error(logMessage);
-            case LOG_WARN -> log.warn(logMessage);
-            case LOG_DEBUG -> log.debug(logMessage);
-            default -> log.info(logMessage);
-        }
+        log.error(logMessage);
+    }
+
+    private void logWarn(Exception exception, WebRequest request) {
+        String logMessage = EXCEPTION_CAUGHT_TEMPLATE.formatted(exception.getMessage(), request.getDescription(false));
+        log.warn(logMessage);
+    }
+
+    private void logDebug(Exception exception, WebRequest request) {
+        String logMessage = EXCEPTION_CAUGHT_TEMPLATE.formatted(exception.getMessage(), request.getDescription(false));
+        log.debug(logMessage);
     }
 }

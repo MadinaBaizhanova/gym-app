@@ -77,6 +77,7 @@ public class TraineeController {
         return traineeService.findByUsername(username);
     }
 
+    // TODO: consider creating interfaces for controllers and move all the Swagger annotations there
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", schema = @Schema(implementation = TraineeDTO.class))),
             @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class))),
