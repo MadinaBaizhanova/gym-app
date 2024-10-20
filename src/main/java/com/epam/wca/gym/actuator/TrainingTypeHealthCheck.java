@@ -14,6 +14,7 @@ import java.util.List;
 @Profile("prod")
 @RequiredArgsConstructor
 public class TrainingTypeHealthCheck extends AbstractHealthIndicator {
+
     private static final String TRAINING_TYPE_SERVICE = "Training Type Service (custom Health Indicator)";
 
     private final RestTemplate restTemplate;

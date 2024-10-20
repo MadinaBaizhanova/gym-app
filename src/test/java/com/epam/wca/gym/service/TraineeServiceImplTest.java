@@ -4,10 +4,10 @@ import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.UserDAO;
 import com.epam.wca.gym.dto.trainee.TraineeDTO;
+import com.epam.wca.gym.dto.trainee.TraineeRegistrationDTO;
 import com.epam.wca.gym.dto.trainee.TraineeUpdateDTO;
 import com.epam.wca.gym.dto.trainee.UpdateTrainersDTO;
 import com.epam.wca.gym.dto.user.UserDTO;
-import com.epam.wca.gym.dto.trainee.TraineeRegistrationDTO;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.TrainingType;
@@ -59,9 +59,6 @@ class TraineeServiceImplTest {
 
     @Mock
     private UserDAO userDAO;
-
-    @Mock
-    private SecurityService securityService;
 
     @InjectMocks
     private TraineeServiceImpl traineeService;
@@ -237,7 +234,6 @@ class TraineeServiceImplTest {
         // Assert
         verify(userDAO).delete(user);
         verify(traineeDAO).findByUsername(username);
-        verify(securityService).logout();
     }
 
     @Test

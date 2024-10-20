@@ -1,7 +1,5 @@
 package com.epam.wca.gym.service.impl;
 
-import com.epam.wca.gym.annotation.Secured;
-import com.epam.wca.gym.annotation.TrainerOnly;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingTypeDAO;
 import com.epam.wca.gym.dto.trainer.TrainerRegistrationDTO;
@@ -59,8 +57,6 @@ public class TrainerServiceImpl implements TrainerService {
         return trainer;
     }
 
-    @Secured
-    @TrainerOnly
     @Override
     public TrainerDTO findByUsername(String username) {
         return trainerDAO.findByUsername(username)
@@ -68,8 +64,6 @@ public class TrainerServiceImpl implements TrainerService {
                 .orElseThrow(() -> new EntityNotFoundException(MISSING_TRAINER_TEMPLATE.formatted(username)));
     }
 
-    @Secured
-    @TrainerOnly
     @Transactional
     @Override
     public TrainerDTO update(TrainerUpdateDTO dto) {
@@ -95,8 +89,6 @@ public class TrainerServiceImpl implements TrainerService {
         return TrainerMapper.toTrainerDTO(trainer);
     }
 
-    @Secured
-    @TrainerOnly
     @Override
     public List<TrainingDTO> findTrainings(FindTrainingQuery dto) {
         return trainerDAO.findTrainings(dto)

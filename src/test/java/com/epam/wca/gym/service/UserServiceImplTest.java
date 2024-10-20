@@ -5,18 +5,21 @@ import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingDAO;
 import com.epam.wca.gym.dao.UserDAO;
 import com.epam.wca.gym.dto.user.ChangePasswordDTO;
+import com.epam.wca.gym.dto.user.TokenDTO;
 import com.epam.wca.gym.dto.user.UserDTO;
 import com.epam.wca.gym.dto.user.UserUpdateDTO;
-import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.entity.Trainee;
 import com.epam.wca.gym.entity.Trainer;
 import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.exception.AuthorizationFailedException;
 import com.epam.wca.gym.exception.EntityNotFoundException;
 import com.epam.wca.gym.exception.InvalidInputException;
+import com.epam.wca.gym.security.authorization.JwtService;
+import com.epam.wca.gym.security.protector.LoginAttemptServiceImpl;
 import com.epam.wca.gym.service.impl.UserServiceImpl;
 import com.epam.wca.gym.utils.UsernameGenerator;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -35,12 +38,14 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -58,6 +63,9 @@ class UserServiceImplTest {
     private BCryptPasswordEncoder passwordEncoder;
 
     @Mock
+    private LoginAttemptServiceImpl loginAttemptService;
+
+    @Mock
     private TraineeDAO traineeDAO;
 
     @Mock
@@ -66,8 +74,16 @@ class UserServiceImplTest {
     @Mock
     private TrainerDAO trainerDAO;
 
+    @Mock
+    private JwtService jwtService;
+
     @InjectMocks
     private UserServiceImpl userService;
+
+    @BeforeEach
+    void setup() {
+        reset(loginAttemptService);
+    }
 
     @ParameterizedTest
     @CsvSource({"Naruto,Uzumaki", "Sasuke,Uchiha", "Sakura,Haruno"})
@@ -118,8 +134,7 @@ class UserServiceImplTest {
     @ParameterizedTest
     @MethodSource("provideAuthenticationTestData")
     void testAuthenticate(String username, String password, String storedPassword, boolean userExists,
-                          boolean passwordMatches, boolean isTrainee, boolean isTrainer,
-                          Role expectedRole, boolean expectException) {
+                          boolean passwordMatches, boolean expectException, String accessToken, String refreshToken) {
         // Arrange
         if (userExists) {
             var user = new User();
@@ -130,31 +145,38 @@ class UserServiceImplTest {
             when(passwordEncoder.matches(password, storedPassword)).thenReturn(passwordMatches);
 
             if (passwordMatches) {
-                when(traineeDAO.findByUsername(username)).thenReturn(isTrainee ?
-                        Optional.of(mock(Trainee.class)) : Optional.empty());
-                when(trainerDAO.findByUsername(username)).thenReturn(isTrainer ?
-                        Optional.of(mock(Trainer.class)) : Optional.empty());
+                when(jwtService.generateAccessToken(username)).thenReturn(accessToken);
+                when(jwtService.generateRefreshToken(username)).thenReturn(refreshToken);
             }
         } else {
             when(userDAO.findByUsername(username)).thenReturn(Optional.empty());
         }
 
+        when(loginAttemptService.isLocked(username)).thenReturn(false);
+
         // Act & Assert
         if (expectException) {
-            var exception = assertThrows(AuthorizationFailedException.class,
-                    () -> userService.authenticate(username, password));
+            var exception = assertThrows(AuthorizationFailedException.class, () -> userService.authenticate(username, password));
             assertEquals("Invalid credentials provided!", exception.getMessage());
         } else {
-            Role result = userService.authenticate(username, password);
-            assertEquals(expectedRole, result);
+            TokenDTO result = userService.authenticate(username, password);
+            assertNotNull(result);
+            assertEquals(accessToken, result.accessToken());
+            assertEquals(refreshToken, result.refreshToken());
+        }
+
+        if (userExists && passwordMatches) {
+            verify(loginAttemptService).resetAttempts(username);
+        } else {
+            verify(loginAttemptService).countFailedLoginAttempts(username);
         }
     }
 
     static Stream<Arguments> provideAuthenticationTestData() {
         return Stream.of(
-                Arguments.of("trainer.user", "password", "hashedPassword", true, true, false, true, Role.TRAINER, false),
-                Arguments.of("user", "wrongPassword", "hashedPassword", true, false, false, false, Role.NONE, true),
-                Arguments.of("nonExistentUser", "password", null, false, false, false, false, Role.NONE, true)
+                Arguments.of("trainee.user", "password", "hashedPassword", true, true, false, "access-token-trainee", "refresh-token-trainee"),
+                Arguments.of("user", "wrongPassword", "hashedPassword", true, false, true, null, null),
+                Arguments.of("nonExistentUser", "password", null, false, false, true, null, null)
         );
     }
 

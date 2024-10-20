@@ -1,23 +1,25 @@
 package com.epam.wca.gym.service.impl;
 
-import com.epam.wca.gym.annotation.Secured;
 import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.TrainingDAO;
 import com.epam.wca.gym.dao.UserDAO;
 import com.epam.wca.gym.dto.user.ChangePasswordDTO;
+import com.epam.wca.gym.dto.user.TokenDTO;
 import com.epam.wca.gym.dto.user.UserDTO;
 import com.epam.wca.gym.dto.user.UserUpdateDTO;
-import com.epam.wca.gym.entity.Role;
 import com.epam.wca.gym.entity.User;
 import com.epam.wca.gym.exception.AuthorizationFailedException;
 import com.epam.wca.gym.exception.EntityNotFoundException;
 import com.epam.wca.gym.exception.InvalidInputException;
+import com.epam.wca.gym.security.authorization.JwtService;
+import com.epam.wca.gym.security.protector.LoginAttemptServiceImpl;
 import com.epam.wca.gym.service.UserService;
 import com.epam.wca.gym.utils.PasswordGenerator;
 import com.epam.wca.gym.utils.UsernameGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +39,8 @@ public class UserServiceImpl implements UserService {
     private final TraineeDAO traineeDAO;
     private final TrainingDAO trainingDAO;
     private final TrainerDAO trainerDAO;
+    private final LoginAttemptServiceImpl loginAttemptService;
+    private final JwtService jwtService;
 
     private static final ThreadLocal<String> rawPasswordHolder = new ThreadLocal<>();
 
@@ -60,44 +64,45 @@ public class UserServiceImpl implements UserService {
 
         User user = userDAO.save(newUser);
 
-        log.info("User Registered Successfully with Username: {} and Default Password: {}", username, rawPassword);
+        log.info("User Registered Successfully with username: %s".formatted(username));
         return user;
     }
 
     @Override
-    public Role authenticate(String username, String password) {
+    public TokenDTO authenticate(String username, String password) {
+        if (loginAttemptService.isLocked(username)) {
+            log.warn("User %s is locked due to too many failed login attempts.".formatted(username));
+            throw new LockedException("Too many failed login attempts. Please try again later.");
+        }
+
         Optional<User> userOptional = userDAO.findByUsername(username);
 
         if (userOptional.isPresent()) {
             User user = userOptional.get();
 
             if (passwordEncoder.matches(password, user.getPassword())) {
-                if (traineeDAO.findByUsername(username).isPresent()) {
-                    log.info("Authenticated as Trainee: {}", username);
-                    return Role.TRAINEE;
-                }
-                if (trainerDAO.findByUsername(username).isPresent()) {
-                    log.info("Authenticated as Trainer: {}", username);
-                    return Role.TRAINER;
-                }
+                loginAttemptService.resetAttempts(username);
+
+                return new TokenDTO(jwtService.generateAccessToken(username),
+                        jwtService.generateRefreshToken(username));
+
             }
         }
-        log.warn("Authentication failed for username: {}", username);
+        loginAttemptService.countFailedLoginAttempts(username);
+        log.warn("Authentication failed for username: %s".formatted(username));
         throw new AuthorizationFailedException("Invalid credentials provided!");
     }
 
-    @Secured
     @Transactional
     @Override
     public void activate(String username) {
         userDAO.findByUsername(username).ifPresent(user -> {
             user.setIsActive(true);
             userDAO.update(user);
-            log.info("User activated successfully.");
+            log.info("User activated successfully!");
         });
     }
 
-    @Secured
     @Transactional
     @Override
     public void deactivate(String username) {
@@ -112,11 +117,10 @@ public class UserServiceImpl implements UserService {
 
                 trainingDAO.deleteByTrainer(username);
             });
-            log.info("User deactivated successfully.");
+            log.info("User deactivated successfully!");
         });
     }
 
-    @Secured
     @Transactional
     @Override
     public void changePassword(String username, ChangePasswordDTO dto) {
@@ -132,7 +136,6 @@ public class UserServiceImpl implements UserService {
         });
     }
 
-    @Secured
     @Transactional
     @Override
     public void update(UserUpdateDTO dto) {
