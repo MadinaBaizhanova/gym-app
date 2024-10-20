@@ -30,7 +30,8 @@ import java.util.Set;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final int JWT_BEGIN_INDEX = 7;
-    private final JwtServiceImpl jwtService;
+
+    private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
     private final TokenStore tokenStore;
     private final ObjectMapper objectMapper;
@@ -75,7 +76,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            if (jwtService.isValid(token) && !tokenStore.isInvalidated(token)) {
+            if (isValidToken(token)) {
                 String username = jwtService.extractUsername(token);
                 try {
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
@@ -98,6 +99,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (AuthorizationFailedException exception) {
             sendErrorResponse(response, exception.getMessage());
         }
+    }
+
+    private boolean isValidToken(String token) {
+        return jwtService.isValid(token) && !tokenStore.isInvalidated(token);
     }
 
     private String extractToken(HttpServletRequest request) {
