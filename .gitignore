@@ -6,6 +6,8 @@
 /src/main/webapp/WEB-INF/
 /src/main/resources/logs/
 /src/test/resources/logs/
+/src/main/resources/env/
+/src/test/resources/env
 
 # Ignore Maven target directory
 /target/
