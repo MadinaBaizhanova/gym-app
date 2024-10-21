@@ -43,10 +43,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private Role determineUserRole(String username) {
         if (traineeDAO.findByUsername(username).isPresent()) {
             return Role.TRAINEE;
-        } else if (trainerDAO.findByUsername(username).isPresent()) {
-            return Role.TRAINER;
-        } else {
-            return Role.NONE;
         }
+
+        if (trainerDAO.findByUsername(username).isPresent()) {
+            return Role.TRAINER;
+        }
+
+        return Role.NONE;
     }
 }
