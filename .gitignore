@@ -8,6 +8,11 @@
 /src/test/resources/logs/
 /src/main/resources/env/
 /src/test/resources/env
+/src/main/resources/application-dev.properties
+/src/main/resources/application-local.properties
+/src/main/resources/application-prod.properties
+/src/main/resources/application-stg.properties
+/src/test/resources/application-test.properties
 
 # Ignore Maven target directory
 /target/
