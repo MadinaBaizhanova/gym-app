@@ -12,9 +12,9 @@ import org.springframework.context.annotation.Configuration;
 @OpenAPIDefinition(
         info = @Info(
                 title = "Gym CRM API",
-                version = "1.0",
+                version = "1.2",
                 description = "OpenAPI documentation for the GYM CRM Application."))
-@SecurityScheme(name = "basicAuth", type = SecuritySchemeType.HTTP, scheme = "basic")
+@SecurityScheme(name = "bearerAuth", type = SecuritySchemeType.HTTP, scheme = "bearer", bearerFormat = "JWT")
 public class SwaggerConfig {
 
     @Bean

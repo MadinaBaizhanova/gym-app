@@ -1,8 +1,6 @@
 package com.epam.wca.gym.service.impl;
 
 import com.epam.wca.gym.annotation.CheckActiveTrainee;
-import com.epam.wca.gym.annotation.Secured;
-import com.epam.wca.gym.annotation.TraineeOnly;
 import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainerDAO;
 import com.epam.wca.gym.dao.UserDAO;
@@ -22,7 +20,6 @@ import com.epam.wca.gym.exception.InvalidInputException;
 import com.epam.wca.gym.mapper.TraineeMapper;
 import com.epam.wca.gym.mapper.TrainerMapper;
 import com.epam.wca.gym.mapper.TrainingMapper;
-import com.epam.wca.gym.service.SecurityService;
 import com.epam.wca.gym.service.TraineeService;
 import com.epam.wca.gym.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +43,6 @@ public class TraineeServiceImpl implements TraineeService {
     private final TrainerDAO trainerDAO;
     private final UserService userService;
     private final UserDAO userDAO;
-    private final SecurityService securityService;
 
     @Transactional
     @Override
@@ -65,8 +61,6 @@ public class TraineeServiceImpl implements TraineeService {
         return trainee;
     }
 
-    @Secured
-    @TraineeOnly
     @Override
     public TraineeDTO findByUsername(String username) {
         return traineeDAO.findByUsername(username)
@@ -74,8 +68,6 @@ public class TraineeServiceImpl implements TraineeService {
                 .orElseThrow(() -> new EntityNotFoundException(MISSING_TRAINEE_TEMPLATE.formatted(username)));
     }
 
-    @Secured
-    @TraineeOnly
     @Transactional
     @Override
     public void deleteByUsername(String username) {
@@ -85,12 +77,8 @@ public class TraineeServiceImpl implements TraineeService {
         userDAO.delete(trainee.getUser());
 
         log.info("Trainee profile deleted successfully.");
-
-        securityService.logout();
     }
 
-    @Secured
-    @TraineeOnly
     @Transactional
     @Override
     public TraineeDTO update(TraineeUpdateDTO dto) {
@@ -114,8 +102,6 @@ public class TraineeServiceImpl implements TraineeService {
         return TraineeMapper.toTraineeDTO(trainee);
     }
 
-    @Secured
-    @TraineeOnly
     @CheckActiveTrainee
     @Transactional
     @Override
@@ -127,8 +113,6 @@ public class TraineeServiceImpl implements TraineeService {
         }
     }
 
-    @Secured
-    @TraineeOnly
     @Override
     public List<TrainerForTraineeDTO> findAvailableTrainers(String username) {
         return traineeDAO.findAvailableTrainers(username)
@@ -137,8 +121,6 @@ public class TraineeServiceImpl implements TraineeService {
                 .toList();
     }
 
-    @Secured
-    @TraineeOnly
     @Override
     public List<TrainerForTraineeDTO> findAssignedTrainers(String username) {
         Trainee trainee = traineeDAO.findByUsername(username)
@@ -150,8 +132,6 @@ public class TraineeServiceImpl implements TraineeService {
                 .toList();
     }
 
-    @Secured
-    @TraineeOnly
     @Override
     public List<TrainingDTO> findTrainings(FindTrainingQuery dto) {
         return traineeDAO.findTrainings(dto)

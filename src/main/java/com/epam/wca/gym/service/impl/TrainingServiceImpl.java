@@ -1,8 +1,6 @@
 package com.epam.wca.gym.service.impl;
 
 import com.epam.wca.gym.annotation.CheckActiveTrainee;
-import com.epam.wca.gym.annotation.Secured;
-import com.epam.wca.gym.annotation.TraineeOnly;
 import com.epam.wca.gym.dao.TraineeDAO;
 import com.epam.wca.gym.dao.TrainingDAO;
 import com.epam.wca.gym.dto.training.TrainingDTO;
@@ -26,8 +24,6 @@ public class TrainingServiceImpl implements TrainingService {
     private final TrainingDAO trainingDAO;
     private final TraineeDAO traineeDAO;
 
-    @Secured
-    @TraineeOnly
     @CheckActiveTrainee
     @Transactional
     @Override
