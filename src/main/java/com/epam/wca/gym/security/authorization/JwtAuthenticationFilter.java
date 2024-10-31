@@ -13,8 +13,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -23,6 +21,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+
+import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
 @Slf4j
 @Component
@@ -54,55 +54,55 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
-        String requestUri = request.getRequestURI().substring(request.getContextPath().length());
-        String requestMethod = request.getMethod();
-        String allowedMethod = ALLOWED_ENDPOINTS.get(requestUri);
-
-        if (ALLOWED_PREFIXES.stream().anyMatch(requestUri::startsWith)) {
+        var requestUri = request.getRequestURI().substring(request.getContextPath().length());
+        if (isAllowedUri(requestUri)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        if (allowedMethod != null && allowedMethod.equals(requestMethod)) {
+        var allowedMethod = ALLOWED_ENDPOINTS.get(requestUri);
+        var requestMethod = request.getMethod();
+        if (isAllowedMethod(allowedMethod, requestMethod)) {
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            String token = extractToken(request);
-
+            var token = extractToken(request);
             if (token == null) {
-                sendErrorResponse(response, "Missing or invalid authorization header.");
+                sendErrorResponse(response, "Missing or invalid Bearer authorization header.");
                 return;
             }
 
-            if (isValidToken(token)) {
-                String username = jwtService.extractUsername(token);
-                try {
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            if (isAuthenticationRequired(token)) {
+                var username = jwtService.extractUsername(token);
+                var user = userDetailsService.loadUserByUsername(username);
 
-                    if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                        var authToken = new UsernamePasswordAuthenticationToken(userDetails, null,
-                                userDetails.getAuthorities());
+                var authToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
 
-                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                        SecurityContextHolder.getContext().setAuthentication(authToken);
-                    }
-                } catch (EntityNotFoundException e) {
-                    sendErrorResponse(response, "User profile no longer exists.");
-                    return;
-                }
+                getContext().setAuthentication(authToken);
             }
 
             filterChain.doFilter(request, response);
+        } catch (EntityNotFoundException e) {
+            sendErrorResponse(response, "User profile no longer exists.");
         } catch (AuthorizationFailedException exception) {
             sendErrorResponse(response, exception.getMessage());
         }
     }
 
-    private boolean isValidToken(String token) {
-        return jwtService.isValid(token) && !tokenStore.isInvalidated(token);
+    private boolean isAuthenticationRequired(String token) {
+        return jwtService.isValid(token) && !tokenStore.isInvalidated(token) && getContext().getAuthentication() == null;
+    }
+
+    private boolean isAllowedMethod(String allowedMethod, String requestMethod) {
+        return allowedMethod != null && allowedMethod.equals(requestMethod);
+    }
+
+    private boolean isAllowedUri(String requestUri) {
+        return ALLOWED_PREFIXES.stream().anyMatch(requestUri::startsWith);
     }
 
     private String extractToken(HttpServletRequest request) {

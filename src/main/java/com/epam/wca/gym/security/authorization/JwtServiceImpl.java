@@ -21,6 +21,7 @@ public class JwtServiceImpl implements JwtService {
 
     @Value("${jwt.secret.key}")
     private String secretKey;
+
     private static final int ACCESS_TOKEN_EXPIRATION = 300_000;
     private static final int REFRESH_TOKEN_EXPIRATION = 1_800_000;
 
@@ -52,7 +53,7 @@ public class JwtServiceImpl implements JwtService {
             throw new AuthorizationFailedException("Invalid or invalidated refresh token!");
         }
 
-        String username = extractUsername(refreshToken);
+        var username = extractUsername(refreshToken);
         return generateAccessToken(username);
     }
 
